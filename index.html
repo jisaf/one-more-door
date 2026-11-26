@@ -254,7 +254,7 @@ const T = {
   furyMax: 3,
   // two-half prototype
   ispd: { strike: 50, heavy: 25, guard: 70, hex: 40, rend: 60, dazed: 0, shoot: 55, charge: 55, pounce: 30, retreat: 75 },
-  distOn: 1, distStep: 1 / 3, defMove: 1, chargeMove: 2, startDist: { brute: 2, skirmisher: 2, lurker: 3, warden: 1 }, wardenDmg: 1.3, wardenHp: 1.15, bruteHp: 1.15, bruteDmg: 1.1, retreatShot: 0.75, skirmDmg: 1.25, pounceDist: 1, bruteCharge: 0.85, skirmRetreat: 0.8, spdJitter: 15,
+  distOn: 1, distStep: 1 / 3, defMove: 1, chargeMove: 2, startDist: { brute: 2, skirmisher: 2, lurker: 3, warden: 1 }, wardenDmg: 1.3, wardenHp: 1.15, bruteHp: 1.15, newFavors: 0, bruteDmg: 1.1, retreatShot: 0.75, skirmDmg: 1.25, pounceDist: 1, bruteCharge: 0.85, skirmRetreat: 0.8, spdJitter: 15,
   campLose: 1, fightLose: 1, mendN: 2, exhaustGold: 0.5, winMend: 0, rendLost: 1, lootMend: 1, normHpMul: 1, bossRestore: 0, bossHeal: 0, handCap: 99, dmgMul: 1, antechamber: 0, swapKeepsPlace: 1, lootRecover: 0,
   intents: { strike: 38, heavy: 20, guard: 15, hex: 17, rend: 10 }, bossIntents: { strike: 42, heavy: 20, guard: 13, hex: 13, rend: 12 }, bossRage: { strike: 38, heavy: 30, guard: 8, hex: 12, rend: 12 }, rageAt: 0.5, rageDmg: 1,
   emberPerDoor: 1, emberBoss: 5, emberDeepDoor: 1, emberDeepBoss: 3,
@@ -437,15 +437,15 @@ const PATRONS = {
 };
 const FAVORS = [
   { id: 'kindle', p: 'lamp', n: 'Kindle', d: 'Your attacks set it alight: it burns for 2 at the end of every exchange after.' },
-  { id: 'flare', p: 'lamp', n: 'Flare', d: 'Unleash hits one extra time. You start with an Unleash card.' },
+  { id: 'blind', p: 'lamp', n: 'Flare', d: 'A monster that charges or pounces is blinded: its hit lands a third weaker.' },
   { id: 'emberheart', p: 'lamp', n: 'Ember Heart', d: 'Winning a fight heals 3 more Grit.' },
-  { id: 'wick', p: 'lamp', n: 'Long Wick', d: 'You start every fight with 1 Fury.' },
-  { id: 'quick', p: 'rat', n: 'Quick Feet', d: 'Escaping is 1 easier, and a failed Run still stabs for 2.' },
+  { id: 'reach', p: 'lamp', n: 'Long Reach', d: 'Far counts as Near for your attacks. Only Distant weakens them.' },
+  { id: 'quick', p: 'rat', n: 'Quick Feet', d: 'A half played as a move goes 2 steps instead of 1. Escaping is 1 easier, and a failed Run still stabs for 2.' },
   { id: 'pockets', p: 'rat', n: 'Deep Pockets', d: '+4 coins every time you win.' },
   { id: 'cutpurse', p: 'rat', n: 'Cutpurse’s Charm', d: 'Hexes can never take your coins or gear.' },
-  { id: 'scurry', p: 'rat', n: 'Low Scurry', d: 'Every block card also deals 2 damage.' },
+  { id: 'scurry', p: 'rat', n: 'Low Scurry', d: 'Every bottom half that blocks also deals 2 damage.' },
   { id: 'mortar', p: 'mason', n: 'Mortar', d: '+4 max Grit, and heal 4 now.' },
-  { id: 'buttress', p: 'mason', n: 'Buttress', d: 'Fully blocking a Wind-up throws the blow back at the monster.' },
+  { id: 'buttress', p: 'mason', n: 'Buttress', d: 'Fully blocking a Wind-up or a Pounce throws the blow back at the monster.' },
   { id: 'keystone', p: 'mason', n: 'Keystone', d: '+1 Armor.' },
   { id: 'plumb', p: 'mason', n: 'Plumb Line', d: 'Your attacks ignore Guard.' },
 ];
@@ -620,11 +620,13 @@ function monType(mon) { return mon.boss ? 'brute' : (MTYPE[mon.n] || 'brute'); }
 // Might at a distance: Near is normal, each step closer or further adds or takes a third (rounded down)
 function atDist(m, d) { if (!T.distOn || d == null) return m; return Math.max(0, Math.floor(m * (1 + T.distStep * (1 - d)))); }
 function effDist(h, d) { if (h.ranged) return 1; if (h.reach) return d === 0 ? 0 : Math.max(1, d - 1); return d; }
+function reachD(s, d) { return T.newFavors && d === 2 && has(s, 'reach') ? 1 : d; }
 function clampD(d) { return Math.max(0, Math.min(3, d)); }
 // a half's move: free-direction halves take 'in' or 'out'; fixed ones move their own way; any other half can be played as Move 1
-function moveOf(h, mode) {
+function moveOf(h, mode, s) {
   if (h.move) { const dir = h.dir || mode; return dir === 'in' ? -h.move : dir === 'out' ? h.move : 0; }
-  return mode === 'in' ? -T.defMove : mode === 'out' ? T.defMove : 0;
+  const n = s && T.newFavors && has(s, 'quick') ? 2 : T.defMove;
+  return mode === 'in' ? -n : mode === 'out' ? n : 0;
 }
 function usesFx(h, mode) { return !!h.move || !mode || mode === 'fx'; }
 function halfModes(s, h) {
@@ -640,8 +642,9 @@ function incomingRaw(s) {
   const f = s.fight; if (!f) return 0; const base = f.dmg + enrage(f), it = f.intent;
   if (it === 'shoot') return base;
   if (it === 'retreat') return f.mtype === 'skirmisher' ? Math.floor(base * T.retreatShot) : 0;
-  if (it === 'pounce') return atDist(base, T.pounceDist) * 2;
-  let d = f.dist; if (it === 'charge') d = clampD(d - T.chargeMove); if (it === 'pounce') d = 0;
+  const bl = T.newFavors && has(s, 'blind') ? 1 : 0;
+  if (it === 'pounce') return atDist(base, T.pounceDist + bl) * 2;
+  let d = f.dist; if (it === 'charge') d = clampD(d - T.chargeMove) + bl; else if (f.charged) d += bl; if (it === 'pounce') d = 0;
   const m = atDist(base, d);
   return it === 'strike' || it === 'rend' || it === 'charge' ? m : it === 'heavy' || it === 'pounce' ? m * 2 : 0;
 }
@@ -768,7 +771,7 @@ function shuffleInto(r, arr) { for (let i = arr.length - 1; i > 0; i--) { const 
 // Played cards are spent. Resting returns spent cards but loses one for the run. Burn halves lose the card.
 function shuffleInto(r, arr) { for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(r.next() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; } return arr; }
 function rollSpeed(s, r) { const f = s.fight; f.mspd = (T.ispd[f.intent] || 0) + (f.intent === 'dazed' ? 0 : r.int(-T.spdJitter, T.spdJitter)); }
-function startExchange(s, r) { const f = s.fight; f.block = 0; f.countering = false; f.attacks = 0; rollSpeed(s, r); }
+function startExchange(s, r) { const f = s.fight; f.block = 0; f.charged = false; f.countering = false; f.attacks = 0; rollSpeed(s, r); }
 function exhausted(s) { return s.cards.length < 2 && !s.spent.length; }
 function playShot(s, idx) {
   const c = s.hand[idx]; if (!c) return;
@@ -798,7 +801,7 @@ function playShot(s, idx) {
 
 function halfPreview(s, id, half) {
   const f = s.fight, h = HALVES[id] && HALVES[id][half]; if (!h) return null;
-  const m = f && f.dist != null ? atDist(fightMight(s), effDist(h, f.dist)) : fightMight(s), a = armor(s), B = 2 + a;
+  const m = f && f.dist != null ? atDist(fightMight(s), reachD(s, effDist(h, f.dist))) : fightMight(s), a = armor(s), B = 2 + a;
   let dmg = Math.floor((h.dmg || 0) * m) + (h.dmgA || 0) * a;
   if (dmg && f && !h.pierce) dmg = guardCut(s, dmg, false);
   let blk = Math.floor((h.blk || 0) * B);
@@ -843,7 +846,7 @@ function playPair(s, ti, bi, lead, tm, bm) {
   if (tf && ht.stun && fast && (f.intent === 'heavy' || f.intent === 'hex' || f.intent === 'charge' || f.intent === 'pounce')) { log(s, `You trip ${the(f.mon.n)}. Its ${INTENTS[f.intent].n} is spoiled.`); f.intent = 'dazed'; }
   saveRng(s, r);
   const act = () => {
-    const dd = moveOf(ht, tm) + moveOf(hb, bm);
+    const dd = moveOf(ht, tm, s) + moveOf(hb, bm, s);
     if (dd) { const d0 = f.dist; f.dist = clampD(f.dist + dd); if (f.dist !== d0) log(s, `You move to ${DIST_N[f.dist]}.`); }
     const a = tf ? applyHalf(s, tid, 'top', r) : {}, b = bf ? applyHalf(s, bid, 'bot', r) : {};
     log(s, `${CARDS[tid].n} (${tf ? 'top' : 'move'}${a.dmg ? ', ' + a.dmg + ' damage' : ''}) + ${CARDS[bid].n} (${bf ? 'bottom' : 'move'}${b.blk ? ', block ' + b.blk : ''}${b.dmg ? ', ' + b.dmg + ' damage' : ''}).`);
@@ -870,8 +873,8 @@ function restCards(s, i) {
 function monsterAct(s) {
   const r = rngOf(s); const f = s.fight;
   let took = 0;
-  if (f.intent === 'charge') { const d0 = f.dist; f.dist = clampD(f.dist - T.chargeMove); log(s, `${cap(the(f.mon.n))} charges in to ${DIST_N[f.dist]}.`); f.moved = (f.moved || 0) + d0 - f.dist; f.intent = 'strike'; }
-  else if (f.intent === 'pounce') { const raw = incomingRaw(s); f.dist = 0; f.pounced = true; f.intent = 'pounced'; took = Math.max(0, raw - f.block); s.grit -= took; log(s, `${cap(the(f.mon.n))} pounces${took ? ' for ' + took : ', and you block it'}.`); }
+  if (f.intent === 'charge') { const d0 = f.dist; f.dist = clampD(f.dist - T.chargeMove); log(s, `${cap(the(f.mon.n))} charges in to ${DIST_N[f.dist]}.`); f.moved = (f.moved || 0) + d0 - f.dist; f.intent = 'strike'; f.charged = true; }
+  else if (f.intent === 'pounce') { const raw = incomingRaw(s); f.dist = 0; f.pounced = true; f.intent = 'pounced'; took = Math.max(0, raw - f.block); s.grit -= took; if (!took && raw && T.newFavors && has(s, 'buttress')) { f.hp -= raw; log(s, `Buttress throws ${raw} back.`); } log(s, `${cap(the(f.mon.n))} pounces${took ? ' for ' + took : ', and you block it'}.`); }
   else if (f.intent === 'retreat') { const sh = incomingRaw(s); f.dist = clampD(f.dist + 1); log(s, `${cap(the(f.mon.n))} backs off to ${DIST_N[f.dist]}.`); if (sh) { const tk = Math.max(0, sh - f.block); s.grit -= tk; took = tk; if (tk) log(s, `It shoots as it goes for ${tk}.`); } }
   const intent = f.intent;
   if (intent === 'strike' || intent === 'heavy' || intent === 'rend' || intent === 'shoot') {
@@ -879,7 +882,7 @@ function monsterAct(s) {
     if (took > 0) { s.grit -= took; log(s, `${cap(the(f.mon.n))} ${intent === 'heavy' ? 'lands a heavy blow' : 'hits you'} for ${took}${blocked ? ' (' + blocked + ' blocked)' : ''}.`);
       if (intent === 'rend' && s.cards.length) { const c = s.cards.splice(r.int(0, s.cards.length - 1), 1)[0]; (T.rendLost ? s.lost : s.spent).push(c); log(s, `It rends ${CARDS[c].n} out of your hand${T.rendLost ? ' for good' : ''}.`); } }
     else { log(s, `You block all ${raw}.`); if (intent === 'heavy' && has(s, 'buttress')) { f.hp -= raw; log(s, `Buttress throws ${raw} back.`); } }
-    if (f.countering) { const m = atDist(fightMight(s), f.dist); f.hp -= m; log(s, `You counter for ${m}.`); }
+    if (f.countering) { const m = atDist(fightMight(s), reachD(s, f.dist)); f.hp -= m; log(s, `You counter for ${m}.`); }
   } else if (intent === 'hex') {
     log(s, `${cap(the(f.mon.n))} hexes you. ${badText(f.mon.bad === 'coins' ? 'quarter' : f.mon.bad)}`);
     applyBad(s, f.mon.bad === 'coins' ? 'quarter' : f.mon.bad, r, true);
@@ -1115,7 +1118,7 @@ const LORE = [
   { at: 35, t: 'Ma admits she once owned the building above the doors. "Sold it," she says. "To someone below."' },
 ];
 
-Object.assign(T, {"winMend":0,"lootMend":0,"bossHeal":99,"handCap":8,"bossHp":90,"dmgMul":0.8,"lootRecover":4,"hpMul":3.4,"bossRestore":1}); for (const [k,v] of Object.entries({"heavy":{"spd":20,"top":{"dmg":2.25},"bot":{"blk":1.75}},"lunge":{"spd":60,"top":{"dmg":3.5,"burn":1,"move":1,"dir":"in"},"bot":{"rec":2}},"brace":{"spd":40,"top":{"dmg":1.5,"blk":0.5},"bot":{"blk":1.25}},"jab":{"spd":85,"top":{"dmg":2},"bot":{"blk":0.75}},"reckless":{"spd":50,"top":{"dmg":2.5,"self":2},"bot":{"blk":1.25}},"bash":{"spd":45,"top":{"dmg":2},"bot":{"blk":0.75,"dmgA":1}},"feint":{"spd":70,"top":{"dmg":2},"bot":{"rec":1,"blk":0.5}},"bulwark":{"spd":30,"top":{"dmg":2.25},"bot":{"blk":1.75}},"pierce":{"spd":55,"top":{"dmg":2,"pierce":1,"reach":1},"bot":{"rec":2}}})) HALVES[k]=v;
+Object.assign(T, {"winMend":0,"lootMend":0,"bossHeal":99,"handCap":8,"bossHp":90,"dmgMul":0.8,"lootRecover":4,"hpMul":3.4,"bossRestore":1,"newFavors":1}); for (const [k,v] of Object.entries({"heavy":{"spd":20,"top":{"dmg":2.25},"bot":{"blk":1.75}},"lunge":{"spd":60,"top":{"dmg":3.5,"burn":1,"move":1,"dir":"in"},"bot":{"rec":2}},"brace":{"spd":40,"top":{"dmg":1.5,"blk":0.5},"bot":{"blk":1.25}},"jab":{"spd":85,"top":{"dmg":2},"bot":{"blk":0.75}},"reckless":{"spd":50,"top":{"dmg":2.5,"self":2},"bot":{"blk":1.25}},"bash":{"spd":45,"top":{"dmg":2},"bot":{"blk":0.75,"dmgA":1}},"feint":{"spd":70,"top":{"dmg":2},"bot":{"rec":1,"blk":0.5}},"bulwark":{"spd":30,"top":{"dmg":2.25},"bot":{"blk":1.75}},"pierce":{"spd":55,"top":{"dmg":2,"pierce":1,"reach":1},"bot":{"rec":2}}})) HALVES[k]=v;
 const api = { DSTATS, DIST_N, atDist, halfModes, moveOf, monType, swapOut, dropCard, HALVES, halfPreview, pairOptions, playPair, restFight, restCamp, canCamp, exhausted, T, MONSTERS, BOSS, TWISTS, TREASURES, CURSES, CALLINGS, ORIGIN, FORGE, KEEPER, LORE, STARTER, INTENTS, PATRONS, FAVORS,
   forgeCost, forgeRanks, newMeta, fixMeta, buyForge, unlockCalling, EMBERS, DEEP_BOSSES, emberCost, emberRank, buyEmber, rerollFavor, lastDoor, isDeepBossDoor, deepOf,
   startRun, openDoor, playShot, fight, flee, takeTreasure, takeFavor, rest, manage, canManage, canKeep, bagRoom, replacedBy,
@@ -1447,7 +1450,7 @@ function halfBtn(s, id, i, half){
 function moveBtns(s, id, i, half){
   const h = G.HALVES[id][half]; if (h.move && h.dir) return '';
   const d = s.fight.dist, pk = pickOf(i, half), sameCard = pick.find(p => p.i === i && p.half !== half), other = pick.find(p => p.half === half);
-  const n = h.move || 1, b = (mode, lab, ok) => { const on = pk && pk.mode === mode, dis = !ok || (!pk && (sameCard || (other && pick.length >= 2)));
+  const n = h.move || Math.abs(G.moveOf(h, 'out', s)), b = (mode, lab, ok) => { const on = pk && pk.mode === mode, dis = !ok || (!pk && (sameCard || (other && pick.length >= 2)));
     return `<button class="mv ${on ? 'on' : ''}" data-half="${i}:${half}:${mode}" ${dis ? 'disabled' : ''} data-tip="${h.move ? 'Move' : 'Play this half as a move instead:'} ${n} ${mode === 'in' ? 'closer' : 'further'}. Your Might and its hits grow by a third for each step closer and shrink by a third for each step further.">${lab}</button>`; };
   return `<span class="mvs">${b('in', n + ' ▶', d > 0)}${b('out', '◀ ' + n, d < 3)}</span>`;
 }
@@ -1470,7 +1473,7 @@ function pairPreview(s){
   const f = s.fight, tid = s.cards[t.i], bid = s.cards[b.i], lead = pick[0].half, lid = lead === 'top' ? tid : bid;
   const ht = G.HALVES[tid].top, hb = G.HALVES[bid].bot, tf = !!ht.move || t.mode === 'fx', bf = !!hb.move || b.mode === 'fx';
   const spd = G.HALVES[lid].spd, fast = spd > f.mspd, d0 = f.dist, cl = d => Math.max(0, Math.min(3, d));
-  const dd = G.moveOf(ht, t.mode) + G.moveOf(hb, b.mode);
+  const dd = G.moveOf(ht, t.mode, s) + G.moveOf(hb, b.mode, s);
   let dm = d0; if (!fast) dm = f.intent === 'charge' ? cl(d0 - G.T.chargeMove) : f.intent === 'pounce' ? 0 : f.intent === 'retreat' ? cl(d0 + 1) : d0;
   const dAtk = cl((fast ? d0 : dm) + dd);
   const zero = { dmg: 0, blk: 0 };
