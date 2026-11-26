@@ -254,7 +254,7 @@ const T = {
   furyMax: 3,
   // two-half prototype
   ispd: { strike: 50, heavy: 25, guard: 70, hex: 40, rend: 60, dazed: 0, shoot: 55, charge: 55, pounce: 30, retreat: 75 },
-  distOn: 1, distStep: 1 / 3, defMove: 1, chargeMove: 2, startDist: { brute: 2, skirmisher: 2, lurker: 3, warden: 1 }, wardenDmg: 1.3, wardenHp: 1.15, bruteHp: 1.15, newFavors: 0, bruteDmg: 1.1, retreatShot: 0.75, skirmDmg: 1.25, pounceDist: 1, bruteCharge: 0.85, skirmRetreat: 0.8, spdJitter: 15,
+  distOn: 1, distStep: 1 / 3, defMove: 1, chargeMove: 2, startDist: { brute: 2, skirmisher: 2, lurker: 3, warden: 1 }, wardenDmg: 1.3, wardenHp: 1.15, bruteHp: 1.15, newFavors: 0, winRecover: 0, restPer: 0, baseMight: 0, bruteDmg: 1.1, retreatShot: 0.75, skirmDmg: 1.25, pounceDist: 1, bruteCharge: 0.85, skirmRetreat: 0.8, spdJitter: 15,
   campLose: 1, fightLose: 1, mendN: 2, exhaustGold: 0.5, winMend: 0, rendLost: 1, lootMend: 1, normHpMul: 1, bossRestore: 0, bossHeal: 0, handCap: 99, dmgMul: 1, antechamber: 0, swapKeepsPlace: 1, lootRecover: 0,
   intents: { strike: 38, heavy: 20, guard: 15, hex: 17, rend: 10 }, bossIntents: { strike: 42, heavy: 20, guard: 13, hex: 13, rend: 12 }, bossRage: { strike: 38, heavy: 30, guard: 8, hex: 12, rend: 12 }, rageAt: 0.5, rageDmg: 1,
   emberPerDoor: 1, emberBoss: 5, emberDeepDoor: 1, emberDeepBoss: 3,
@@ -548,7 +548,7 @@ function startRun(meta, opts) {
   };
   s.grit = s.maxGrit; s.cards = s.deck.slice();
   const r = rngOf(s);
-  s.queue.push(Object.assign({ src: 'start' }, STARTER.hand), Object.assign({ src: 'start' }, STARTER.body));
+  s.gear.hand1 = Object.assign({ src: 'start' }, STARTER.hand); s.gear.body = Object.assign({ src: 'start' }, STARTER.body);
   if (meta.keepsake && meta.hearth.keepsake) { s.queue.push(Object.assign({}, meta.keepsake, { src: 'keepsake' })); meta.keepsake = null; }
   for (let i = 0; i < 1 + meta.forge.satchel; i++) s.queue.push(Object.assign(drawShot(r), { src: 'start' }));
   const pv = meta.provisions || {};
@@ -583,7 +583,7 @@ function escapeBonus(s) {
   return e;
 }
 function might(s) {
-  let m = s.level + gearMight(s) + s.temper + (s.whet || 0);
+  let m = T.baseMight + s.level + gearMight(s) + s.temper + (s.whet || 0);
   if (s.fight) { if (s.calling === 'brawler' && s.fight.mon.p >= 10) m += 2; }
   return m;
 }
@@ -867,7 +867,8 @@ function canCamp(s) { return s.phase === 'door' && s.spent.length > 0; }
 function restCamp(s, i) { if (!canCamp(s)) return false; restCards(s, i); log(s, 'You rest between doors.'); ev(s, { t: 'camp' }); return true; }
 function restCards(s, i) {
   s.cards.push(...s.spent); s.spent = [];
-  for (let k = 0; k < T.campLose && s.cards.length; k++) { const j = i != null && s.cards[i] ? i : s.cards.length - 1; s.lost.push(s.cards.splice(j, 1)[0]); i = null; }
+  const nl = T.campLose + (T.restPer ? Math.floor(Math.max(0, s.cards.length - 8) / T.restPer) : 0);
+  for (let k = 0; k < nl && s.cards.length; k++) { const j = i != null && s.cards[i] ? i : s.cards.length - 1; s.lost.push(s.cards.splice(j, 1)[0]); i = null; }
 }
 // the monster's move; returns false if the fight ended
 function monsterAct(s) {
@@ -951,6 +952,7 @@ const DSTATS = {};
 function dstat(s, dead) { const f = s.fight; if (!f || !f.mtype || s._sim) return; const k = f.mon.boss ? 'boss' : f.mtype; const o = DSTATS[k] = DSTATS[k] || { fights: 0, dead: 0, took: 0, rounds: 0 }; o.fights++; if (dead) o.dead++; o.took += f.grit0 - Math.max(0, s.grit); o.rounds += f.round; }
 function win(s, how) {
   dstat(s, false);
+  for (let j = 0; j < T.winRecover && s.spent.length; j++) s.cards.push(s.spent.pop());
   const r = rngOf(s); const f = s.fight; const big = f.mon.p >= T.bigMonster;
   const lv = big ? 2 : 1; s.level += lv;
   const coins = (T.coinPerWin * (big ? 2 : 1) + (has(s, 'pockets') ? 4 : 0)) * f.greed; s.coins += coins;
@@ -1118,7 +1120,7 @@ const LORE = [
   { at: 35, t: 'Ma admits she once owned the building above the doors. "Sold it," she says. "To someone below."' },
 ];
 
-Object.assign(T, {"winMend":0,"lootMend":0,"bossHeal":99,"handCap":8,"bossHp":90,"dmgMul":0.8,"lootRecover":4,"hpMul":3.4,"bossRestore":1,"newFavors":1}); for (const [k,v] of Object.entries({"heavy":{"spd":20,"top":{"dmg":2.25},"bot":{"blk":1.75}},"lunge":{"spd":60,"top":{"dmg":3.5,"burn":1,"move":1,"dir":"in"},"bot":{"rec":2}},"brace":{"spd":40,"top":{"dmg":1.5,"blk":0.5},"bot":{"blk":1.25}},"jab":{"spd":85,"top":{"dmg":2},"bot":{"blk":0.75}},"reckless":{"spd":50,"top":{"dmg":2.5,"self":2},"bot":{"blk":1.25}},"bash":{"spd":45,"top":{"dmg":2},"bot":{"blk":0.75,"dmgA":1}},"feint":{"spd":70,"top":{"dmg":2},"bot":{"rec":1,"blk":0.5}},"bulwark":{"spd":30,"top":{"dmg":2.25},"bot":{"blk":1.75}},"pierce":{"spd":55,"top":{"dmg":2,"pierce":1,"reach":1},"bot":{"rec":2}}})) HALVES[k]=v;
+Object.assign(T, {"winMend":0,"lootMend":0,"bossHeal":99,"handCap":99,"bossHp":90,"dmgMul":0.8,"lootRecover":2,"hpMul":5,"bossRestore":1,"newFavors":1,"baseMight":2,"winRecover":2}); for (const [k,v] of Object.entries({"heavy":{"spd":20,"top":{"dmg":2.25},"bot":{"blk":1.75}},"lunge":{"spd":60,"top":{"dmg":3.5,"burn":1,"move":1,"dir":"in"},"bot":{"rec":2}},"brace":{"spd":40,"top":{"dmg":1.5,"blk":0.5},"bot":{"blk":1.25}},"jab":{"spd":85,"top":{"dmg":2},"bot":{"blk":0.75}},"reckless":{"spd":50,"top":{"dmg":2.5,"self":2},"bot":{"blk":1.25}},"bash":{"spd":45,"top":{"dmg":2},"bot":{"blk":0.75,"dmgA":1}},"feint":{"spd":70,"top":{"dmg":2},"bot":{"rec":1,"blk":0.5}},"bulwark":{"spd":30,"top":{"dmg":2.25},"bot":{"blk":1.75}},"pierce":{"spd":55,"top":{"dmg":2,"pierce":1,"reach":1},"bot":{"rec":2}}})) HALVES[k]=v;
 const api = { DSTATS, DIST_N, atDist, halfModes, moveOf, monType, swapOut, dropCard, HALVES, halfPreview, pairOptions, playPair, restFight, restCamp, canCamp, exhausted, T, MONSTERS, BOSS, TWISTS, TREASURES, CURSES, CALLINGS, ORIGIN, FORGE, KEEPER, LORE, STARTER, INTENTS, PATRONS, FAVORS,
   forgeCost, forgeRanks, newMeta, fixMeta, buyForge, unlockCalling, EMBERS, DEEP_BOSSES, emberCost, emberRank, buyEmber, rerollFavor, lastDoor, isDeepBossDoor, deepOf,
   startRun, openDoor, playShot, fight, flee, takeTreasure, takeFavor, rest, manage, canManage, canKeep, bagRoom, replacedBy,
@@ -1678,7 +1680,7 @@ function renderSheet(){
     const cull = sheet === 'cull' && s.phase === 'hearth';
     title = cull ? 'Burn a card' : `Your deck · ${s.deck.length} cards`;
     const ids = s.deck.map((id, i) => [id, i]).sort((a, b) => a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0);
-    body = `<p class="small muted" style="margin:0 0 8px">${cull ? 'Tap a card to burn it for the rest of this run. A smaller deck draws your best cards more often.' : `Hand ${s.cards.length} · spent ${s.spent.length} · lost ${s.lost.length + s.burned.length}. You carry up to ${G.T.handCap} cards. Each card has a top half and a bottom half; play one of each per turn.`}</p><div class="cgrid">${ids.map(([id, i]) => tileCard(id, '', cull ? `data-cull="${i}"` : 'tabindex="-1"')).join('')}</div>`;
+    body = `<p class="small muted" style="margin:0 0 8px">${cull ? 'Tap a card to burn it for the rest of this run. A smaller deck draws your best cards more often.' : `Hand ${s.cards.length} · spent ${s.spent.length} · lost ${s.lost.length + s.burned.length}. Each card has a top half and a bottom half; play one of each per turn.`}</p><div class="cgrid">${ids.map(([id, i]) => tileCard(id, '', cull ? `data-cull="${i}"` : 'tabindex="-1"')).join('')}</div>`;
     if (s.favors.length) body += `<div class="sec"><h3>Favors</h3></div><div class="favs">${s.favors.map(id => { const f = G.FAVORS.find(x => x.id === id); return `<span class="fav" data-tip="${esc(f.d)}">${patronIcon(f.p, 16)} ${esc(f.n)}</span>`; }).join('')}</div><p class="tiny muted">${s.favors.map(id => { const f = G.FAVORS.find(x => x.id === id); return `<b>${esc(f.n)}:</b> ${esc(f.d)}`; }).join(' ')}</p>`;
   }
   return `<div class="sheetbg" data-close="1"><div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(title)}"><div class="hd"><h2 style="font-size:18px">${esc(title)}</h2><button class="ib" id="sclose" aria-label="Close">✕</button></div>${body}</div></div>`;
@@ -1702,7 +1704,7 @@ function helpBody(){
 <p><b>Getting cards back.</b> Rest (mid-fight or at a camp between doors) returns all spent cards but loses one for good. Loot picks return 4 spent cards. Smelling Salts return 3. Hearths and Mending Thread bring back lost cards. <b>Beating a boss is a checkpoint:</b> every card comes back and you heal fully.</p>
 <p><b>Moves to watch:</b> a <b>Swipe</b> hits for the number shown; a <b>Wind-up</b> hits double but is slow; <b>Guard</b> halves your attacks; a <b>Hex</b> curses you; a <b>Rend</b> tears a card from your hand if it hits. Run out of cards and you stagger home with half your coins.</p>
 <p><b>Distance.</b> You and the monster are Close, Near, Far or Distant. Near is normal. Each step closer adds a third to Might, and each step further takes a third off (rounded down), for you and the monster alike. Any half can be played as a move of 1 instead (◀ ▶), and movement cards move 2 or 3 and are quick. Ranged attacks ignore distance. Brutes charge in, Skirmishers back off and shoot, Lurkers pounce from afar, and Wardens never move.</p>
-<p><b>Numbers.</b> Attacks use your <b>Might</b> (level + weapons). Blocks use your <b>Armor</b>. You carry up to ${G.T.handCap} cards.</p></div>`;
+<p><b>Numbers.</b> Attacks use your <b>Might</b> (level + weapons). Blocks use your <b>Armor</b>.</p></div>`;
 }
 
 // ---------- modals ----------
