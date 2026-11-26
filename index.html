@@ -1449,7 +1449,7 @@ function moveBtns(s, id, i, half){
   const d = s.fight.dist, pk = pickOf(i, half), sameCard = pick.find(p => p.i === i && p.half !== half), other = pick.find(p => p.half === half);
   const n = h.move || 1, b = (mode, lab, ok) => { const on = pk && pk.mode === mode, dis = !ok || (!pk && (sameCard || (other && pick.length >= 2)));
     return `<button class="mv ${on ? 'on' : ''}" data-half="${i}:${half}:${mode}" ${dis ? 'disabled' : ''} data-tip="${h.move ? 'Move' : 'Play this half as a move instead:'} ${n} ${mode === 'in' ? 'closer' : 'further'}. Your Might and its hits grow by a third for each step closer and shrink by a third for each step further.">${lab}</button>`; };
-  return `<span class="mvs">${b('in', '◀ ' + n, d > 0)}${b('out', n + ' ▶', d < 3)}</span>`;
+  return `<span class="mvs">${b('in', n + ' ▶', d > 0)}${b('out', '◀ ' + n, d < 3)}</span>`;
 }
 function focusPanel(s){
   if (!s.cards.length) return '';
@@ -1481,7 +1481,7 @@ function pairPreview(s){
 }
 function distTrack(s, pv){
   const f = s.fight, M = G.fightMight(s);
-  return `<div class="dtrack"><span class="mt" data-tip="${esc(TYPE_TIP[f.mtype] || '')}">${esc(TYPE_N[f.mtype] || '')}</span>${G.DIST_N.map((n, k) => `<span class="dc ${k === f.dist ? 'cur' : ''} ${pv && pv.moved && pv.dAtk === k ? 'to' : ''}" data-tip="${n}: Might ${DMUL[k]}. Your Might here is ${G.atDist(M, k)}; its hits are ${G.atDist(f.dmg, k)}${f.mtype === 'skirmisher' ? ' (its shots ignore distance)' : ''}.">${n}<small>${DMUL[k]}</small></span>`).join('')}</div>`;
+  return `<div class="dtrack"><span class="mt" data-tip="${esc(TYPE_TIP[f.mtype] || '')}">${esc(TYPE_N[f.mtype] || '')}</span>${[3, 2, 1, 0].map(k => { const n = G.DIST_N[k]; return `<span class="dc ${k === f.dist ? 'cur' : ''} ${pv && pv.moved && pv.dAtk === k ? 'to' : ''}" data-tip="${n}: Might ${DMUL[k]}. Your Might here is ${G.atDist(M, k)}; its hits are ${G.atDist(f.dmg, k)}${f.mtype === 'skirmisher' ? ' (its shots ignore distance)' : ''}.">${n}<small>${DMUL[k]}</small></span>`; }).join('')}</div>`;
 }
 function loseBody(s){
   const camp = sheet === 'losecamp', all = s.cards.concat(s.spent);
