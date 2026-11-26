@@ -214,6 +214,19 @@ span[data-tip],div[data-tip],b[data-tip]{cursor:help}
 .tc.face .tl{font-size:11px;font-weight:600;line-height:1.2;padding:0 3px}.tc.face .tl b{font-size:9px;text-transform:uppercase;color:var(--muted);margin-right:2px}
 .tl .pd{color:var(--atk)}.tl .pb{color:var(--blk)}.tl .pg{color:var(--ok)}.tl .px{color:var(--bad)}
 @media (max-height:740px){.fc{height:84px}.fc .fart svg{width:28px;height:28px}.fan{min-height:100px}.focus .fbig{width:44px;height:44px}}
+.hrow{display:flex;gap:3px;align-items:stretch}.hrow>.half{flex:1 1 auto}
+.mvs{display:flex;flex-direction:column;gap:2px;flex:0 0 40px}
+.mv{flex:1;min-height:18px;padding:0 2px;border:1px solid var(--line);border-radius:6px;background:var(--card2);color:var(--ink);font:700 11px system-ui}
+.mv.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}.mv:disabled{opacity:.35}
+.pm{color:#2f8a7a}.half .pm{color:#2f8a7a}
+.dtrack{display:flex;gap:3px;align-items:stretch;font-size:11px}
+.dtrack .mt{flex:0 0 auto;align-self:center;font-weight:700;padding:0 4px;color:var(--muted)}
+.dtrack .dc{flex:1;text-align:center;border-radius:7px;background:var(--card2);padding:2px 0;line-height:1.1;color:var(--muted);border:2px solid transparent}
+.dtrack .dc small{display:block;font-size:10px}
+.dtrack .dc.cur{background:var(--accent);color:var(--accent-ink);font-weight:700}
+.dtrack .dc.to{border-color:var(--accent);border-style:dashed;color:var(--ink)}
+.actors.dist0{justify-content:center;gap:0}.actors.dist1{padding-left:14%;padding-right:14%}.actors.dist2{padding-left:8%;padding-right:8%}.actors.dist3{padding-left:1%;padding-right:1%}
+.intent.i-charge,.intent.i-pounce{border-color:#d8443a}.next.i-charge,.next.i-pounce{border-left-color:var(--bad)}.next.i-shoot{border-left-color:var(--accent)}
 </style>
 <div class="app" id="app"><p class="muted">Loading…</p></div>
 <div id="sheet"></div>
@@ -240,7 +253,8 @@ const T = {
   retireBase: 100, retireGrow: 2, leaseHp: 0.3, leaseDmg: 1.5, leaseGold: 0.5, leaseEmber: 0.25, forgeGrow: 1,
   furyMax: 3,
   // two-half prototype
-  ispd: { strike: 50, heavy: 25, guard: 70, hex: 40, rend: 60, dazed: 0 }, spdJitter: 15,
+  ispd: { strike: 50, heavy: 25, guard: 70, hex: 40, rend: 60, dazed: 0, shoot: 55, charge: 55, pounce: 30, retreat: 75 },
+  distOn: 1, distStep: 1 / 3, defMove: 1, chargeMove: 2, startDist: { brute: 2, skirmisher: 2, lurker: 3, warden: 1 }, wardenDmg: 1.3, wardenHp: 1.15, bruteHp: 1.15, bruteDmg: 1.1, retreatShot: 0.75, skirmDmg: 1.25, pounceDist: 1, bruteCharge: 0.85, skirmRetreat: 0.8, spdJitter: 15,
   campLose: 1, fightLose: 1, mendN: 2, exhaustGold: 0.5, winMend: 0, rendLost: 1, lootMend: 1, normHpMul: 1, bossRestore: 0, bossHeal: 0, handCap: 99, dmgMul: 1, antechamber: 0, swapKeepsPlace: 1, lootRecover: 0,
   intents: { strike: 38, heavy: 20, guard: 15, hex: 17, rend: 10 }, bossIntents: { strike: 42, heavy: 20, guard: 13, hex: 13, rend: 12 }, bossRage: { strike: 38, heavy: 30, guard: 8, hex: 12, rend: 12 }, rageAt: 0.5, rageDmg: 1,
   emberPerDoor: 1, emberBoss: 5, emberDeepDoor: 1, emberDeepBoss: 3,
@@ -294,6 +308,10 @@ const INTENTS = {
   guard: { n: 'Guard', d: 'Hunkers down. Your Strike does half damage.' },
   hex: { n: 'Hex', d: 'Will curse you if it is still standing at the end of the exchange.' },
   rend: { n: 'Rend', d: 'Hits you for its damage. If any gets through, one card in your hand is spent.' },
+  shoot: { n: 'Shoot', d: 'A ranged hit. Distance does not weaken it.' },
+  charge: { n: 'Charge', d: 'Moves 2 closer, then hits you.' },
+  pounce: { n: 'Pounce', d: 'Leaps to Close and lands a heavy blow.' },
+  retreat: { n: 'Back off', d: 'Moves 1 further away.' },
   dazed: { n: 'Dazed', d: 'Does nothing this exchange.' },
 };
 
@@ -358,7 +376,7 @@ const CARDS = {
   lunge: { n: 'Lunge', c: 0, t: 'atk', d: 'All in.' },
   second: { n: 'Second Breath', c: 0, t: 'skill', d: 'Gain 1 energy and draw 1. Once per fight.', once: true, price: 220 },
 };
-const BASE_POOL = ['bash', 'pierce', 'bulwark', 'feint', 'reckless', 'breath', 'trip', 'plunder'];
+const BASE_POOL = ['bash', 'pierce', 'bulwark', 'feint', 'reckless', 'breath', 'trip', 'plunder', 'sidestep', 'dash', 'charge', 'sling'];
 const HALVES = {
   strike:   { spd: 50, top: { dmg: 2 }, bot: { blk: 1 } },
   brace:    { spd: 40, top: { dmg: 1.5 }, bot: { blk: 1.5 } },
@@ -381,8 +399,20 @@ const HALVES = {
   second:   { spd: 65, top: { dmg: 1 }, bot: { recAll: 1, burn: 1 } },
 };
 
+Object.assign(HALVES, {
+  sidestep: { spd: 90, top: { dmg: 1.5 }, bot: { move: 2, blk: 0.5 } },
+  dash:     { spd: 95, top: { move: 3 }, bot: { blk: 0.75 } },
+  charge:   { spd: 70, top: { move: 2, dir: 'in', dmg: 2 }, bot: { blk: 1 } },
+  sling:    { spd: 60, top: { dmg: 1.5, ranged: 1 }, bot: { move: 2 } },
+});
+Object.assign(CARDS, {
+  sidestep: { n: 'Sidestep', c: 0, t: 'skill', d: 'Quick feet.' },
+  dash: { n: 'Dash', c: 0, t: 'skill', d: 'Cover ground.' },
+  charge: { n: 'Charge', c: 0, t: 'atk', d: 'Close in and hit.' },
+  sling: { n: 'Sling', c: 0, t: 'atk', d: 'Hit from range.' },
+});
 const LIBRARY = Object.keys(CARDS).filter(k => CARDS[k].price);
-const STARTER_DECK = ['strike', 'strike', 'strike', 'brace', 'brace', 'heavy', 'jab', 'lunge'];
+const STARTER_DECK = ['strike', 'strike', 'sidestep', 'brace', 'brace', 'heavy', 'jab', 'lunge'];
 // Leases: chosen difficulty. Harder doors, bigger pay. Beating the Landlord on a Lease opens the next one and raises Forge limits.
 const LEASES = [
   { n: 'Tenancy', d: 'The doors as they are.' },
@@ -579,10 +609,42 @@ function monStats0(mon) {
 // ---------- cards in a fight ----------
 function guardCut(s, dmg, pierce) { const f = s.fight; return f && f.intent === 'guard' && !pierce && !has(s, 'plumb') ? Math.floor(dmg / 2) : dmg; }
 function fightMight(s) { return might(s) + (s.fight ? s.fight.rally : 0); }
+const DIST_N = ['Close', 'Near', 'Far', 'Distant'];
+const MTYPE = {
+  'Damp Rat King': 'brute', 'Grudge Badger': 'brute', 'Gravel Golem': 'brute', 'Snoring Ogre': 'brute', 'Spite Dog': 'brute', 'Brass Hound': 'brute', 'Velvet Horror': 'brute', 'Weeping Colossus': 'brute', 'The Unpaid Mason': 'brute',
+  'Sock Goblin': 'skirmisher', 'Candle Thief': 'skirmisher', 'Tax Imp': 'skirmisher', 'Lantern Moth Swarm': 'skirmisher', 'Gutter Prophet': 'skirmisher', 'Bog Witch': 'skirmisher', 'Cave Choir': 'skirmisher', 'Spore Duke': 'skirmisher', 'Glacier Wyrmling': 'skirmisher',
+  'Gnawing Ledger': 'lurker', 'Pickpocket Vine': 'lurker', 'Mimic Wardrobe': 'lurker', 'Debt Collector Below': 'lurker',
+  'Mildew Knight': 'warden', 'Hollow Bishop': 'warden', 'Iron Matron': 'warden', 'Bone Accountant': 'warden', 'Lich in a Bathtub': 'warden', 'Furnace Abbot': 'warden',
+};
+function monType(mon) { return mon.boss ? 'brute' : (MTYPE[mon.n] || 'brute'); }
+// Might at a distance: Near is normal, each step closer or further adds or takes a third (rounded down)
+function atDist(m, d) { if (!T.distOn || d == null) return m; return Math.max(0, Math.floor(m * (1 + T.distStep * (1 - d)))); }
+function effDist(h, d) { if (h.ranged) return 1; if (h.reach) return d === 0 ? 0 : Math.max(1, d - 1); return d; }
+function clampD(d) { return Math.max(0, Math.min(3, d)); }
+// a half's move: free-direction halves take 'in' or 'out'; fixed ones move their own way; any other half can be played as Move 1
+function moveOf(h, mode) {
+  if (h.move) { const dir = h.dir || mode; return dir === 'in' ? -h.move : dir === 'out' ? h.move : 0; }
+  return mode === 'in' ? -T.defMove : mode === 'out' ? T.defMove : 0;
+}
+function usesFx(h, mode) { return !!h.move || !mode || mode === 'fx'; }
+function halfModes(s, h) {
+  const d = s.fight ? s.fight.dist : 1;
+  if (!T.distOn) return h.move ? (h.dir ? ['fx'] : []) : ['fx'];
+  if (h.move) return h.dir ? ['fx'] : ['in', 'out'].filter(m => m === 'in' ? d > 0 : d < 3);
+  return ['fx'].concat(T.noDefMove ? [] : ['in', 'out'].filter(m => m === 'in' ? d > 0 : d < 3));
+}
 // what a card would do now: { dmg, blk, heal, ok }
 function cardPreview(s, id) { return halfPreview(s, id, 'top'); }
 // the monster's swing this exchange, before your block
-function incomingRaw(s) { const f = s.fight; if (!f) return 0; const d = f.dmg + enrage(f); return f.intent === 'strike' || f.intent === 'rend' ? d : f.intent === 'heavy' ? d * 2 : 0; }
+function incomingRaw(s) {
+  const f = s.fight; if (!f) return 0; const base = f.dmg + enrage(f), it = f.intent;
+  if (it === 'shoot') return base;
+  if (it === 'retreat') return f.mtype === 'skirmisher' ? Math.floor(base * T.retreatShot) : 0;
+  if (it === 'pounce') return atDist(base, T.pounceDist) * 2;
+  let d = f.dist; if (it === 'charge') d = clampD(d - T.chargeMove); if (it === 'pounce') d = 0;
+  const m = atDist(base, d);
+  return it === 'strike' || it === 'rend' || it === 'charge' ? m : it === 'heavy' || it === 'pounce' ? m * 2 : 0;
+}
 function enrage(f) { return Math.max(0, f.round - T.enrageAfter); }
 function incoming(s) { const f = s.fight; if (!f) return 0; return Math.max(0, incomingRaw(s) - f.block); }
 function deathChance() { return 0; }
@@ -611,8 +673,17 @@ function peek(s) {
   if (!s.next) { const r = rngOf(s); s.next = genDoor(s, r, s.door + 1); saveRng(s, r); }
   return s.next;
 }
+function pickW(r, w) { let tot = 0; for (const k in w) tot += w[k]; let x = r.next() * tot; for (const k in w) if ((x -= w[k]) < 0) return k; return Object.keys(w)[0]; }
 function rollIntent(s, r) {
-  const f = s.fight; const w = f.mon.boss ? (f.raged ? T.bossRage : T.bossIntents) : T.intents;
+  const f = s.fight; const base = f.mon.boss ? (f.raged ? T.bossRage : T.bossIntents) : T.intents;
+  if (T.distOn) {
+    const t = f.mtype;
+    if (t === 'lurker' && !f.pounced) { f.intent = f.dist >= 2 ? 'pounce' : 'retreat'; return; }
+    if (t === 'brute' || t === 'lurker') { if (f.dist > 0) { f.intent = r.next() < T.bruteCharge ? 'charge' : 'hex'; return; } f.intent = pickW(r, Object.assign({}, base, { heavy: base.heavy * 1.4 })); return; }
+    if (t === 'skirmisher') { if (f.dist < 2 && r.next() < T.skirmRetreat) { f.intent = 'retreat'; return; } f.intent = pickW(r, { shoot: base.strike + base.heavy * 0.5 + (base.rend || 0), hex: base.hex, guard: base.guard }); return; }
+    if (t === 'warden') { f.intent = pickW(r, Object.assign({}, base, { guard: base.guard * 1.6 })); return; }
+  }
+  const w = base;
   let tot = 0; for (const k in w) tot += w[k];
   let x = r.next() * tot; for (const k in w) { if ((x -= w[k]) < 0) { f.intent = k; return; } }
   f.intent = 'strike';
@@ -664,6 +735,10 @@ function openDoor(s) {
       energy: 0, mspd: 50, block: 0, attacks: 0, rally: 0, dealt: 0 };
     if (has(s, 'wick')) s.fury = Math.min(T.furyMax, s.fury + 1);
     if (s.hearth.spark) s.fury = Math.min(T.furyMax, s.fury + s.hearth.spark);
+    { const f = s.fight; f.mtype = monType(door.mon); f.dist = T.distOn ? T.startDist[f.mtype] : 1; f.grit0 = s.grit;
+      if (T.distOn && f.mtype === 'warden') { f.dmg = Math.round(f.dmg * T.wardenDmg); f.hp = f.maxHp = Math.round(f.hp * T.wardenHp); }
+      if (T.distOn && f.mtype === 'skirmisher') f.dmg = Math.round(f.dmg * T.skirmDmg);
+      if (T.distOn && f.mtype === 'brute' && !door.mon.boss) { f.dmg = Math.round(f.dmg * T.bruteDmg); f.hp = f.maxHp = Math.round(f.hp * T.bruteHp); } }
     rollIntent(s, r); startExchange(s, r);
     s.phase = 'fight'; ev(s, { t: 'monster' });
     log(s, `Door ${d}: ${door.mon.n}, ${hp} health${tw.length ? ' — ' + tw.map(t => t.n).join(', ') : ''}.`);
@@ -723,21 +798,12 @@ function playShot(s, idx) {
 
 function halfPreview(s, id, half) {
   const f = s.fight, h = HALVES[id] && HALVES[id][half]; if (!h) return null;
-  const m = fightMight(s), a = armor(s), B = 2 + a;
+  const m = f && f.dist != null ? atDist(fightMight(s), effDist(h, f.dist)) : fightMight(s), a = armor(s), B = 2 + a;
   let dmg = Math.floor((h.dmg || 0) * m) + (h.dmgA || 0) * a;
   if (dmg && f && !h.pierce) dmg = guardCut(s, dmg, false);
   let blk = Math.floor((h.blk || 0) * B);
   if (blk && s.calling === 'warden' && f && !f.wardenUsed) blk *= 2;
   return { dmg, blk, heal: h.heal || 0, h };
-}
-// all distinct plays this turn: { top, bot, lead } as hand indices, lead = 'top' | 'bot'
-function pairOptions(s) {
-  const out = [], seen = new Set(), c = s.cards;
-  for (let i = 0; i < c.length; i++) for (let j = 0; j < c.length; j++) {
-    if (i === j) continue;
-    for (const lead of ['top', 'bot']) { const k = c[i] + '|' + c[j] + '|' + lead; if (seen.has(k)) continue; seen.add(k); out.push({ top: i, bot: j, lead }); }
-  }
-  return out;
 }
 function applyHalf(s, id, half, r) {
   const f = s.fight, p = halfPreview(s, id, half), h = p.h;
@@ -750,22 +816,38 @@ function applyHalf(s, id, half, r) {
   if (h.recAll) { s.cards.push(...s.spent); s.spent = []; }
   return p;
 }
-function playPair(s, ti, bi, lead) {
+function pairOptions(s) {
+  const out = [], seen = new Set(), c = s.cards;
+  for (let i = 0; i < c.length; i++) for (let j = 0; j < c.length; j++) {
+    if (i === j) continue;
+    const tms = halfModes(s, HALVES[c[i]].top), bms = halfModes(s, HALVES[c[j]].bot);
+    for (const tm of tms) for (const bm of bms) for (const lead of ['top', 'bot']) {
+      const k = c[i] + '|' + c[j] + '|' + lead + '|' + tm + '|' + bm; if (seen.has(k)) continue; seen.add(k); out.push({ top: i, bot: j, lead, tm, bm });
+    }
+  }
+  return out;
+}
+function playPair(s, ti, bi, lead, tm, bm) {
   if (s.phase !== 'fight' || ti === bi || ti == null || bi == null || !s.cards[ti] || !s.cards[bi]) return false;
   const r = rngOf(s), f = s.fight; const tid = s.cards[ti], bid = s.cards[bi];
-  // take both cards out of hand
-  for (const i of [ti, bi].sort((x, y) => y - x)) s.cards.splice(i, 1);
   const ht = HALVES[tid].top, hb = HALVES[bid].bot;
-  (ht.burn ? s.burned : s.spent).push(tid); (hb.burn ? s.burned : s.spent).push(bid);
+  tm = tm || (ht.move && !ht.dir ? 'in' : 'fx'); bm = bm || (hb.move && !hb.dir ? 'in' : 'fx');
+  const tf = usesFx(ht, tm), bf = usesFx(hb, bm);
+  for (const i of [ti, bi].sort((x, y) => y - x)) s.cards.splice(i, 1);
+  (ht.burn && tf ? s.burned : s.spent).push(tid); (hb.burn && bf ? s.burned : s.spent).push(bid);
   const spd = HALVES[lead === 'bot' ? bid : tid].spd, fast = spd > f.mspd;
-  f.lastPlay = { top: tid, bot: bid, lead, fast };
-  // block always lands this turn
-  const pb = halfPreview(s, bid, 'bot'); if (pb.blk) { f.block += pb.blk; if (s.calling === 'warden') f.wardenUsed = true; if (has(s, 'scurry')) f.hp -= guardCut(s, 2); }
-  { const pt = halfPreview(s, tid, 'top'); if (pt.blk) f.block += pt.blk; }
-  if (hb.counter) f.countering = true;
-  if (ht.stun && fast && (f.intent === 'heavy' || f.intent === 'hex')) { log(s, `You trip ${the(f.mon.n)}. Its ${INTENTS[f.intent].n} is spoiled.`); f.intent = 'dazed'; }
+  f.lastPlay = { top: tid, bot: bid, lead, fast, tm, bm };
+  if (bf) { const pb = halfPreview(s, bid, 'bot'); if (pb.blk) { f.block += pb.blk; if (s.calling === 'warden') f.wardenUsed = true; if (has(s, 'scurry')) f.hp -= guardCut(s, 2); } }
+  if (tf) { const pt = halfPreview(s, tid, 'top'); if (pt.blk) f.block += pt.blk; }
+  if (bf && hb.counter) f.countering = true;
+  if (tf && ht.stun && fast && (f.intent === 'heavy' || f.intent === 'hex' || f.intent === 'charge' || f.intent === 'pounce')) { log(s, `You trip ${the(f.mon.n)}. Its ${INTENTS[f.intent].n} is spoiled.`); f.intent = 'dazed'; }
   saveRng(s, r);
-  const act = () => { const a = applyHalf(s, tid, 'top', r), b = applyHalf(s, bid, 'bot', r); log(s, `${CARDS[tid].n} (top${a.dmg ? ', ' + a.dmg + ' damage' : ''}) + ${CARDS[bid].n} (bottom${b.blk ? ', block ' + b.blk : ''}${b.dmg ? ', ' + b.dmg + ' damage' : ''}).`); };
+  const act = () => {
+    const dd = moveOf(ht, tm) + moveOf(hb, bm);
+    if (dd) { const d0 = f.dist; f.dist = clampD(f.dist + dd); if (f.dist !== d0) log(s, `You move to ${DIST_N[f.dist]}.`); }
+    const a = tf ? applyHalf(s, tid, 'top', r) : {}, b = bf ? applyHalf(s, bid, 'bot', r) : {};
+    log(s, `${CARDS[tid].n} (${tf ? 'top' : 'move'}${a.dmg ? ', ' + a.dmg + ' damage' : ''}) + ${CARDS[bid].n} (${bf ? 'bottom' : 'move'}${b.blk ? ', block ' + b.blk : ''}${b.dmg ? ', ' + b.dmg + ' damage' : ''}).`);
+  };
   ev(s, { t: 'pair', top: tid, bot: bid, fast });
   if (fast) { act(); if (f.hp <= 0) { win(s, 'card'); return true; } bossRage(s); monsterAct(s); }
   else { if (!monsterAct(s)) return true; act(); if (f.hp <= 0) { win(s, 'card'); return true; } bossRage(s); }
@@ -787,13 +869,17 @@ function restCards(s, i) {
 // the monster's move; returns false if the fight ended
 function monsterAct(s) {
   const r = rngOf(s); const f = s.fight;
-  let took = 0; const intent = f.intent;
-  if (intent === 'strike' || intent === 'heavy' || intent === 'rend') {
+  let took = 0;
+  if (f.intent === 'charge') { const d0 = f.dist; f.dist = clampD(f.dist - T.chargeMove); log(s, `${cap(the(f.mon.n))} charges in to ${DIST_N[f.dist]}.`); f.moved = (f.moved || 0) + d0 - f.dist; f.intent = 'strike'; }
+  else if (f.intent === 'pounce') { const raw = incomingRaw(s); f.dist = 0; f.pounced = true; f.intent = 'pounced'; took = Math.max(0, raw - f.block); s.grit -= took; log(s, `${cap(the(f.mon.n))} pounces${took ? ' for ' + took : ', and you block it'}.`); }
+  else if (f.intent === 'retreat') { const sh = incomingRaw(s); f.dist = clampD(f.dist + 1); log(s, `${cap(the(f.mon.n))} backs off to ${DIST_N[f.dist]}.`); if (sh) { const tk = Math.max(0, sh - f.block); s.grit -= tk; took = tk; if (tk) log(s, `It shoots as it goes for ${tk}.`); } }
+  const intent = f.intent;
+  if (intent === 'strike' || intent === 'heavy' || intent === 'rend' || intent === 'shoot') {
     const raw = incomingRaw(s); took = Math.max(0, raw - f.block); const blocked = raw - took;
     if (took > 0) { s.grit -= took; log(s, `${cap(the(f.mon.n))} ${intent === 'heavy' ? 'lands a heavy blow' : 'hits you'} for ${took}${blocked ? ' (' + blocked + ' blocked)' : ''}.`);
       if (intent === 'rend' && s.cards.length) { const c = s.cards.splice(r.int(0, s.cards.length - 1), 1)[0]; (T.rendLost ? s.lost : s.spent).push(c); log(s, `It rends ${CARDS[c].n} out of your hand${T.rendLost ? ' for good' : ''}.`); } }
     else { log(s, `You block all ${raw}.`); if (intent === 'heavy' && has(s, 'buttress')) { f.hp -= raw; log(s, `Buttress throws ${raw} back.`); } }
-    if (f.countering) { const m = fightMight(s); f.hp -= m; log(s, `You counter for ${m}.`); }
+    if (f.countering) { const m = atDist(fightMight(s), f.dist); f.hp -= m; log(s, `You counter for ${m}.`); }
   } else if (intent === 'hex') {
     log(s, `${cap(the(f.mon.n))} hexes you. ${badText(f.mon.bad === 'coins' ? 'quarter' : f.mon.bad)}`);
     applyBad(s, f.mon.bad === 'coins' ? 'quarter' : f.mon.bad, r, true);
@@ -804,7 +890,7 @@ function monsterAct(s) {
   ev(s, { t: 'exchange', took, intent });
   f.took = (f.took || 0) + took;
   if (s.grit <= 0 && s.winds > 0) { s.winds--; s.grit = 3; log(s, `Second Wind: you get back up with 3 Grit.`); }
-  if (s.grit <= 0) { s.grit = 0; log(s, `${cap(the(f.mon.n))} finishes you. You die at door ${s.door}.`); ev(s, { t: 'dead', mon: f.mon }); s.fight = null; saveRng(s, r); endRun(s, 'dead'); return false; }
+  if (s.grit <= 0) { s.grit = 0; log(s, `${cap(the(f.mon.n))} finishes you. You die at door ${s.door}.`); ev(s, { t: 'dead', mon: f.mon }); dstat(s, true); s.fight = null; saveRng(s, r); endRun(s, 'dead'); return false; }
   if (f.hp <= 0) { saveRng(s, r); win(s, 'burn'); return false; }
   saveRng(s, r); return true;
 }
@@ -858,7 +944,10 @@ function runAway(s) {
   if (f.hp <= 0) return win(s, 'run');
   endTurn(s, true);
 }
+const DSTATS = {};
+function dstat(s, dead) { const f = s.fight; if (!f || !f.mtype || s._sim) return; const k = f.mon.boss ? 'boss' : f.mtype; const o = DSTATS[k] = DSTATS[k] || { fights: 0, dead: 0, took: 0, rounds: 0 }; o.fights++; if (dead) o.dead++; o.took += f.grit0 - Math.max(0, s.grit); o.rounds += f.round; }
 function win(s, how) {
+  dstat(s, false);
   const r = rngOf(s); const f = s.fight; const big = f.mon.p >= T.bigMonster;
   const lv = big ? 2 : 1; s.level += lv;
   const coins = (T.coinPerWin * (big ? 2 : 1) + (has(s, 'pockets') ? 4 : 0)) * f.greed; s.coins += coins;
@@ -1026,8 +1115,8 @@ const LORE = [
   { at: 35, t: 'Ma admits she once owned the building above the doors. "Sold it," she says. "To someone below."' },
 ];
 
-Object.assign(T, {"winMend":0,"lootMend":0,"bossHeal":99,"handCap":8,"bossHp":90,"dmgMul":0.8,"lootRecover":4,"hpMul":3.3,"bossRestore":1}); for (const [k,v] of Object.entries({"heavy": {"spd": 20, "top": {"dmg": 2.25}, "bot": {"blk": 1.75}}, "lunge": {"spd": 60, "top": {"dmg": 3.5, "burn": 1}, "bot": {"rec": 2}}, "brace": {"spd": 40, "top": {"dmg": 1.5, "blk": 0.5}, "bot": {"blk": 1.25}}, "jab": {"spd": 85, "top": {"dmg": 2}, "bot": {"blk": 0.75}}, "reckless": {"spd": 50, "top": {"dmg": 2.5, "self": 2}, "bot": {"blk": 1.25}}, "bash": {"spd": 45, "top": {"dmg": 2}, "bot": {"blk": 0.75, "dmgA": 1}}, "feint": {"spd": 70, "top": {"dmg": 2}, "bot": {"rec": 1, "blk": 0.5}}, "bulwark": {"spd": 30, "top": {"dmg": 2.25}, "bot": {"blk": 1.75}}, "pierce": {"spd": 55, "top": {"dmg": 2, "pierce": 1}, "bot": {"rec": 2}}})) HALVES[k]=v;
-const api = { swapOut, dropCard, HALVES, halfPreview, pairOptions, playPair, restFight, restCamp, canCamp, exhausted, T, MONSTERS, BOSS, TWISTS, TREASURES, CURSES, CALLINGS, ORIGIN, FORGE, KEEPER, LORE, STARTER, INTENTS, PATRONS, FAVORS,
+Object.assign(T, {"winMend":0,"lootMend":0,"bossHeal":99,"handCap":8,"bossHp":90,"dmgMul":0.8,"lootRecover":4,"hpMul":3.4,"bossRestore":1}); for (const [k,v] of Object.entries({"heavy":{"spd":20,"top":{"dmg":2.25},"bot":{"blk":1.75}},"lunge":{"spd":60,"top":{"dmg":3.5,"burn":1,"move":1,"dir":"in"},"bot":{"rec":2}},"brace":{"spd":40,"top":{"dmg":1.5,"blk":0.5},"bot":{"blk":1.25}},"jab":{"spd":85,"top":{"dmg":2},"bot":{"blk":0.75}},"reckless":{"spd":50,"top":{"dmg":2.5,"self":2},"bot":{"blk":1.25}},"bash":{"spd":45,"top":{"dmg":2},"bot":{"blk":0.75,"dmgA":1}},"feint":{"spd":70,"top":{"dmg":2},"bot":{"rec":1,"blk":0.5}},"bulwark":{"spd":30,"top":{"dmg":2.25},"bot":{"blk":1.75}},"pierce":{"spd":55,"top":{"dmg":2,"pierce":1,"reach":1},"bot":{"rec":2}}})) HALVES[k]=v;
+const api = { DSTATS, DIST_N, atDist, halfModes, moveOf, monType, swapOut, dropCard, HALVES, halfPreview, pairOptions, playPair, restFight, restCamp, canCamp, exhausted, T, MONSTERS, BOSS, TWISTS, TREASURES, CURSES, CALLINGS, ORIGIN, FORGE, KEEPER, LORE, STARTER, INTENTS, PATRONS, FAVORS,
   forgeCost, forgeRanks, newMeta, fixMeta, buyForge, unlockCalling, EMBERS, DEEP_BOSSES, emberCost, emberRank, buyEmber, rerollFavor, lastDoor, isDeepBossDoor, deepOf,
   startRun, openDoor, playShot, fight, flee, takeTreasure, takeFavor, rest, manage, canManage, canKeep, bagRoom, replacedBy,
   bank, settle, peek, might, armor, incoming, incomingRaw, enrage, canUnleash, monStats, monsterTotal, fightMight, cardPreview, canPlay, playCard, endTurn, runAway, chooseSpoils, cardPool,
@@ -1041,7 +1130,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = api; else 
 <script>
 (function(){
 'use strict';
-const G = window.OMD, KEY = 'omd-2h-save-v1', OLDKEY = 'omd-2h-none';
+const G = window.OMD, KEY = 'omd-2h-save-v2', OLDKEY = 'omd-2h-none';
 let meta, run, lastEnd = null;
 let calling = 'brawler', oath = false, tab = 'go', retireSel = null;
 let fx = null, narr = [], manageSel = null, sheet = null, pick = [], capNew = null, pairFx = null, focusI = 0, fanScan = false;
@@ -1270,10 +1359,10 @@ function cardFx(s, id){
 }
 function handCard(s, id, i){
   const H = G.HALVES[id], c = G.CARDS[id], n = s.cards.length, mid = (n - 1) / 2, off = i - mid;
-  const tp = pick.find(p => p.i === i), lead = pick[0] && pick[0].i === i;
+  const tp = pick.find(p => p.i === i), tmv = tp && tp.mode !== 'fx' && !G.HALVES[id][tp.half].move, lead = pick[0] && pick[0].i === i;
   const rot = off * Math.min(5, 26 / Math.max(1, n)), dy = Math.abs(off) * Math.abs(off) * 1.2;
   const ov = n > 1 ? Math.min(4, (Math.min(window.innerWidth || 380, 520) - 28 - 66 * n) / (n - 1)) : 0;
-  return `<button class="fc ${i === focusI ? 'foc' : ''} ${tp ? 'picked' : ''}" data-fc="${i}" style="--hue:${cardHue(id)};--rot:${rot}deg;--dy:${dy}px;margin-left:${i ? ov : 0}px;z-index:${i === focusI ? 40 : 10 + i}" aria-label="${esc(c.n)}"><span class="fspd">⚡${H.spd}</span>${tp ? `<span class="fpk">${lead ? '1st ' : ''}${tp.half === 'top' ? 'Top' : 'Bot'}</span>` : ''}<span class="fart">${cardArt(id, 34)}</span><span class="fnm">${esc(c.n)}</span><span class="fmini"><i class="t">${esc(halfMini(s, id, 'top'))}</i><i class="b">${esc(halfMini(s, id, 'bot'))}</i></span></button>`;
+  return `<button class="fc ${i === focusI ? 'foc' : ''} ${tp ? 'picked' : ''}" data-fc="${i}" style="--hue:${cardHue(id)};--rot:${rot}deg;--dy:${dy}px;margin-left:${i ? ov : 0}px;z-index:${i === focusI ? 40 : 10 + i}" aria-label="${esc(c.n)}"><span class="fspd">⚡${H.spd}</span>${tp ? `<span class="fpk">${lead ? '1st ' : ''}${tmv ? 'Move' : tp.half === 'top' ? 'Top' : 'Bot'}</span>` : ''}<span class="fart">${cardArt(id, 34)}</span><span class="fnm">${esc(c.n)}</span><span class="fmini"><i class="t">${esc(halfMini(s, id, 'top'))}</i><i class="b">${esc(halfMini(s, id, 'bot'))}</i></span></button>`;
 }
 function tileCard(id, extra, attrs, sm){
   const c = G.CARDS[id];
@@ -1302,11 +1391,19 @@ const CARD_ART = {
   overpower:['#5a1a12', `<path d="M18 17h4v19h-4z" fill="${WOOD}"/><rect x="5" y="4" width="30" height="14" rx="3" fill="#bdb6aa" stroke="${INK}" stroke-width="2.2"/><path d="M9 8v6M14 8v6M26 8v6M31 8v6" stroke="${INK}" stroke-width="1.8"/>`],
   momentum: ['#c0612a', `<path d="M6 10l8 10-8 10M15 10l8 10-8 10M24 10l8 10-8 10" stroke="#fff" stroke-width="3.6" fill="none" stroke-linejoin="round" stroke-linecap="round"/>`],
   second:   ['#a8365e', `<path d="M20 33S7 25 7 15a6.5 6.5 0 0 1 13-2 6.5 6.5 0 0 1 13 2c0 10-13 18-13 18z" fill="#ff8fb0" stroke="${INK}" stroke-width="2"/><path d="M14 18a6 6 0 1 0 6-6" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round"/><path d="M20 9l1 3-3 1" stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round"/>`],
+  sidestep: ['#2f7f6f', `<path d="M10 30c-3 0-4-4-3-8s4-5 5-2-1 10-2 10z" fill="${STEEL}" stroke="${INK}" stroke-width="1.5"/><path d="M22 20c-3 0-4-4-3-8s4-5 5-2-1 10-2 10z" fill="${STEEL}" stroke="${INK}" stroke-width="1.5"/><path d="M26 30h9M31 26l4 4-4 4" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`],
+  dash:     ['#c98a12', `<path d="M14 10h8v12l9 3c3 1 3 6 0 6H13z" fill="${STEEL}" stroke="${INK}" stroke-width="2"/><path d="M4 16h7M2 22h9M5 28h6" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/><path d="M22 10c4-4 9-4 12-1-4 0-7 2-8 5" fill="#fff" stroke="${INK}" stroke-width="1.4"/>`],
+  charge:   ['#8f2a1a', `<path d="M12 14c-6-1-8-6-7-9 2 3 5 4 9 4M28 14c6-1 8-6 7-9-2 3-5 4-9 4" fill="${STEEL}" stroke="${INK}" stroke-width="1.6"/><path d="M12 12h16l-2 14c-1 4-11 4-12 0z" fill="#7a4a2a" stroke="${INK}" stroke-width="2"/><circle cx="16" cy="18" r="1.6" fill="${INK}"/><circle cx="24" cy="18" r="1.6" fill="${INK}"/><path d="M3 34h12M25 34h12" stroke="${GOLDC}" stroke-width="2.4" stroke-linecap="round"/>`],
+  sling:    ['#5e6b2a', `<path d="M14 36V22L7 8M14 22l7-14" stroke="${WOOD}" stroke-width="3.2" fill="none" stroke-linecap="round"/><path d="M7 8c4 6 10 6 14 0" stroke="#e8dcc0" stroke-width="1.6" fill="none"/><circle cx="29" cy="12" r="4" fill="#b7b0a2" stroke="${INK}" stroke-width="1.5"/><path d="M22 18l3-3M24 22l4-3" stroke="#fff" stroke-width="1.8" stroke-linecap="round" opacity=".8"/>`],
 };
+const TYPE_N = { brute: 'Brute', skirmisher: 'Skirmisher', lurker: 'Lurker', warden: 'Warden' };
+const TYPE_TIP = { brute: 'Brute: wants Close. It charges 2 closer, then hits.', skirmisher: 'Skirmisher: wants Far. It backs off when you close in and shoots as it goes. Its shots ignore distance.', lurker: 'Lurker: waits at Distant, then pounces to Close with a heavy blow. After that it fights like a brute.', warden: 'Warden: never moves and hits hard. You choose the distance.' };
+const DMUL = ['×1⅓', '×1', '×⅔', '×⅓'];
 function halfParts(s, id, half){
   const p = G.halfPreview(s, id, half); if (!p) return [];
   const h = p.h, a = [];
-  if (p.dmg) a.push(['d', p.dmg + ' dmg' + (h.pierce ? ', pierces' : '')]);
+  if (h.move) a.push(['m', (h.dir === 'in' ? '→ ' : '↔ ') + h.move]);
+  if (p.dmg) a.push(['d', p.dmg + ' dmg' + (h.pierce ? ', pierces' : '') + (h.ranged ? ', ranged' : '')]);
   if (p.blk) a.push(['b', '⛨ ' + p.blk]);
   if (h.heal) a.push(['g', '+' + h.heal + ' Grit']);
   if (h.rally) a.push(['g', '+' + h.rally + ' Might']);
@@ -1321,7 +1418,8 @@ function halfParts(s, id, half){
 }
 function halfWords(s, id, half){
   const h = G.HALVES[id][half], a = [];
-  if (h.dmg) a.push(`hit for ${h.dmg}× Might${h.pierce ? ', ignoring Guard' : ''}`);
+  if (h.move) a.push(h.dir === 'in' ? `move ${h.move} closer first` : `move ${h.move} closer or further`);
+  if (h.dmg) a.push(`hit for ${h.dmg}× Might${h.pierce ? ', ignoring Guard' : ''}${h.ranged ? ', and distance does not weaken it' : ''}${h.reach ? ', and it reaches one step further before distance weakens it' : ''}`);
   if (h.dmgA) a.push(`hit for your Armor`);
   if (h.blk) a.push(`block ${h.blk}× (2 + Armor)`);
   if (h.heal) a.push(`heal ${h.heal} Grit`);
@@ -1336,18 +1434,28 @@ function halfWords(s, id, half){
   return a.join(', ');
 }
 function cardWords(id){ const H = G.HALVES[id]; return `Speed ${H.spd}. Top: ${halfWords(run, id, 'top')}. Bottom: ${halfWords(run, id, 'bot')}.`; }
+function freeMove(h){ return h.move && !h.dir; }
+function defMode(s, h){ return freeMove(h) ? (s.fight && s.fight.dist > 0 ? 'in' : 'out') : 'fx'; }
+function pickOf(i, half){ return pick.find(p => p.i === i && p.half === half); }
 function halfBtn(s, id, i, half){
-  const pi = pick.findIndex(p => p.i === i && p.half === half), other = pick.find(p => p.half === half), sameCard = pick.find(p => p.i === i && p.half !== half);
-  const on = pi >= 0, dis = !on && (sameCard || (other && pick.length >= 2));
+  const h = G.HALVES[id][half], pk = pickOf(i, half), pi = pick.findIndex(p => p.i === i && p.half === half);
+  const other = pick.find(p => p.half === half), sameCard = pick.find(p => p.i === i && p.half !== half);
+  const on = pk && (freeMove(h) || pk.mode === 'fx'), dis = !pk && (sameCard || (other && pick.length >= 2));
   const parts = halfParts(s, id, half);
-  const h = G.HALVES[id][half];
-  return `<button class="half ${half} ${on ? 'on' : ''} ${h.burn ? 'burn' : ''}" data-half="${i}:${half}" ${dis ? 'disabled' : ''} data-tip="${esc(G.CARDS[id].n)}, ${half === 'top' ? 'top' : 'bottom'} half: ${esc(halfWords(s, id, half))}.${h.burn ? ' Using this half loses the card.' : ''}">${on && pi === 0 ? '<span class="lead">1st</span>' : ''}${parts.map(([k, t]) => `<span class="p${k}">${esc(t)}</span>`).join(' ') || '<span class="px">—</span>'}</button>`;
+  return `<button class="half ${half} ${on ? 'on' : ''} ${h.burn ? 'burn' : ''}" data-half="${i}:${half}:${defMode(s, h)}" ${dis ? 'disabled' : ''} data-tip="${esc(G.CARDS[id].n)}, ${half === 'top' ? 'top' : 'bottom'} half: ${esc(halfWords(s, id, half))}.${h.burn ? ' Using this half loses the card.' : ''}">${on && pi === 0 ? '<span class="lead">1st</span>' : ''}${parts.map(([k, t]) => `<span class="p${k}">${esc(t)}</span>`).join(' ') || '<span class="px">—</span>'}</button>`;
+}
+function moveBtns(s, id, i, half){
+  const h = G.HALVES[id][half]; if (h.move && h.dir) return '';
+  const d = s.fight.dist, pk = pickOf(i, half), sameCard = pick.find(p => p.i === i && p.half !== half), other = pick.find(p => p.half === half);
+  const n = h.move || 1, b = (mode, lab, ok) => { const on = pk && pk.mode === mode, dis = !ok || (!pk && (sameCard || (other && pick.length >= 2)));
+    return `<button class="mv ${on ? 'on' : ''}" data-half="${i}:${half}:${mode}" ${dis ? 'disabled' : ''} data-tip="${h.move ? 'Move' : 'Play this half as a move instead:'} ${n} ${mode === 'in' ? 'closer' : 'further'}. Your Might and its hits grow by a third for each step closer and shrink by a third for each step further.">${lab}</button>`; };
+  return `<span class="mvs">${b('in', '◀ ' + n, d > 0)}${b('out', n + ' ▶', d < 3)}</span>`;
 }
 function focusPanel(s){
   if (!s.cards.length) return '';
   if (focusI == null || focusI >= s.cards.length) focusI = 0;
   const i = focusI, id = s.cards[i], H = G.HALVES[id], c = G.CARDS[id];
-  const big = half => { const b = halfBtn(s, id, i, half); return b.replace('</button>', `<small class="hw">${esc(halfWords(s, id, half))}</small></button>`); };
+  const big = half => { const b = halfBtn(s, id, i, half); return `<div class="hrow">${b.replace('</button>', `<small class="hw">${esc(halfWords(s, id, half))}</small></button>`)}${moveBtns(s, id, i, half)}</div>`; };
   return `<div class="focus" style="--hue:${cardHue(id)}"><div class="fhead"><span class="fbig">${cardArt(id, 44)}</span><span><b>${esc(c.n)}</b><small>⚡${H.spd} speed${H.spd > s.fight.mspd ? ', beats its ' + s.fight.mspd : ', slower than its ' + s.fight.mspd}</small></span></div><div class="fhalves"><span class="hl">Top</span>${big('top')}<span class="hl">Bottom</span>${big('bot')}</div></div>`;
 }function tileCard(id, extra, attrs, sm){
   const c = G.CARDS[id], H = G.HALVES[id];
@@ -1358,12 +1466,22 @@ function focusPanel(s){
 }
 function pairPreview(s){
   if (pick.length < 2) return null;
-  const t = pick.find(p => p.half === 'top'), b = pick.find(p => p.half === 'bot');
-  const tid = s.cards[t.i], bid = s.cards[b.i], lead = pick[0].half, lid = lead === 'top' ? tid : bid;
-  const pt = G.halfPreview(s, tid, 'top'), pb = G.halfPreview(s, bid, 'bot'), f = s.fight;
-  const spd = G.HALVES[lid].spd, fast = spd > f.mspd, dmg = pt.dmg + pb.dmg, blk = pt.blk + pb.blk;
-  const raw = G.incomingRaw(s), took = Math.max(0, raw - blk);
-  return { t, b, tid, bid, lead, lid, spd, fast, dmg, blk, raw, took, kills: dmg >= f.hp && fast };
+  const t = pick.find(p => p.half === 'top'), b = pick.find(p => p.half === 'bot'); if (!t || !b) return null;
+  const f = s.fight, tid = s.cards[t.i], bid = s.cards[b.i], lead = pick[0].half, lid = lead === 'top' ? tid : bid;
+  const ht = G.HALVES[tid].top, hb = G.HALVES[bid].bot, tf = !!ht.move || t.mode === 'fx', bf = !!hb.move || b.mode === 'fx';
+  const spd = G.HALVES[lid].spd, fast = spd > f.mspd, d0 = f.dist, cl = d => Math.max(0, Math.min(3, d));
+  const dd = G.moveOf(ht, t.mode) + G.moveOf(hb, b.mode);
+  let dm = d0; if (!fast) dm = f.intent === 'charge' ? cl(d0 - G.T.chargeMove) : f.intent === 'pounce' ? 0 : f.intent === 'retreat' ? cl(d0 + 1) : d0;
+  const dAtk = cl((fast ? d0 : dm) + dd);
+  const zero = { dmg: 0, blk: 0 };
+  f.dist = dAtk; const pt = tf ? G.halfPreview(s, tid, 'top') : zero, pb = bf ? G.halfPreview(s, bid, 'bot') : zero;
+  f.dist = fast ? dAtk : d0; const raw = G.incomingRaw(s); f.dist = d0;
+  const dmg = pt.dmg + pb.dmg, blk = pt.blk + pb.blk, took = Math.max(0, raw - blk);
+  return { t, b, tid, bid, lead, lid, spd, fast, dmg, blk, raw, took, dAtk, moved: dAtk !== (fast ? d0 : dm), kills: dmg >= f.hp && fast };
+}
+function distTrack(s, pv){
+  const f = s.fight, M = G.fightMight(s);
+  return `<div class="dtrack"><span class="mt" data-tip="${esc(TYPE_TIP[f.mtype] || '')}">${esc(TYPE_N[f.mtype] || '')}</span>${G.DIST_N.map((n, k) => `<span class="dc ${k === f.dist ? 'cur' : ''} ${pv && pv.moved && pv.dAtk === k ? 'to' : ''}" data-tip="${n}: Might ${DMUL[k]}. Your Might here is ${G.atDist(M, k)}; its hits are ${G.atDist(f.dmg, k)}${f.mtype === 'skirmisher' ? ' (its shots ignore distance)' : ''}.">${n}<small>${DMUL[k]}</small></span>`).join('')}</div>`;
 }
 function loseBody(s){
   const camp = sheet === 'losecamp', all = s.cards.concat(s.spent);
@@ -1415,7 +1533,7 @@ function topBar(s){
 }
 function statBar(s){
   const p = s.grit / s.maxGrit, col = p > .5 ? 'var(--ok)' : p > .25 ? 'var(--gold)' : 'var(--bad)';
-  return `<div class="bar2"><div class="gbar" data-tip="Grit is your health for the whole run. It does not refill between doors. At zero the run ends and you lose your coins."><i style="width:${p * 100}%;background:${col}"></i><span>Grit ${s.grit}/${s.maxGrit}</span></div><span class="st" data-tip="Might: the damage your attacks deal. Level plus weapons."><small>Might</small>${s.fight ? G.fightMight(s) : G.might(s)}</span><span class="st" data-tip="Armor: makes your block bigger."><small>Armor</small>${G.armor(s)}</span><span class="st" data-tip="Level: rises when you win fights, and adds to your Might."><small>Lv</small>${s.level}</span></div>`;
+  return `<div class="bar2"><div class="gbar" data-tip="Grit is your health for the whole run. It does not refill between doors. At zero the run ends and you lose your coins."><i style="width:${p * 100}%;background:${col}"></i><span>Grit ${s.grit}/${s.maxGrit}</span></div><span class="st" data-tip="Might: the damage your attacks deal. Level plus weapons, changed by distance in a fight."><small>Might</small>${s.fight ? G.atDist(G.fightMight(s), s.fight.dist) : G.might(s)}</span><span class="st" data-tip="Armor: makes your block bigger."><small>Armor</small>${G.armor(s)}</span><span class="st" data-tip="Level: rises when you win fights, and adds to your Might."><small>Lv</small>${s.level}</span></div>`;
 }
 function energyDots_unused(s){ const e = s.fight ? s.fight.energy : G.T.energy, n = Math.max(G.T.energy, e); return Array.from({ length: n }, (_, i) => `<i class="${i < e ? 'on' : ''}"></i>`).join(''); }
 function track(s){
@@ -1449,7 +1567,7 @@ function doorScene(s){
 }
 function intentBadge(s){
   const f = s.fight, it = G.INTENTS[f.intent], n = G.incomingRaw(s);
-  const ic = { strike: '⚔', heavy: '⚔⚔', guard: '⛨', hex: '☠', dazed: '✷', rend: '✂' }[f.intent];
+  const ic = { strike: '⚔', heavy: '⚔⚔', guard: '⛨', hex: '☠', dazed: '✷', rend: '✂', shoot: '➶', charge: '»', pounce: '⤓', retreat: '«' }[f.intent];
   return `<div class="intent i-${f.intent}" data-tip="Its next move. ${esc(intentTip(s))}">${ic} ${esc(it.n)}${n ? ` <b>${n}</b>` : ''} <span class="mspd">⚡${f.mspd}</span></div>`;
 }
 function intentTip(s){
@@ -1459,7 +1577,11 @@ function intentTip(s){
     guard: 'Guard: your attacks deal half damage this turn. Pierce ignores it.',
     hex: `Hex: you ${badWords[f.mon.bad] || 'suffer'} unless you win first, or Trip it while faster.`,
     rend: `Rend: hits for ${G.incomingRaw(s)}. If any damage gets through, one card in your hand is lost.`,
-    dazed: 'Dazed: it does nothing this turn.' }[f.intent] || '') + ` Its speed this turn is ${f.mspd}. Lead with a faster card and you act before it.`;
+    dazed: 'Dazed: it does nothing this turn.',
+    shoot: `Shoot: a ranged hit for ${G.incomingRaw(s)}. Distance does not weaken it.`,
+    charge: `Charge: it moves ${G.T.chargeMove} closer, then hits for ${G.incomingRaw(s)} at the new distance. Step away first and the hit shrinks.`,
+    pounce: `Pounce: it leaps to Close and lands a heavy blow for ${G.incomingRaw(s)}. Block it; moving away does not help.`,
+    retreat: `Back off: it moves 1 further away${G.incomingRaw(s) ? ' and shoots for ' + G.incomingRaw(s) : ''}.` }[f.intent] || '') + ` Its speed this turn is ${f.mspd}. Lead with a faster card and you act before it.`;
 }
 function fightScene(s){
   const f = s.fight, e = s.ev || {};
@@ -1482,7 +1604,7 @@ function fightScene(s){
   if (fx === 'fizzle') floats += `<div class="float h bad">Fizzled</div>`;
   const hpP = Math.max(0, f.hp) / f.maxHp;
   const shield = f.block ? `<div class="shield" data-tip="Block: stops this much of the monster's next hit. It resets every turn.">⛨ ${f.block}</div>` : '';
-  return `<div class="scene ${fx === 'open' ? 'fx-enter' : ''}">${corridorSVG({ num: s.door, boss: f.mon.boss, open: true })}<div class="actors">${heroSVG(s, heroFx, shield + `<div class="hpbar me" data-tip="Your Grit."><i style="width:${s.grit / s.maxGrit * 100}%"></i><span>${s.grit}/${s.maxGrit}</span></div>`)}${monsterSVG(f.mon, monFx, intentBadge(s) + `<div class="hpbar" data-tip="Monster health. Bring it to zero to win.${f.mon.f ? ' ' + esc(f.mon.f) : ''}"><i style="width:${hpP * 100}%"></i><span>${Math.max(0, f.hp)}/${f.maxHp}</span></div>`)}</div><span class="tag">${esc(f.mon.n)} · round ${f.round}</span><div class="chips">${chips}</div>${floats}${narrBox()}${ex && ex.took ? '<div class="redflash"></div>' : ''}</div>`;
+  return `<div class="scene ${fx === 'open' ? 'fx-enter' : ''}">${corridorSVG({ num: s.door, boss: f.mon.boss, open: true })}<div class="actors dist${f.dist}">${heroSVG(s, heroFx, shield + `<div class="hpbar me" data-tip="Your Grit."><i style="width:${s.grit / s.maxGrit * 100}%"></i><span>${s.grit}/${s.maxGrit}</span></div>`)}${monsterSVG(f.mon, monFx, intentBadge(s) + `<div class="hpbar" data-tip="Monster health. Bring it to zero to win.${f.mon.f ? ' ' + esc(f.mon.f) : ''}"><i style="width:${hpP * 100}%"></i><span>${Math.max(0, f.hp)}/${f.maxHp}</span></div>`)}</div><span class="tag">${esc(f.mon.n)} · ${TYPE_N[f.mtype] || ''} · round ${f.round}</span><div class="chips">${chips}</div>${floats}${narrBox()}${ex && ex.took ? '<div class="redflash"></div>' : ''}</div>`;
 }
 function fightPanel(s){
   const f = s.fight, it = G.INTENTS[f.intent], raw = G.incomingRaw(s), ec = G.escapeChance(s), pv = pairPreview(s);
@@ -1490,15 +1612,16 @@ function fightPanel(s){
   if (pv){
     const order = pv.fast ? `<b>You go first</b> (⚡${pv.spd} beats ${f.mspd}).` : `<b>It goes first</b> (⚡${pv.spd} vs ${f.mspd}).`;
     const res = pv.kills ? ' <b class="okc">That finishes it before it moves.</b>' : raw ? ` Its ${esc(it.n)} for ${raw}: ${pv.took ? `you'd take <b class="${pv.took >= s.grit ? 'badc' : ''}">${pv.took}</b>${pv.took >= s.grit ? ', lethal' : ''}` : 'fully blocked'}${f.intent === 'rend' && pv.took ? ', and a card is lost' : ''}.` : '';
-    line = `${order} ${pv.dmg ? `You deal ${pv.dmg}.` : ''}${res}`;
+    line = `${order} ${pv.moved ? `You move to <b>${G.DIST_N[pv.dAtk]}</b>. ` : ''}${pv.dmg ? `You deal ${pv.dmg}.` : ''}${res}`;
   } else if (pick.length === 1) line = `Now pick ${pick[0].half === 'top' ? 'a bottom' : 'a top'} half from another card. <b>${esc(G.CARDS[s.cards[pick[0].i]].n)}</b> leads at ⚡${G.HALVES[s.cards[pick[0].i]].spd} vs its ⚡${f.mspd}.`;
   else if (s.cards.length < 2) line = `<b>One card left.</b> Rest to get your ${s.spent.length} spent card${s.spent.length === 1 ? '' : 's'} back, at the cost of one card.`;
-  else if (raw) line = `<b>${esc(it.n)} for ${raw}${f.intent === 'rend' ? ', and it tears a card if it hits' : ''}.</b> Pick a top half and a bottom half from two cards. The first you pick leads.`;
+  else if (raw) line = `<b>${esc(it.n)} for ${raw}${f.intent === 'rend' ? ', and it tears a card if it hits' : ''}.</b> Pick a top half and a bottom half from two cards. The first you pick leads. ◀ ▶ plays a half as a move.`;
   else if (f.intent === 'hex') line = `<b>Hex:</b> you ${esc(badWords[f.mon.bad] || 'suffer')} unless you win first or Trip it while faster.`;
   else if (f.intent === 'guard') line = `<b>Guard:</b> your attacks deal half this turn. Pierce ignores it. A good turn to block or recover.`;
+  else if (f.intent === 'retreat') line = `<b>It backs off</b> to ${G.DIST_N[Math.min(3, f.dist + 1)]}. Follow it, or hit it while you can.`;
   else line = `<b>Dazed:</b> it does nothing this turn. Hit it.`;
   let h = `<div class="next i-${f.intent}">${line}${meta.runs < 3 && f.round === 1 && !pick.length ? ' <span class="muted">Hold your finger on anything to read about it.</span>' : ''}</div>`;
-  h += focusPanel(s) + `<div class="fan">${s.cards.length ? s.cards.map((id, i) => handCard(s, id, i)).join('') : '<p class="small muted" style="margin:0;padding:8px 0">No cards in hand.</p>'}</div>`;
+  h += distTrack(s, pv) + focusPanel(s) + `<div class="fan">${s.cards.length ? s.cards.map((id, i) => handCard(s, id, i)).join('') : '<p class="small muted" style="margin:0;padding:8px 0">No cards in hand.</p>'}</div>`;
   const belt = s.hand.map((c, i) => `<button class="ib bi" data-shot="${i}" aria-label="${esc(c.n)}: ${esc(shotText(c))}" data-tip="${esc(c.n)}: ${esc(shotText(c))}. One use, free, any time in a fight.">${icon(c)}</button>`).join('');
   h += `<div class="pilerow">${pileLine(s)}</div>`;
   const canRest = s.spent.length > 0;
@@ -1575,6 +1698,7 @@ function helpBody(){
 <p><b>Speed.</b> The card you pick first leads. If its ⚡ beats the monster's ⚡, you act before its move, so a killing blow means it never swings. Block always lands.</p>
 <p><b>Getting cards back.</b> Rest (mid-fight or at a camp between doors) returns all spent cards but loses one for good. Loot picks return 4 spent cards. Smelling Salts return 3. Hearths and Mending Thread bring back lost cards. <b>Beating a boss is a checkpoint:</b> every card comes back and you heal fully.</p>
 <p><b>Moves to watch:</b> a <b>Swipe</b> hits for the number shown; a <b>Wind-up</b> hits double but is slow; <b>Guard</b> halves your attacks; a <b>Hex</b> curses you; a <b>Rend</b> tears a card from your hand if it hits. Run out of cards and you stagger home with half your coins.</p>
+<p><b>Distance.</b> You and the monster are Close, Near, Far or Distant. Near is normal. Each step closer adds a third to Might, and each step further takes a third off (rounded down), for you and the monster alike. Any half can be played as a move of 1 instead (◀ ▶), and movement cards move 2 or 3 and are quick. Ranged attacks ignore distance. Brutes charge in, Skirmishers back off and shoot, Lurkers pounce from afar, and Wardens never move.</p>
 <p><b>Numbers.</b> Attacks use your <b>Might</b> (level + weapons). Blocks use your <b>Armor</b>. You carry up to ${G.T.handCap} cards.</p></div>`;
 }
 
@@ -1732,7 +1856,7 @@ function bind(){
     if (a === 'run') { pick = []; act(() => G.runAway(run)); }
     else if (a === 'rest') { sheet = 'losefight'; render(); }
     else if (a === 'camp') { sheet = 'losecamp'; render(); }
-    else if (a === 'play') { const pv = pairPreview(run); if (!pv) return; pairFx = { dmg: pv.dmg, blk: pv.blk }; pick = []; act(() => G.playPair(run, pv.t.i, pv.b.i, pv.lead)); } });
+    else if (a === 'play') { const pv = pairPreview(run); if (!pv) return; pairFx = { dmg: pv.dmg, blk: pv.blk }; pick = []; act(() => G.playPair(run, pv.t.i, pv.b.i, pv.lead, pv.t.mode, pv.b.mode)); } });
   all('[data-lose]', b => { const i = +b.dataset.lose, w = sheet; sheet = null; pick = []; act(() => w === 'losecamp' ? G.restCamp(run, i) : G.restFight(run, i)); });
   all('[data-drop]', b => { const nw = capNew; capNew = null; G.swapOut(run, nw, b.dataset.drop); narr = [`You leave ${G.CARDS[b.dataset.drop].n} behind.`]; save(); render(); });
   all('[data-favor]', b => act(() => G.takeFavor(run, +b.dataset.favor)));
@@ -1766,9 +1890,9 @@ function bind(){
 document.addEventListener('keydown', ev => {
   if (ev.key === 'Escape' && (manageSel || sheet)){ manageSel = null; sheet = null; render(); return; }
   if (!run || run.phase !== 'fight' || sheet || manageSel || ev.target.closest && ev.target.closest('input')) return;
-  if (ev.key === 'Enter'){ const pv = pairPreview(run); if (pv){ pairFx = { dmg: pv.dmg, blk: pv.blk }; pick = []; act(() => G.playPair(run, pv.t.i, pv.b.i, pv.lead)); } }
+  if (ev.key === 'Enter'){ const pv = pairPreview(run); if (pv){ pairFx = { dmg: pv.dmg, blk: pv.blk }; pick = []; act(() => G.playPair(run, pv.t.i, pv.b.i, pv.lead, pv.t.mode, pv.b.mode)); } }
 });
-function bindHalves(){ document.querySelectorAll('[data-half]').forEach(b => b.onclick = () => { const [i, half] = b.dataset.half.split(':'); const k = pick.findIndex(p => p.i === +i && p.half === half); if (k >= 0) pick.splice(k, 1); else { pick = pick.filter(p => p.half !== half && p.i !== +i); pick.push({ i: +i, half }); } render(); }); }
+function bindHalves(){ document.querySelectorAll('[data-half]').forEach(b => b.onclick = () => { const [i, half, mode] = b.dataset.half.split(':'); const k = pick.findIndex(p => p.i === +i && p.half === half); if (k >= 0 && pick[k].mode === mode) pick.splice(k, 1); else if (k >= 0) pick[k].mode = mode; else { pick = pick.filter(p => p.half !== half && p.i !== +i); pick.push({ i: +i, half, mode: mode || 'fx' }); } render(); }); }
 // ---------- inspect: hold a finger down, then slide it across anything to read about it ----------
 let holdT = null, holdAt = null, inspecting = false, insEl = null, swallowUntil = 0, hoverT = null;
 function tipText(el){ return el ? el.getAttribute('data-tip') : ''; }
