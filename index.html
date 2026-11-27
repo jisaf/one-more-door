@@ -608,7 +608,7 @@ function escapeNeed(s) {
   const f = s.fight; const e = escapeBonus(s) + (f.mon.esc || 0) + f.twistEsc + f.escBonus;
   return Math.max(2, T.escapeTarget - e); // a 1 always fails
 }
-function escapeChance(s) { if (s.fight && s.fight.autoEscape) return 1; return (7 - escapeNeed(s)) / 6; }
+function escapeChance(s) { if (s.fight && s.fight.autoEscape) return 1; return Math.max(0, Math.min(1, (7 - escapeNeed(s)) / 6)); }
 function multAt(d) { return d > T.doors ? T.mult[T.doors] + T.deepMultStep * (d - T.doors) : T.mult[Math.max(1, d)]; }
 const deepOf = d => Math.max(0, d - T.doors);
 const isDeepBossDoor = d => d > T.doors && deepOf(d) % T.deepBossEvery === 0;
@@ -1451,8 +1451,8 @@ function halfParts(s, id, half){
 }
 function halfWords(s, id, half){
   const h = G.HALVES[id][half], a = [];
-  if (h.move) a.push(h.dir === 'in' ? `move ${h.move} closer first` : `move ${h.move} closer or further`);
-  if (h.dmg) a.push(`hit for ${h.dmg}× Might${h.pierce ? ', ignoring Guard' : ''}${h.ranged ? ', and distance does not weaken it' : ''}${h.reach ? ', and it reaches one step further before distance weakens it' : ''}`);
+  if (h.move && G.T.distOn) a.push(h.dir === 'in' ? `move ${h.move} closer first` : `move ${h.move} closer or further`);
+  if (h.dmg) a.push(`hit for ${h.dmg}× Might${h.pierce ? ', ignoring Guard' : ''}${h.ranged && G.T.distOn ? ', and distance does not weaken it' : ''}${h.reach && G.T.distOn ? ', and it reaches one step further before distance weakens it' : ''}`);
   if (h.dmgA) a.push(`hit for your Armor`);
   if (h.blk) a.push(`block ${h.blk}× (2 + Armor)`);
   if (h.heal) a.push(`heal ${h.heal} Grit`);
@@ -1568,7 +1568,7 @@ function topBar(s){
 }
 function statBar(s){
   const p = s.grit / s.maxGrit, col = p > .5 ? 'var(--ok)' : p > .25 ? 'var(--gold)' : 'var(--bad)';
-  return `<div class="bar2"><div class="gbar" data-tip="Grit is your health for the whole run. It does not refill between doors. At zero the run ends and you lose your coins."><i style="width:${p * 100}%;background:${col}"></i><span>Grit ${s.grit}/${s.maxGrit}</span></div><span class="st" data-tip="Might: the damage your attacks deal. Level plus weapons, changed by distance in a fight."><small>Might</small>${s.fight ? G.atDist(G.fightMight(s), s.fight.dist) : G.might(s)}</span><span class="st" data-tip="Armor: makes your block bigger."><small>Armor</small>${G.armor(s)}</span><span class="st" data-tip="Level: rises when you win fights, and adds to your Might."><small>Lv</small>${s.level}</span></div>`;
+  return `<div class="bar2"><div class="gbar" data-tip="Grit is your health for the whole run. It does not refill between doors. At zero the run ends and you lose your coins."><i style="width:${p * 100}%;background:${col}"></i><span>Grit ${s.grit}/${s.maxGrit}</span></div><span class="st" data-tip="Might: the damage your attacks deal. Level plus weapons."><small>Might</small>${s.fight ? G.atDist(G.fightMight(s), s.fight.dist) : G.might(s)}</span><span class="st" data-tip="Armor: makes your block bigger."><small>Armor</small>${G.armor(s)}</span><span class="st" data-tip="Level: rises when you win fights, and adds to your Might."><small>Lv</small>${s.level}</span></div>`;
 }
 function energyDots_unused(s){ const e = s.fight ? s.fight.energy : G.T.energy, n = Math.max(G.T.energy, e); return Array.from({ length: n }, (_, i) => `<i class="${i < e ? 'on' : ''}"></i>`).join(''); }
 function track(s){
@@ -1650,7 +1650,7 @@ function fightPanel(s){
     line = `${order} ${pv.moved ? `You move to <b>${G.DIST_N[pv.dAtk]}</b>. ` : ''}${pv.dmg ? `You deal ${pv.dmg}.` : ''}${res}`;
   } else if (pick.length === 1) line = `Now pick ${pick[0].half === 'top' ? 'a bottom' : 'a top'} half from another card. <b>${esc(G.CARDS[s.cards[pick[0].i]].n)}</b> leads at ⚡${G.HALVES[s.cards[pick[0].i]].spd} vs its ⚡${f.mspd}.`;
   else if (s.cards.length < 2) line = `<b>One card left.</b> Rest to get your ${s.spent.length} spent card${s.spent.length === 1 ? '' : 's'} back, at the cost of one card.`;
-  else if (raw) line = `<b>${esc(it.n)} for ${raw}${f.intent === 'rend' ? ', and it tears a card if it hits' : ''}.</b> Pick a top half and a bottom half from two cards. The first you pick leads. ◀ ▶ plays a half as a move.`;
+  else if (raw) line = `<b>${esc(it.n)} for ${raw}${f.intent === 'rend' ? ', and it tears a card if it hits' : ''}.</b> Pick a top half and a bottom half from two cards. The first you pick leads.${G.T.distOn ? ' ◀ ▶ plays a half as a move.' : ''}`;
   else if (f.intent === 'hex') line = `<b>Hex:</b> you ${esc(badWords[f.mon.bad] || 'suffer')} unless you win first or Trip it while faster.`;
   else if (f.intent === 'guard') line = `<b>Guard:</b> your attacks deal half this turn. Pierce ignores it. A good turn to block or recover.`;
   else if (f.intent === 'retreat') line = `<b>It backs off</b> to ${G.DIST_N[Math.min(3, f.dist + 1)]}. Follow it, or hit it while you can.`;
@@ -1740,7 +1740,7 @@ function helpBody(){
   return `<div class="small"><p><b>Doors.</b> Open them one at a time. After any door you can walk home and bank your coins, multiplied by how deep you got. Die and you lose what you carry. Door 10 is the Landlord.</p>
 <p><b>Your hand is your stamina.</b> You start with 8 cards and no deck to draw from. Each turn you play two: the <b>top half</b> of one and the <b>bottom half</b> of the other. Played cards are <b>spent</b>.</p>
 <p><b>Speed.</b> The card you pick first leads. If its ⚡ beats the monster's ⚡, you act before its move, so a killing blow means it never swings. Block always lands.</p>
-<p><b>Getting cards back.</b> Rest (mid-fight or at a camp between doors) returns all spent cards but loses one for good. Loot picks return 4 spent cards. Smelling Salts return 3. Hearths and Mending Thread bring back lost cards. <b>Beating a boss is a checkpoint:</b> every card comes back and you heal fully.</p>
+<p><b>Getting cards back.</b> Rest (mid-fight or at a camp between doors) returns all spent cards but loses one for good. Every win returns ${G.T.winRecover} spent cards, and loot picks return ${G.T.lootRecover} more. Smelling Salts return 3. Hearths and Mending Thread bring back lost cards. <b>Beating a boss is a checkpoint:</b> every card comes back and you heal fully.</p>
 <p><b>Moves to watch:</b> a <b>Swipe</b> hits for the number shown; a <b>Wind-up</b> hits double but is slow; <b>Guard</b> halves your attacks; a <b>Hex</b> curses you; a <b>Rend</b> tears a card from your hand if it hits. Run out of cards and you stagger home with half your coins.</p>
 ${G.T.distOn ? '' : '<!--'}<p><b>Distance.</b> You and the monster are Close, Near, Far or Distant. Near is normal. Each step closer adds a third to Might, and each step further takes a third off (rounded down), for you and the monster alike. Any half can be played as a move of 1 instead (◀ ▶), and movement cards move 2 or 3 and are quick. Ranged attacks ignore distance. Brutes charge in, Skirmishers back off and shoot, Lurkers pounce from afar, and Wardens never move.</p>${G.T.distOn ? '' : '-->'}
 <p><b>Town.</b> Townsfolk are held captive in the cellar. Free one by winning a fight at or past their door, then walk home alive. Their building goes up for gold in the Town tab and changes every run after.</p>
@@ -1773,11 +1773,11 @@ function renderModal(){
     const sp = s.spoils, e = s.ev && s.ev.t === 'win' ? s.ev : null;
     let h = `<div class="kicker">Spoils</div><h2>${e ? 'You beat ' + esc(/^The /.test(e.mon.n) ? e.mon.n : 'the ' + e.mon.n) : 'Victory'}</h2>`;
     if (e) h += `<p class="kind">+${e.lv} level${e.lv > 1 ? 's' : ''} · <span class="gold">+${e.coins} coins</span>${e.heal ? ` · <span class="okc">+${e.heal} Grit</span>` : ''}</p>`;
-    h += `<p class="small" style="text-align:center;margin:8px 0">${sp.loot ? `Take one thing. Loot is gear or a one-shot, and it also gives you back ${G.T.lootRecover} spent cards. A card is a new move for your hand.` : 'Choose a card for your deck.'}</p>`;
+    h += `<p class="small" style="text-align:center;margin:8px 0">${sp.loot ? `Take one thing. Loot is gear or a one-shot, and it also gives you back ${G.T.lootRecover} spent cards. A card joins your deck.` : 'Choose a card for your deck.'}</p>`;
     if (sp.loot && sp.lootOpts){
       h += `<div class="sec"><h3>Loot</h3><span class="tiny muted">pick one find</span></div><div class="loot2">`;
       h += sp.lootOpts.map((t, i) => `<button class="icard lootc" data-spoil="loot" data-i="${i}" data-tip="${esc(t.n)}: ${esc(kindLine(t))}">${icon(t)}<span class="nm">${esc(t.n)}</span><span class="fx">${esc(shortFx(t))}</span><span class="tiny ${t.k === 'gear' && G.equipGain(s, t) > 0 ? 'okc' : 'muted'}">${t.k === 'gear' ? (t.only && t.only !== s.calling ? G.CALLINGS[t.only].n + 's only' : gainTxt(s, t)) : 'one-shot for your belt'}</span></button>`).join('') + '</div>';
-      h += `<div class="sec"><h3>Or a card</h3><span class="tiny muted">a new move${G.T.cardLevel ? ', +' + G.T.cardLevel + ' level' : ''}</span></div>`;
+      h += `<div class="sec"><h3>Or a card</h3><span class="tiny muted">a new card${G.T.cardLevel ? ', +' + G.T.cardLevel + ' level' : ''}</span></div>`;
     }
     h += `<div class="cgrid" style="margin-top:4px">${sp.cards.map((id, i) => tileCard(id, '', `data-spoil="card" data-i="${i}"`)).join('')}</div>`;
     h += `<div class="acts"><button class="ghost" data-spoil="skip">Skip<small>keep your deck lean</small></button></div>`;
