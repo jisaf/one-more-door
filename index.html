@@ -871,7 +871,7 @@ function playPair(s, ti, bi, lead, tm, bm) {
   saveRng(s, r);
   const act = () => {
     const dd = moveOf(ht, tm, s) + moveOf(hb, bm, s);
-    if (dd) { const d0 = f.dist; f.dist = clampD(f.dist + dd); if (f.dist !== d0) log(s, `You move to ${DIST_N[f.dist]}.`); }
+    if (dd && T.distOn) { const d0 = f.dist; f.dist = clampD(f.dist + dd); if (f.dist !== d0) log(s, `You move to ${DIST_N[f.dist]}.`); }
     const a = tf ? applyHalf(s, tid, 'top', r) : {}, b = bf ? applyHalf(s, bid, 'bot', r) : {};
     log(s, `${CARDS[tid].n} (${tf ? 'top' : 'move'}${a.dmg ? ', ' + a.dmg + ' damage' : ''}) + ${CARDS[bid].n} (${bf ? 'bottom' : 'move'}${b.blk ? ', block ' + b.blk : ''}${b.dmg ? ', ' + b.dmg + ' damage' : ''}).`);
   };
@@ -1510,8 +1510,8 @@ function pairPreview(s){
   const zero = { dmg: 0, blk: 0 };
   f.dist = dAtk; const pt = tf ? G.halfPreview(s, tid, 'top') : zero, pb = bf ? G.halfPreview(s, bid, 'bot') : zero;
   f.dist = fast ? dAtk : d0; const raw = G.incomingRaw(s); f.dist = d0;
-  const dmg = pt.dmg + pb.dmg, blk = pt.blk + pb.blk, took = Math.max(0, raw - blk);
-  return { t, b, tid, bid, lead, lid, spd, fast, dmg, blk, raw, took, dAtk, moved: dAtk !== (fast ? d0 : dm), kills: dmg >= f.hp && fast };
+  const dmg = pt.dmg + pb.dmg, blk = pt.blk + pb.blk, took = Math.max(0, raw - blk - (f.block || 0));
+  return { t, b, tid, bid, lead, lid, spd, fast, dmg, blk, raw, took, dAtk, moved: !!G.T.distOn && dAtk !== (fast ? d0 : dm), kills: dmg >= f.hp && fast };
 }
 function distTrack(s, pv){
   if (!G.T.distOn) return '';
