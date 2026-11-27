@@ -1363,9 +1363,13 @@ function endRun(s, how) {
   { const bm = townLv(s.town, 'archive') >= 3 ? 1.5 : 1, done = (s.bounties || []).filter(b => b.done); s.ended.bounty = { n: done.length, of: (s.bounties || []).length, gold: Math.round(done.reduce((a, b) => a + b.g, 0) * bm), embers: Math.round(done.reduce((a, b) => a + b.e, 0) * bm), mats: (() => { const o = {}, rr = MATS.filter(m => m.r === 2); done.forEach((b, i) => { const m = b.mat ? MATS.find(x => x.id === b.mat) : rr[(i + (s.door || 0)) % rr.length]; o[m.id] = (o[m.id] || 0) + 1; }); return o; })() }; }
   log(s, how === 'dead' ? `Run over. ${gold ? 'Your Strongbox saved ' + gold + ' gold.' : 'Everything you carried is lost.'}` : `You walk home with ${gold} gold.`);
 }
+const TRADE = { 1: [30, 1.2], 2: [120, 1.3] };
+function tradePrice(meta, id) { const m = MATS.find(x => x.id === id), t = m && TRADE[m.r]; if (!t) return null; return Math.round(t[0] * Math.pow(t[1], ((meta.trade || {})[id] || 0))); }
+function buyMat(meta, id) { const p = tradePrice(meta, id); if (p == null || meta.gold < p) return false; meta.gold -= p; meta.mats[id] = (meta.mats[id] || 0) + 1; meta.trade = meta.trade || {}; meta.trade[id] = (meta.trade[id] || 0) + 1; return true; }
 function settle(meta, s) {
   if (!s.ended || s.settled) return null;
   s.settled = true; const e = s.ended;
+  if (meta.trade) for (const k in meta.trade) meta.trade[k] = Math.floor(meta.trade[k] / 2);
   let embers = e.embers; let firstKill = false;
   if (e.how === 'victory') { if (!meta.bossKills) { embers += T.emberBoss; firstKill = true; } meta.bossKills++; meta.oathUnlocked = true; if ((e.lease || 0) > meta.leaseBest) { meta.leaseBest = e.lease || 0; e.newLease = true; } }
   if (e.keep && meta.hearth && meta.hearth.keepsake) meta.keepsake = Object.assign({}, e.keep); 
@@ -1409,7 +1413,7 @@ const LORE = [
 ];
 
 Object.assign(T, {"winMend":0,"lootMend":0,"bossHeal":99,"handCap":99,"bossHp":90,"dmgMul":0.8,"lootRecover":2,"hpMul":5.5,"bossRestore":1,"newFavors":0,"baseMight":2,"winRecover":2,"gritPerLevel":1,"easeStart":0.6,"easeDoor":7,"distOn":0}); for (const [k,v] of Object.entries({"heavy":{"spd":20,"top":{"dmg":2.25},"bot":{"blk":1.75}},"lunge":{"spd":60,"top":{"dmg":3.5,"burn":1,"move":1,"dir":"in"},"bot":{"rec":2}},"brace":{"spd":40,"top":{"blk":1.5},"bot":{"blk":1.25}},"jab":{"spd":85,"top":{"dmg":2},"bot":{"dmg":1}},"reckless":{"spd":50,"top":{"dmg":2.5,"self":2},"bot":{"blk":1.25}},"bash":{"spd":45,"top":{"dmg":2},"bot":{"dmg":1,"blk":0.5}},"feint":{"spd":70,"top":{"dmg":2},"bot":{"rec":1,"blk":0.5}},"bulwark":{"spd":30,"top":{"blk":2},"bot":{"blk":1.75}},"pierce":{"spd":55,"top":{"dmg":2,"pierce":1,"reach":1},"bot":{"rec":2}},"momentum":{"spd":55,"top":{"dmg":2.5},"bot":{"dmg":1.25}},"ironskin":{"spd":35,"top":{"blk":2},"bot":{"blk":3,"burn":1}}})) HALVES[k]=v;
-const api = { findOffer, findCarry, handSize, drawUp, HOME_START, tileFree, fixBeds, MATS, RAR_N, PARTS, CROPS, HOME_W, HOME_H, homeLv, partOf, partCost, canHome, buildHome, placeHome, styleHome, plant, cropRuns, pantryTake, homeTown, shotById, TOWN, GEAR_TOK, tokCapOf, TOKENS, TOKEN_CARDS, TOWN, townLv, upCost, makeBounties, bestKills, MONSTERS, townOf, canBuild, buildTown, doorChoices, DSTATS, DIST_N, atDist, halfModes, moveOf, monType, swapOut, dropCard, HALVES, halfPreview, pairOptions, playPair, restFight, restCamp, canCamp, exhausted, T, MONSTERS, BOSS, TWISTS, TREASURES, SETS, setsOn, gx, tierMax, CURSES, CALLINGS, ORIGIN, FORGE, KEEPER, LORE, STARTER, INTENTS, PATRONS, FAVORS,
+const api = { tradePrice, buyMat, findOffer, findCarry, handSize, drawUp, HOME_START, tileFree, fixBeds, MATS, RAR_N, PARTS, CROPS, HOME_W, HOME_H, homeLv, partOf, partCost, canHome, buildHome, placeHome, styleHome, plant, cropRuns, pantryTake, homeTown, shotById, TOWN, GEAR_TOK, tokCapOf, TOKENS, TOKEN_CARDS, TOWN, townLv, upCost, makeBounties, bestKills, MONSTERS, townOf, canBuild, buildTown, doorChoices, DSTATS, DIST_N, atDist, halfModes, moveOf, monType, swapOut, dropCard, HALVES, halfPreview, pairOptions, playPair, restFight, restCamp, canCamp, exhausted, T, MONSTERS, BOSS, TWISTS, TREASURES, SETS, setsOn, gx, tierMax, CURSES, CALLINGS, ORIGIN, FORGE, KEEPER, LORE, STARTER, INTENTS, PATRONS, FAVORS,
   forgeCost, forgeRanks, newMeta, fixMeta, buyForge, unlockCalling, EMBERS, DEEP_BOSSES, emberCost, emberRank, buyEmber, rerollFavor, lastDoor, isDeepBossDoor, deepOf,
   startRun, openDoor, playShot, fight, flee, takeTreasure, takeFavor, rest, manage, canManage, canKeep, bagRoom, replacedBy,
   bank, settle, peek, might, armor, incoming, incomingRaw, enrage, canUnleash, monStats, monsterTotal, fightMight, cardPreview, canPlay, playCard, endTurn, runAway, chooseSpoils, cardPool,
@@ -2219,6 +2223,7 @@ function pantryLine(){ const cnt = {}; meta.pantry.forEach(id => cnt[id] = (cnt[
 function homeTab(){
   const h = meta.home;
   let o = `<div class="hmats">${G.MATS.map(m => `<span class="${meta.mats[m.id] ? '' : 'z'}" title="${m.n}, ${G.RAR_N[m.r]}">${m.i}<b>${meta.mats[m.id] || 0}</b></span>`).join('')}</div>`;
+  o += `<div class="hrow" style="flex-wrap:wrap;gap:4px;margin:4px 0" data-tip="A peddler passes the ruins. Prices climb as you buy, and settle back a little after each run."><b class="tiny">🛒 Peddler</b>${G.MATS.filter(m => G.tradePrice(meta, m.id) != null).map(m => { const p = G.tradePrice(meta, m.id); return `<button class="tinybtn" data-buymat="${m.id}" ${meta.gold < p ? 'disabled' : ''} data-tip="Buy 1 ${esc(m.n)} for ${p} gold.">${m.i} ${p}g</button>`; }).join('')}</div>`;
   o += `<div class="hscene">${homeSVG(h, false)}</div><div class="box hinsp">`;
   if (homePanel === 'share') {
     o += `<div class="hrow"><b class="small">Share your homestead</b><button class="tinybtn" data-hclose>Back</button></div>`;
@@ -2270,7 +2275,7 @@ function renderIntro(){
 }
 const CALL_SHORT = { brawler: '+2 Might vs big', sneak: 'Easy escapes', warden: '+2 Armor' };
 function renderTown(){
-  let h = `<div class="thead"><h1>One More Door <span class="small muted">Homestead</span></h1><span class="money"><span data-tip="Gold: bank it by walking home from a run. Spend it in the Workshop and the Library."><b class="gold">${meta.gold}</b> <span class="small muted">gold</span></span> · <span data-tip="Embers: earned for every door you clear, even if you die. Spend them in the Embers tab."><b class="ember">${meta.embers}</b> <span class="small muted">embers</span></span></span></div>`;
+  let h = `<div class="thead"><h1>One More Door <span class="small muted">Homestead</span></h1><span class="money"><span data-tip="Gold: bank it by walking home from a run. Spend it in the Workshop, the Library and at the peddler."><b class="gold">${meta.gold}</b> <span class="small muted">gold</span></span> · <span data-tip="Embers: earned for every door you clear, even if you die. Spend them in the Embers tab."><b class="ember">${meta.embers}</b> <span class="small muted">embers</span></span></span></div>`;
   const dot = has => has ? '<span class="dot"></span>' : '';
   const canForge = G.FORGE.some(f => meta.forge[f.id] < G.forgeMax(meta, f) && meta.gold >= G.forgeCost(f, meta.forge[f.id]));
   const canEmb = G.EMBERS.some(e => { const r = G.emberRank(meta, e); return r < e.cost.length && meta.embers >= G.emberCost(e, r); });
@@ -2397,6 +2402,7 @@ function bind(){
   all('[data-tab]', b => { tab = b.dataset.tab; retireSel = null; render(); });
   all('[data-call]', b => { calling = b.dataset.call; meta.calling = calling; save(); render(); });
   all('[data-lease]', b => { G.setLease(meta, +b.dataset.lease); save(); render(); });
+  all('[data-buymat]', b => { if (G.buyMat(meta, b.dataset.buymat)) { save(); render(); } });
   all('[data-find]', b => { const i = +b.dataset.find, k = G.findCarry(meta); let sel = (meta.findSel || []).slice(); if (sel.includes(i)) sel = sel.filter(x => x !== i); else { sel.push(i); while (sel.length > k) sel.shift(); } meta.findSel = sel; save(); render(); });
   all('[data-store]', b => { const id = b.dataset.store; meta.provisions = meta.provisions || {}; if (meta.provisions[id]) delete meta.provisions[id]; else if ((meta.stores || {})[id] > 0) meta.provisions[id] = true; save(); render(); });
   all('#setout', () => { meta.setOut = true; meta.calling = calling; run = G.startRun(meta, { calling }); narr = []; manageSel = null; sheet = null; save(); render(); });
