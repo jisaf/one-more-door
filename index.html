@@ -526,7 +526,7 @@ function buyCard(meta, id) { fixMeta(meta); const c = CARDS[id]; if (!c || !c.pr
 function provisionCost(meta, p) { return Math.round(p.cost * (1 + 0.5 * (meta.lease || 0))); }
 function buyProvision(meta, id) { fixMeta(meta); const p = PROVISIONS.find(x => x.id === id); if (!p || meta.provisions[id]) return false; const c = provisionCost(meta, p); if (meta.gold < c) return false; meta.gold -= c; meta.provisions[id] = true; return true; }
 // Retiring: pay gold to take a card out of your starting deck for good. Each one costs more; the deck never drops below minDeck.
-function startDeck(meta) { const d = STARTER_DECK.slice(); for (const id of (meta.retired || [])) { const i = d.indexOf(id); if (i >= 0) d.splice(i, 1); } return d; }
+function startDeck(meta) { const d = STARTER_DECK.map(id => !T.distOn && id === 'sidestep' ? 'strike' : id); for (const id of (meta.retired || [])) { const i = d.indexOf(id); if (i >= 0) d.splice(i, 1); } return d; }
 function retireCost(meta) { return Math.round(T.retireBase * Math.pow(T.retireGrow, (meta.retired || []).length)); }
 function canRetire(meta) { return startDeck(meta).length > T.minDeck; }
 function retireCard(meta, id) { fixMeta(meta); if (!canRetire(meta) || !startDeck(meta).includes(id)) return false; const c = retireCost(meta); if (meta.gold < c) return false; meta.gold -= c; meta.retired.push(id); return true; }
@@ -548,7 +548,7 @@ function startRun(meta, opts) {
   };
   s.grit = s.maxGrit; s.cards = s.deck.slice();
   const r = rngOf(s);
-  s.gear.hand1 = Object.assign({ src: 'start' }, STARTER.hand); s.gear.body = Object.assign({ src: 'start' }, STARTER.body);
+  s.queue.push(Object.assign({ src: 'start' }, STARTER.hand), Object.assign({ src: 'start' }, STARTER.body));
   if (meta.keepsake && meta.hearth.keepsake) { s.queue.push(Object.assign({}, meta.keepsake, { src: 'keepsake' })); meta.keepsake = null; }
   for (let i = 0; i < 1 + meta.forge.satchel; i++) s.queue.push(Object.assign(drawShot(r), { src: 'start' }));
   const pv = meta.provisions || {};
@@ -972,7 +972,8 @@ function win(s, how) {
   if (f.mon.boss && f.mon.deep) s.deepBosses++; else if (f.mon.boss) s.bossDown = true;
   s.phase = 'spoils';
 }
-function cardPool(s) { return BASE_POOL.concat(s.library || []); }
+const MOVE_CARDS = ['sidestep', 'dash', 'charge', 'sling'];
+function cardPool(s) { const p = BASE_POOL.concat(s.library || []); return T.distOn ? p : p.filter(id => !MOVE_CARDS.includes(id)); }
 function cardOffer(s, r, n) { const pool = cardPool(s).slice(); const out = []; n = n || 3; while (out.length < n && pool.length) out.push(pool.splice(Math.floor(r.next() * pool.length), 1)[0]); return out; }
 // after a win: 'loot' (a treasure), 'card' with index into the offer, or 'skip'
 function chooseSpoils(s, how, i) {
@@ -1121,7 +1122,7 @@ const LORE = [
   { at: 35, t: 'Ma admits she once owned the building above the doors. "Sold it," she says. "To someone below."' },
 ];
 
-Object.assign(T, {"winMend":0,"lootMend":0,"bossHeal":99,"handCap":99,"bossHp":90,"dmgMul":0.8,"lootRecover":2,"hpMul":5.5,"bossRestore":1,"newFavors":1,"baseMight":2,"winRecover":2,"gritPerLevel":1,"easeStart":0.6,"easeDoor":7}); for (const [k,v] of Object.entries({"heavy":{"spd":20,"top":{"dmg":2.25},"bot":{"blk":1.75}},"lunge":{"spd":60,"top":{"dmg":3.5,"burn":1,"move":1,"dir":"in"},"bot":{"rec":2}},"brace":{"spd":40,"top":{"dmg":1.5,"blk":0.5},"bot":{"blk":1.25}},"jab":{"spd":85,"top":{"dmg":2},"bot":{"blk":0.75}},"reckless":{"spd":50,"top":{"dmg":2.5,"self":2},"bot":{"blk":1.25}},"bash":{"spd":45,"top":{"dmg":2},"bot":{"blk":0.75,"dmgA":1}},"feint":{"spd":70,"top":{"dmg":2},"bot":{"rec":1,"blk":0.5}},"bulwark":{"spd":30,"top":{"dmg":2.25},"bot":{"blk":1.75}},"pierce":{"spd":55,"top":{"dmg":2,"pierce":1,"reach":1},"bot":{"rec":2}}})) HALVES[k]=v;
+Object.assign(T, {"winMend":0,"lootMend":0,"bossHeal":99,"handCap":99,"bossHp":90,"dmgMul":0.8,"lootRecover":2,"hpMul":5.5,"bossRestore":1,"newFavors":0,"baseMight":2,"winRecover":2,"gritPerLevel":1,"easeStart":0.6,"easeDoor":7,"distOn":0}); for (const [k,v] of Object.entries({"heavy":{"spd":20,"top":{"dmg":2.25},"bot":{"blk":1.75}},"lunge":{"spd":60,"top":{"dmg":3.5,"burn":1,"move":1,"dir":"in"},"bot":{"rec":2}},"brace":{"spd":40,"top":{"blk":1.5},"bot":{"blk":1.25}},"jab":{"spd":85,"top":{"dmg":2},"bot":{"dmg":1}},"reckless":{"spd":50,"top":{"dmg":2.5,"self":2},"bot":{"blk":1.25}},"bash":{"spd":45,"top":{"dmg":2},"bot":{"dmg":1,"blk":0.5}},"feint":{"spd":70,"top":{"dmg":2},"bot":{"rec":1,"blk":0.5}},"bulwark":{"spd":30,"top":{"blk":2},"bot":{"blk":1.75}},"pierce":{"spd":55,"top":{"dmg":2,"pierce":1,"reach":1},"bot":{"rec":2}},"momentum":{"spd":55,"top":{"dmg":2.5},"bot":{"dmg":1.25}},"ironskin":{"spd":35,"top":{"blk":2},"bot":{"blk":3,"burn":1}}})) HALVES[k]=v;
 const api = { DSTATS, DIST_N, atDist, halfModes, moveOf, monType, swapOut, dropCard, HALVES, halfPreview, pairOptions, playPair, restFight, restCamp, canCamp, exhausted, T, MONSTERS, BOSS, TWISTS, TREASURES, CURSES, CALLINGS, ORIGIN, FORGE, KEEPER, LORE, STARTER, INTENTS, PATRONS, FAVORS,
   forgeCost, forgeRanks, newMeta, fixMeta, buyForge, unlockCalling, EMBERS, DEEP_BOSSES, emberCost, emberRank, buyEmber, rerollFavor, lastDoor, isDeepBossDoor, deepOf,
   startRun, openDoor, playShot, fight, flee, takeTreasure, takeFavor, rest, manage, canManage, canKeep, bagRoom, replacedBy,
@@ -1451,6 +1452,7 @@ function halfBtn(s, id, i, half){
   return `<button class="half ${half} ${on ? 'on' : ''} ${h.burn ? 'burn' : ''}" data-half="${i}:${half}:${defMode(s, h)}" ${dis ? 'disabled' : ''} data-tip="${esc(G.CARDS[id].n)}, ${half === 'top' ? 'top' : 'bottom'} half: ${esc(halfWords(s, id, half))}.${h.burn ? ' Using this half loses the card.' : ''}">${on && pi === 0 ? '<span class="lead">1st</span>' : ''}${parts.map(([k, t]) => `<span class="p${k}">${esc(t)}</span>`).join(' ') || '<span class="px">—</span>'}</button>`;
 }
 function moveBtns(s, id, i, half){
+  if (!G.T.distOn) return '';
   const h = G.HALVES[id][half]; if (h.move && h.dir) return '';
   const d = s.fight.dist, pk = pickOf(i, half), sameCard = pick.find(p => p.i === i && p.half !== half), other = pick.find(p => p.half === half);
   const n = h.move || Math.abs(G.moveOf(h, 'out', s)), b = (mode, lab, ok) => { const on = pk && pk.mode === mode, dis = !ok || (!pk && (sameCard || (other && pick.length >= 2)));
@@ -1486,6 +1488,7 @@ function pairPreview(s){
   return { t, b, tid, bid, lead, lid, spd, fast, dmg, blk, raw, took, dAtk, moved: dAtk !== (fast ? d0 : dm), kills: dmg >= f.hp && fast };
 }
 function distTrack(s, pv){
+  if (!G.T.distOn) return '';
   const f = s.fight, M = G.fightMight(s);
   return `<div class="dtrack"><span class="mt" data-tip="${esc(TYPE_TIP[f.mtype] || '')}">${esc(TYPE_N[f.mtype] || '')}</span>${[3, 2, 1, 0].map(k => { const n = G.DIST_N[k]; return `<span class="dc ${k === f.dist ? 'cur' : ''} ${pv && pv.moved && pv.dAtk === k ? 'to' : ''}" data-tip="${n}: Might ${DMUL[k]}. Your Might here is ${G.atDist(M, k)}; its hits are ${G.atDist(f.dmg, k)}${f.mtype === 'skirmisher' ? ' (its shots ignore distance)' : ''}.">${n}<small>${DMUL[k]}</small></span>`; }).join('')}</div>`;
 }
@@ -1610,7 +1613,7 @@ function fightScene(s){
   if (fx === 'fizzle') floats += `<div class="float h bad">Fizzled</div>`;
   const hpP = Math.max(0, f.hp) / f.maxHp;
   const shield = f.block ? `<div class="shield" data-tip="Block: stops this much of the monster's next hit. It resets every turn.">⛨ ${f.block}</div>` : '';
-  return `<div class="scene ${fx === 'open' ? 'fx-enter' : ''}">${corridorSVG({ num: s.door, boss: f.mon.boss, open: true })}<div class="actors dist${f.dist}">${heroSVG(s, heroFx, shield + `<div class="hpbar me" data-tip="Your Grit."><i style="width:${s.grit / s.maxGrit * 100}%"></i><span>${s.grit}/${s.maxGrit}</span></div>`)}${monsterSVG(f.mon, monFx, intentBadge(s) + `<div class="hpbar" data-tip="Monster health. Bring it to zero to win.${f.mon.f ? ' ' + esc(f.mon.f) : ''}"><i style="width:${hpP * 100}%"></i><span>${Math.max(0, f.hp)}/${f.maxHp}</span></div>`)}</div><span class="tag">${esc(f.mon.n)} · ${TYPE_N[f.mtype] || ''} · round ${f.round}</span><div class="chips">${chips}</div>${floats}${narrBox()}${ex && ex.took ? '<div class="redflash"></div>' : ''}</div>`;
+  return `<div class="scene ${fx === 'open' ? 'fx-enter' : ''}">${corridorSVG({ num: s.door, boss: f.mon.boss, open: true })}<div class="actors dist${f.dist}">${heroSVG(s, heroFx, shield + `<div class="hpbar me" data-tip="Your Grit."><i style="width:${s.grit / s.maxGrit * 100}%"></i><span>${s.grit}/${s.maxGrit}</span></div>`)}${monsterSVG(f.mon, monFx, intentBadge(s) + `<div class="hpbar" data-tip="Monster health. Bring it to zero to win.${f.mon.f ? ' ' + esc(f.mon.f) : ''}"><i style="width:${hpP * 100}%"></i><span>${Math.max(0, f.hp)}/${f.maxHp}</span></div>`)}</div><span class="tag">${esc(f.mon.n)}${G.T.distOn ? ' · ' + (TYPE_N[f.mtype] || '') : ''} · round ${f.round}</span><div class="chips">${chips}</div>${floats}${narrBox()}${ex && ex.took ? '<div class="redflash"></div>' : ''}</div>`;
 }
 function fightPanel(s){
   const f = s.fight, it = G.INTENTS[f.intent], raw = G.incomingRaw(s), ec = G.escapeChance(s), pv = pairPreview(s);
@@ -1704,7 +1707,7 @@ function helpBody(){
 <p><b>Speed.</b> The card you pick first leads. If its ⚡ beats the monster's ⚡, you act before its move, so a killing blow means it never swings. Block always lands.</p>
 <p><b>Getting cards back.</b> Rest (mid-fight or at a camp between doors) returns all spent cards but loses one for good. Loot picks return 4 spent cards. Smelling Salts return 3. Hearths and Mending Thread bring back lost cards. <b>Beating a boss is a checkpoint:</b> every card comes back and you heal fully.</p>
 <p><b>Moves to watch:</b> a <b>Swipe</b> hits for the number shown; a <b>Wind-up</b> hits double but is slow; <b>Guard</b> halves your attacks; a <b>Hex</b> curses you; a <b>Rend</b> tears a card from your hand if it hits. Run out of cards and you stagger home with half your coins.</p>
-<p><b>Distance.</b> You and the monster are Close, Near, Far or Distant. Near is normal. Each step closer adds a third to Might, and each step further takes a third off (rounded down), for you and the monster alike. Any half can be played as a move of 1 instead (◀ ▶), and movement cards move 2 or 3 and are quick. Ranged attacks ignore distance. Brutes charge in, Skirmishers back off and shoot, Lurkers pounce from afar, and Wardens never move.</p>
+${G.T.distOn ? '' : '<!--'}<p><b>Distance.</b> You and the monster are Close, Near, Far or Distant. Near is normal. Each step closer adds a third to Might, and each step further takes a third off (rounded down), for you and the monster alike. Any half can be played as a move of 1 instead (◀ ▶), and movement cards move 2 or 3 and are quick. Ranged attacks ignore distance. Brutes charge in, Skirmishers back off and shoot, Lurkers pounce from afar, and Wardens never move.</p>${G.T.distOn ? '' : '-->'}
 <p><b>Numbers.</b> Attacks use your <b>Might</b> (level + weapons). Blocks use your <b>Armor</b>.</p></div>`;
 }
 
