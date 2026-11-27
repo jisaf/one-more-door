@@ -2097,7 +2097,7 @@ const PAL = [ { n: 'Timber', wall: '#b9875a', trim: '#7a5233', roof: '#8a3b2a' }
   { n: 'Stone', wall: '#a9a59a', trim: '#6c6a63', roof: '#3f6b5a' }, { n: 'Whitewash', wall: '#eee6d6', trim: '#9b8b72', roof: '#3d5a8a' } ];
 const CROPC = { dustcorn: '#d9b44a', mint: '#5fbf7a', pepper: '#d8442f', brave: '#c76bd1', flax: '#6c8fd9', puff: '#e9e3cf', clover: '#3e9b4a', wake: '#b0703a' };
 function rngH(seed){ let x = (seed >>> 0) || 1; return () => (x = (x * 16807) % 2147483647) / 2147483647; }
-const HCX = 46, HS = 48, HT0 = 60, HW = HCX + 8 * 48 + 6, HH = HT0 + 4 * 48 + 4;
+const HCX = 46, HS = 48, HSY = 58, HT0 = 60, HW = HCX + 8 * 48 + 6, HH = HT0 + 4 * 58 + 4, HZ = 1.4;
 function castleHint(R, hue){ // a broken tower and a stub of wall at the left edge
   let o = `<path d="M0 ${HT0 + 8} V${HT0 - 70} h8 v-7 h7 v7 h8 v-4 h7 v10 l6 8 V${HT0 - 38} l10 -6 v-8 h7 v9 l9 4 v${36 + 10} Z" fill="#8f8a80" stroke="#6b665d"/>`;
   o += `<path d="M14 ${HT0 - 30} v-10 a6 6 0 0 1 12 0 v10z" fill="#4d4943"/><path d="M5 ${HT0 - 66} q5 26 -2 52 M38 ${HT0 - 40} q4 16 -1 34" stroke="#4f8a43" stroke-width="3" fill="none"/>`;
@@ -2127,21 +2127,21 @@ function homeSVG(h, hero){
   for (let i = 0; i < 2; i++){ const cx = 90 + R() * (W - 160), cy = 14 + R() * 18; o += `<g fill="#fff" opacity=".75"><ellipse cx="${cx}" cy="${cy}" rx="16" ry="6"/><ellipse cx="${cx + 10}" cy="${cy - 4}" rx="10" ry="6"/></g>`; }
   o += `<path d="M0 ${T0 - 6} Q${W * 0.3} ${T0 - 34 - R() * 12} ${W * 0.55} ${T0 - 14} T${W} ${T0 - 20} V${T0} H0Z" fill="hsl(${110 + hue},28%,64%)"/>`;
   o += `<rect y="${T0}" width="${W}" height="${Hh - T0}" fill="hsl(${100 + hue},38%,54%)"/>`;
-  for (let ty = 0; ty < G.HOME_H; ty++) o += `<rect y="${T0 + ty * S}" width="${W}" height="${S}" fill="hsl(${100 + hue},38%,${50 + ty * 2}%)" opacity=".5"/>`;
+  for (let ty = 0; ty < G.HOME_H; ty++) o += `<rect y="${T0 + ty * HSY}" width="${W}" height="${HSY}" fill="hsl(${100 + hue},38%,${50 + ty * 2}%)" opacity=".5"/>`;
   o += castleHint(R, hue);
   for (let i = 0; i < 34; i++){ const fx = HCX + R() * (W - HCX), fy = T0 + 4 + R() * (Hh - T0 - 8); o += R() < 0.3 ? `<circle cx="${fx}" cy="${fy}" r="1.6" fill="${['#f4e04d', '#f29bd0', '#ffffff'][Math.floor(R() * 3)]}"/>` : `<path d="M${fx} ${fy} l2 -5 l2 5" stroke="hsl(${100 + hue},40%,38%)" fill="none"/>`; }
-  const tx0 = tx => HCX + tx * S, ty0 = ty => T0 + ty * S, taken = new Set();
+  const tx0 = tx => HCX + tx * S, ty0 = ty => T0 + ty * HSY, art = (x, y, f) => { const ax = x + S / 2, ay = y + HSY - 6; return `<g transform="translate(${ax} ${ay}) scale(${HZ}) translate(${-ax} ${-ay})">${f(x, y + HSY - S)}</g>`; }, taken = new Set();
   const ids = Object.keys(h.at || {}).filter(id => (+(h.lv[id] || 0)) || G.HOME_START[id]).sort((a, b) => h.at[a][1] - h.at[b][1]);
   for (const id of ids) taken.add(h.at[id].join(','));
-  if (!hero) for (let ty = 0; ty < G.HOME_H; ty++) for (let tx = 0; tx < G.HOME_W; tx++) if (!taken.has(tx + ',' + ty)) { const cx = tx0(tx) + S / 2, cy = ty0(ty) + S / 2, on = homeSpot && homeSpot[0] === tx && homeSpot[1] === ty;
-    o += on ? `<rect x="${tx0(tx) + 3}" y="${ty0(ty) + 3}" width="${S - 6}" height="${S - 6}" rx="8" fill="rgba(255,255,255,.35)" stroke="#fff" stroke-width="2"/><path d="M${cx - 8} ${cy} h16 M${cx} ${cy - 8} v16" stroke="#fff" stroke-width="3" stroke-linecap="round"/>`
+  if (!hero) for (let ty = 0; ty < G.HOME_H; ty++) for (let tx = 0; tx < G.HOME_W; tx++) if (!taken.has(tx + ',' + ty)) { const cx = tx0(tx) + S / 2, cy = ty0(ty) + HSY / 2, on = homeSpot && homeSpot[0] === tx && homeSpot[1] === ty;
+    o += on ? `<rect x="${tx0(tx) + 3}" y="${ty0(ty) + 3}" width="${S - 6}" height="${HSY - 6}" rx="8" fill="rgba(255,255,255,.35)" stroke="#fff" stroke-width="2"/><path d="M${cx - 8} ${cy} h16 M${cx} ${cy - 8} v16" stroke="#fff" stroke-width="3" stroke-linecap="round"/>`
       : `<path d="M${cx - 4} ${cy} h8 M${cx} ${cy - 4} v8" stroke="#fff" stroke-width="${homeMove ? 2.5 : 1.5}" stroke-linecap="round" opacity="${homeMove ? .9 : .32}"/>`; }
   for (const id of ids){ const lv = +(h.lv[id] || 0), [cx, cy] = h.at[id], pal = PAL[(h.style || {})[id] || 0];
-    if (id === 'hearth' && !lv) o += shackArt(tx0(cx), ty0(cy), pal);
-    else if (id === 'garden' && !lv) o += starterBed(tx0(cx), ty0(cy), h);
-    else o += partArt(id, lv, pal, tx0(cx), ty0(cy), S, h, false); }
-  if (!hero && homeSel && h.at[homeSel]) { const [sx, sy] = h.at[homeSel]; o += `<rect x="${tx0(sx) + 1}" y="${ty0(sy) + 1}" width="${S - 2}" height="${S - 2}" rx="8" fill="none" stroke="#fff" stroke-width="2.5" stroke-dasharray="5 3"/>`; }
-  if (!hero) for (let ty = 0; ty < G.HOME_H; ty++) for (let tx = 0; tx < G.HOME_W; tx++) o += `<rect data-tile="${tx},${ty}" x="${tx0(tx)}" y="${ty0(ty)}" width="${S}" height="${S}" fill="transparent" style="cursor:pointer"/>`;
+    if (id === 'hearth' && !lv) o += art(tx0(cx), ty0(cy), (x, y) => shackArt(x, y, pal));
+    else if (id === 'garden' && !lv) o += art(tx0(cx), ty0(cy), (x, y) => starterBed(x, y, h));
+    else o += art(tx0(cx), ty0(cy), (x, y) => partArt(id, lv, pal, x, y, S, h, false)); }
+  if (!hero && homeSel && h.at[homeSel]) { const [sx, sy] = h.at[homeSel]; o += `<rect x="${tx0(sx) + 1}" y="${ty0(sy) + 1}" width="${S - 2}" height="${HSY - 2}" rx="8" fill="none" stroke="#fff" stroke-width="2.5" stroke-dasharray="5 3"/>`; }
+  if (!hero) for (let ty = 0; ty < G.HOME_H; ty++) for (let tx = 0; tx < G.HOME_W; tx++) o += `<rect data-tile="${tx},${ty}" x="${tx0(tx)}" y="${ty0(ty)}" width="${S}" height="${HSY}" fill="transparent" style="cursor:pointer"/>`;
   return o + `</svg>`;
 }
 function house(x, y, S, p, lv, f){ // a little building that grows with level
@@ -2350,7 +2350,7 @@ function bind(){
   document.querySelectorAll('[data-bed]').forEach(el => el.onchange = () => { G.plant(meta, +el.dataset.bed, el.value); save(); render(); });
   document.querySelectorAll('[data-hname]').forEach(el => el.onchange = () => { meta.home.name = el.value.slice(0, 30); save(); });
   all('[data-hcode]', () => { homeOut = { k: 'code', v: homeCode() }; render(); });
-  all('[data-hpic]', () => { const svg = homeSVG(meta.home, true).replace('<svg ', '<svg width="768" height="451" '); const img = new Image(); img.onload = () => { try{ const c = document.createElement('canvas'); c.width = 768; c.height = 492; const x = c.getContext('2d'); x.fillStyle = '#efe7d8'; x.fillRect(0, 0, 768, 492); x.drawImage(img, 0, 0, 768, 451); x.fillStyle = '#3b3226'; x.font = 'bold 22px Georgia, serif'; x.fillText((meta.home.name || 'My homestead') + ' · One More Door', 16, 478); homeOut = { k: 'pic', v: c.toDataURL('image/png') }; }catch(e){ homeOut = { k: 'pic', v: 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg) }; } render(); }; img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg); });
+  all('[data-hpic]', () => { const svg = homeSVG(meta.home, true).replace('<svg ', '<svg width="768" height="507" '); const img = new Image(); img.onload = () => { try{ const c = document.createElement('canvas'); c.width = 768; c.height = 548; const x = c.getContext('2d'); x.fillStyle = '#efe7d8'; x.fillRect(0, 0, 768, 548); x.drawImage(img, 0, 0, 768, 507); x.fillStyle = '#3b3226'; x.font = 'bold 22px Georgia, serif'; x.fillText((meta.home.name || 'My homestead') + ' · One More Door', 16, 534); homeOut = { k: 'pic', v: c.toDataURL('image/png') }; }catch(e){ homeOut = { k: 'pic', v: 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg) }; } render(); }; img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg); });
   all('[data-hvisitgo]', () => { const t = ($('[data-hvisit]') || {}).value || ''; const v = readCode(t); if (!v) { homeOut = { k: 'bad' }; } else { const gl = gallery(); gl.unshift(t.trim()); try{ localStorage.setItem('omd-home-gallery', JSON.stringify(gl.slice(0, 12))); }catch(e){} homeOut = null; } render(); });
   all('[data-hdrop]', b => { const gl = gallery(); gl.splice(+b.dataset.hdrop, 1); try{ localStorage.setItem('omd-home-gallery', JSON.stringify(gl)); }catch(e){} render(); });
   all('[data-openk]', b => act(() => G.openDoor(run, +b.dataset.openk)));
