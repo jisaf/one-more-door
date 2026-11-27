@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#efe7d8">
-<title>One More Door Halves</title>
+<title>One More Door Homestead</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style>
 :root{--bg:#efe7d8;--card:#fbf6ec;--card2:#e9dfcd;--ink:#1f1a14;--muted:#6a5f52;--line:#d6c9b3;--accent:#b4441f;--accent-ink:#fff;--ok:#2f7a4b;--bad:#b3261e;--gold:#94690a;--ember:#c4501a;--atk:#c0442c;--blk:#3f78a8;--skl:#4f8a4f;--shadow:0 6px 24px rgba(40,25,10,.18)}
@@ -227,7 +227,7 @@ span[data-tip],div[data-tip],b[data-tip]{cursor:help}
 .dtrack .dc.to{border-color:var(--accent);border-style:dashed;color:var(--ink)}
 .actors.dist0{justify-content:center;gap:0}.actors.dist1{padding-left:14%;padding-right:14%}.actors.dist2{padding-left:8%;padding-right:8%}.actors.dist3{padding-left:1%;padding-right:1%}
 .intent.i-charge,.intent.i-pounce{border-color:#d8443a}.next.i-charge,.next.i-pounce{border-left-color:var(--bad)}.next.i-shoot{border-left-color:var(--accent)}
-</style>
+.pack{display:flex;justify-content:space-between;align-items:center;gap:8px;flex:none;margin:4px 0 2px;padding:5px 8px;border-radius:10px;background:var(--panel2,rgba(255,255,255,.05));border:1px solid var(--line,rgba(255,255,255,.12));font-size:14px;font-variant-numeric:tabular-nums}.pack .pmats,.pack .ptoks{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.pack .pk b,.pack .tk b{margin-left:3px}.pack .tk{padding:1px 7px;border-radius:8px;background:rgba(255,200,80,.14);font-weight:600}.pack .tk.off{opacity:.35;background:none}.tinybtn{padding:2px 8px;font-size:12px;min-height:0;display:inline-block;width:auto}.tabs{grid-template-columns:repeat(5,1fr)}.hmats{display:flex;justify-content:space-between;gap:2px;font-size:13px;flex:none}.hmats span{white-space:nowrap}.hmats span b{margin-left:1px}.hmats .z{opacity:.35}.hscene{flex:none}.hscene svg{width:100%;height:auto;display:block;border-radius:12px;box-shadow:var(--shadow)}.hinsp{flex:none;padding:8px 10px}.hrow{display:flex;gap:6px;align-items:center;justify-content:space-between}.hgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:4px}.hgrid button{padding:4px 2px;font-size:12px;min-height:38px;line-height:1.15}.hgrid button small{display:block;font-size:11px}.hgrid button.on{box-shadow:0 0 0 2px var(--accent)}.hgrid button.dim{opacity:.55}.hbuild{width:auto;min-width:96px;padding:4px 10px;font-size:13px}.hbuild small{display:block;font-size:11px}.hbeds{display:grid;grid-template-columns:1fr 1fr;gap:4px 8px;margin-top:4px}.hbeds label{display:flex;flex-direction:column;gap:2px}.hbeds select{font-size:12px;padding:2px}</style>
 <div class="app" id="app"><p class="muted">Loading…</p></div>
 <div id="sheet"></div>
 <div id="modal"></div>
@@ -267,7 +267,7 @@ const MONSTERS = [
   { n: 'Sock Goblin', p: 1, bad: 'shot', f: 'Steals exactly one of every pair.' },
   { n: 'Damp Rat King', p: 2, bad: 'coins', f: 'Crowned with a bottle cap. Demands tribute.' },
   { n: 'Gnawing Ledger', p: 3, bad: 'coins', f: 'An account book with teeth. It is always overdue.' },
-  { n: 'Mildew Knight', p: 3, bad: 'gear', f: 'Rusted shut since the last renovation.' },
+  { n: 'Mildew Knight', p: 3, bad: 'gear', f: 'Rusted shut since the castle fell.' },
   { n: 'Grudge Badger', p: 4, bad: 'level', f: 'Remembers something you did. You do not.' },
   { n: 'Candle Thief', p: 4, bad: 'shot', f: 'Takes the light and anything near it.' },
   { n: 'Tax Imp', p: 5, bad: 'coins', f: 'Has a form for this. Has a form for everything.' },
@@ -291,14 +291,14 @@ const MONSTERS = [
   { n: 'Velvet Horror', p: 15, bad: 'level', f: 'Soft in all the wrong places.' },
   { n: 'Debt Collector Below', p: 16, bad: 'coins', f: 'You signed something once. It remembers.' },
   { n: 'Weeping Colossus', p: 17, bad: 'level', f: 'Cries rocks.' },
-  { n: 'The Unpaid Mason', p: 18, bad: 'gear', f: 'Built this dungeon. Was never paid. Takes it out on you.' },
+  { n: 'The Unpaid Mason', p: 18, bad: 'gear', f: 'Built this castle. Was never paid. Takes it out on you.' },
 ];
-const BOSS = { n: 'The Landlord Beneath', p: 34, bad: 'coins', boss: true, f: 'Owns every door you opened. Wants rent.' };
+const BOSS = { n: 'The Old Lord Beneath', p: 34, bad: 'coins', boss: true, f: 'Still thinks the castle is his. Wants it back, with taxes.' };
 const DEEP_BOSSES = [
-  { n: 'The Assessor', p: 36, bad: 'gear', boss: true, deep: true, f: 'Values everything you own. Takes a cut of the estimate.' },
-  { n: 'Foreclosure Wyrm', p: 38, bad: 'coins', boss: true, deep: true, f: 'Coiled around the building’s foundations. Hungry for equity.' },
-  { n: 'The Underwriter', p: 40, bad: 'level', boss: true, deep: true, f: 'Has already calculated how you die. Wants you to sign here.' },
-  { n: 'Mother of Mortgages', p: 42, bad: 'coins', boss: true, deep: true, f: 'Every debt in the city started as one of her eggs.' },
+  { n: 'The Steward', p: 36, bad: 'gear', boss: true, deep: true, f: 'Counts everything you own. Takes the lord’s share.' },
+  { n: 'Moat Wyrm', p: 38, bad: 'coins', boss: true, deep: true, f: 'Coiled around the castle’s foundations. Hungry for stone.' },
+  { n: 'The Chronicler', p: 40, bad: 'level', boss: true, deep: true, f: 'Has already written how you die. Wants you to sign it.' },
+  { n: 'Mother of Moles', p: 42, bad: 'coins', boss: true, deep: true, f: 'Every tunnel under the castle started as one of her children.' },
 ];
 
 // what a monster does next exchange; shown before you choose
@@ -370,8 +370,8 @@ const GEAR2 = [
   { id: 'flail', n: 'Plumb-Bob Flail', k: 'gear', slot: 'hand', b: 3, tier: 2, fx: { pierce: 1 }, set: 'mason', v: 3, d: 'Your hits ignore Guard. Mason set.' },
   // tier 3: from door 9, and from bosses
   { id: 'cleaver', n: 'Heirloom Cleaver', k: 'gear', slot: 'hand', b: 4, tier: 3, fx: { mpl: 3 }, v: 6, d: '+1 Might for every 3 levels.' },
-  { id: 'crook', n: 'Rent-Collector’s Crook', k: 'gear', slot: 'hand', two: true, b: 9, tier: 3, fx: { winCoins: 6 }, v: 3, d: '+6 coins every win.' },
-  { id: 'shell', n: 'Shell of the Old Tenant', k: 'gear', slot: 'body', b: 4, tier: 3, fx: { apl: 4 }, v: 5, d: '+1 Armor for every 4 levels.' },
+  { id: 'crook', n: 'Tax-Collector’s Crook', k: 'gear', slot: 'hand', two: true, b: 9, tier: 3, fx: { winCoins: 6 }, v: 3, d: '+6 coins every win.' },
+  { id: 'shell', n: 'Shell of the Old Squire', k: 'gear', slot: 'body', b: 4, tier: 3, fx: { apl: 4 }, v: 5, d: '+1 Armor for every 4 levels.' },
   { id: 'crown', n: 'Crown of Bad Ideas', k: 'gear', slot: 'head', b: 3, tier: 3, fx: { top: 6 }, v: 5, d: 'Top halves that hit deal 6 more.' },
   { id: 'leagueboots', n: 'Seven-League Boots', k: 'gear', slot: 'feet', b: 3, esc: 2, tier: 3, fx: { bot: 4 }, v: 4, d: 'Bottom halves that hit deal 4 more.' },
   { id: 'bell', n: 'Warden’s Bell', k: 'gear', slot: 'head', b: 4, tier: 3, fx: { startBlk: 8 }, v: 5, d: 'Start each fight with 8 Block.' },
@@ -501,13 +501,13 @@ const LIBRARY = Object.keys(CARDS).filter(k => CARDS[k].price);
 const STARTER_DECK = ['strike', 'strike', 'sidestep', 'brace', 'brace', 'heavy', 'jab', 'lunge'];
 // Leases: chosen difficulty. Harder doors, bigger pay. Beating the Landlord on a Lease opens the next one and raises Forge limits.
 const LEASES = [
-  { n: 'Tenancy', d: 'The doors as they are.' },
-  { n: 'Short Lease', d: 'Monsters are tougher. Gold and Embers pay more.' },
-  { n: 'Hard Lease', d: 'Tougher still, and they hit harder.' },
-  { n: 'Iron Lease', d: 'Every fight is a grind.' },
-  { n: 'Blood Lease', d: 'For people who have bought everything.' },
+  { n: 'Quiet Ruins', d: 'The doors as they are.' },
+  { n: 'Stirring Ruins', d: 'Monsters are tougher. Gold and Embers pay more.' },
+  { n: 'Restless Ruins', d: 'Tougher still, and they hit harder.' },
+  { n: 'Waking Ruins', d: 'Every fight is a grind.' },
+  { n: 'Raging Ruins', d: 'For people who have built everything.' },
 ];
-const leaseName = t => t < LEASES.length ? LEASES[t].n : 'Lease ' + (t + 1);
+const leaseName = t => t < LEASES.length ? LEASES[t].n : 'Ruins ' + (t + 1);
 // Provisions: one-run edges bought with gold before you go down
 const PROVISIONS = [
   { id: 'whet', n: 'Whetstone', d: '+1 Might for this run.', cost: 40 },
@@ -552,8 +552,8 @@ const CALLINGS = {
 const ORIGIN = { n: 'Wanderer', d: 'Once per run, a failed escape is rerolled automatically.' };
 
 const FORGE = [
-  { id: 'drill', n: 'Drill Yard', d: 'Start each run 1 level higher.', base: 60, max: 3, grow: true },
-  { id: 'armory', n: 'Armory', d: '+1 Armor every run.', base: 70, max: 2, grow: true },
+  { id: 'drill', n: 'Practice Yard', d: 'Start each run 1 level higher.', base: 60, max: 3, grow: true },
+  { id: 'armory', n: 'Armor Rack', d: '+1 Armor every run.', base: 70, max: 2, grow: true },
   { id: 'hearth', n: 'Hearthstone', d: '+3 max Grit.', base: 80, max: 3, grow: true },
   { id: 'cobbler', n: 'Cobbler', d: 'Escape is 1 easier.', base: 120, max: 2 },
   { id: 'satchel', n: 'Satchel', d: 'Start with 1 more one-shot.', base: 60, max: 2, grow: true },
@@ -614,6 +614,72 @@ function bountyHit(s, k, x) {
     b.done = true; log(s, `Bounty done: ${b.t}`); ev(s, { t: 'bounty', b }); }
 }
 function bestKills(s, n) { return (s.best && s.best[n]) || 0; }
+const MATS = [
+  { id: 'wood', n: 'Wood', r: 1, i: '🪵' }, { id: 'brick', n: 'Brick', r: 1, i: '🧱' }, { id: 'iron', n: 'Iron', r: 1, i: '🔩' },
+  { id: 'oak', n: 'Heartwood', r: 2, i: '🌳' }, { id: 'stone', n: 'Dressed Stone', r: 2, i: '🪨' }, { id: 'silver', n: 'Silver', r: 2, i: '🥈' },
+  { id: 'glass', n: 'Castle Glass', r: 3, i: '🔮' }, { id: 'star', n: 'Starmetal', r: 3, i: '✨' },
+];
+const RAR_N = { 1: 'common', 2: 'rare', 3: 'relic' };
+// c: cost per level, as {mat: n}. town: which run mechanic the part drives.
+const PARTS = [
+  { id: 'hearth', n: 'Cottage', zone: 'house', d: 'Grow your shack into a home. You start every run with more Grit.', L: ['+3 max Grit.', '+6 max Grit.', '+9 max Grit.'],
+    c: [{ wood: 4, brick: 4 }, { wood: 6, brick: 8, stone: 2 }, { brick: 12, stone: 4, glass: 1 }] },
+  { id: 'tower', n: 'Lookout Tower', zone: 'house', town: 'watchtower', d: 'Rebuild the old tower. From the top you can see what waits behind each door.', L: ['Two doors to pick from.', 'Three doors to pick from.', 'Three doors, and 25% more gold.'],
+    c: [{ wood: 6, brick: 6 }, { brick: 10, iron: 4, stone: 3 }, { stone: 6, silver: 2, glass: 1 }] },
+  { id: 'bunk', n: 'Bunk Room', zone: 'house', town: 'tavern', d: 'A spare bed brings a farmhand along. At the end of each round they hit the monster too.', L: ['They hit for half your Might.', 'Three quarters of your Might.', 'Your full Might.'],
+    c: [{ wood: 8, iron: 2 }, { wood: 10, oak: 3, iron: 4 }, { oak: 6, silver: 2, star: 1 }] },
+  { id: 'forge', n: 'Forge', zone: 'house', town: 'smithy', d: 'At a hearth you can hone a card: every copy hits and blocks harder for the run.', L: ['Honing adds 50%.', 'Honing adds 75%.', 'Honing adds 100%.'],
+    c: [{ brick: 6, iron: 6 }, { brick: 8, iron: 10, silver: 2 }, { iron: 12, silver: 3, star: 1 }] },
+  { id: 'cart', n: 'Peddler’s Cart', zone: 'house', town: 'market', d: 'A peddler visits. At a hearth you can trade coins for a treasure.', L: ['16 coins buys one find.', 'Finds from 4 doors deeper.', 'Two finds for the price.'],
+    c: [{ wood: 8, iron: 3 }, { wood: 10, oak: 2, silver: 2 }, { oak: 5, silver: 4, star: 1 }] },
+  { id: 'chapel', n: 'Chapel Corner', zone: 'house', town: 'chapel', d: 'A quiet corner of the old chapel. Every run starts with a second favor.', L: ['A second favor at the start.', 'Favor offers show one more choice.', 'Shrines also restore 4 Grit.'],
+    c: [{ brick: 8, stone: 1 }, { brick: 10, stone: 4, glass: 1 }, { stone: 8, glass: 2 }] },
+  { id: 'doghouse', n: 'Dog House', zone: 'farm', town: 'kennel', d: 'A dog follows you down and takes the first damage meant for you each fight.', L: ['Takes the first 3.', 'Takes the first 5.', 'Takes 8, and fetches a spent card after each win.'],
+    c: [{ wood: 6 }, { wood: 8, oak: 3 }, { oak: 6, silver: 2, star: 1 }] },
+  { id: 'study', n: 'Study', zone: 'house', town: 'archive', d: 'Maps and notices. More bounties are posted each run.', L: ['Two bounties each run.', 'Three bounties.', 'Bounties pay 50% more.'],
+    c: [{ wood: 6, brick: 4 }, { oak: 3, stone: 3, silver: 1 }, { oak: 5, glass: 2, star: 1 }] },
+  { id: 'garden', n: 'Garden Beds', zone: 'farm', d: 'Plant crops that ripen into one-shots over a few runs. You start with one bed. Ripe crops go to your pantry.', L: ['2 beds.', '4 beds.', '6 beds.'],
+    c: [{ wood: 3 }, { wood: 8, brick: 4 }, { wood: 10, stone: 3, oak: 2 }] },
+  { id: 'orchard', n: 'Orchard', zone: 'farm', d: 'Young trees take 3 runs to bear. After that, fruit for the pantry every run.', L: ['A Fizzing Tonic every run.', 'Two Tonics every run.', 'Two Tonics and a Liquid Courage.'],
+    c: [{ wood: 4, brick: 2 }, { wood: 6, oak: 3 }, { oak: 6, silver: 1, glass: 1 }] },
+  { id: 'well', n: 'Well', zone: 'farm', d: 'Clean water. Crops grow faster and heavier.', L: ['Crops ripen a run sooner.', 'Each bed yields one more.', 'And your pantry sends 1 more one-shot down with you.'],
+    c: [{ brick: 6, iron: 2 }, { brick: 8, stone: 3, iron: 3 }, { stone: 6, silver: 2, glass: 1 }] },
+  { id: 'kiln', n: 'Kiln', zone: 'farm', d: 'Fires common materials into rare ones while you are away.', L: ['After each run, 3 commons become 1 rare.', 'Twice after each run.', 'And 4 rares become a relic.'],
+    c: [{ brick: 10, iron: 2 }, { brick: 12, iron: 6, stone: 2 }, { stone: 8, silver: 3, oak: 3 }] },
+];
+const CROPS = [
+  { id: 'dustcorn', n: 'Dustcorn', runs: 1, shot: 'sand', yield: 1, d: 'Grinds into Pocket Sand.' },
+  { id: 'mint', n: 'Fizzmint', runs: 1, shot: 'tonic', yield: 1, d: 'Brews into a Fizzing Tonic.' },
+  { id: 'pepper', n: 'Firepepper', runs: 2, shot: 'firejar', yield: 1, d: 'Packs into a Fire Jar.' },
+  { id: 'brave', n: 'Bravewort', runs: 2, shot: 'courage', yield: 1, d: 'Steeps into Liquid Courage.' },
+  { id: 'flax', n: 'Flax', runs: 2, shot: 'thread', yield: 2, d: 'Spins into Mending Thread.' },
+  { id: 'puff', n: 'Puffball', runs: 2, shot: 'smoke', yield: 1, d: 'Dries into a Smoke Bomb.' },
+  { id: 'clover', n: 'Clover', runs: 3, shot: 'penny', yield: 2, d: 'Now and then, a Lucky Penny.' },
+  { id: 'wake', n: 'Wakeroot', runs: 3, shot: 'salts', yield: 2, d: 'Grates into Smelling Salts.' },
+];
+function homeLv(meta, id) { return +((meta.home && meta.home.lv[id]) || 0); }
+function partOf(id) { return PARTS.find(p => p.id === id); }
+function partCost(id, lv) { const p = partOf(id); if (!p || !p.c[lv]) return null; const o = {}, mul = [1, 1.5, 2][lv]; for (const k in p.c[lv]) o[k] = Math.ceil(p.c[lv][k] * mul); return o; }
+function canHome(meta, id) { const lv = homeLv(meta, id), c = partCost(id, lv); if (!c) return false; for (const k in c) if ((meta.mats[k] || 0) < c[k]) return false; return true; }
+const HOME_START = { hearth: [1, 2], garden: [3, 2] };
+function tileFree(meta, x, y, id) { return !Object.keys(meta.home.at).some(k => k !== id && meta.home.at[k][0] === x && meta.home.at[k][1] === y); }
+function buildHome(meta, id, x, y) { if (!canHome(meta, id)) return false; const lv = homeLv(meta, id), c = partCost(id, lv); for (const k in c) meta.mats[k] -= c[k]; meta.home.lv[id] = lv + 1;
+  if (!meta.home.at[id] && x != null && x >= 0 && y >= 0 && x < HOME_W && y < HOME_H && tileFree(meta, x, y, id)) meta.home.at[id] = [x, y];
+  if (!meta.home.at[id]) { const used = new Set(Object.values(meta.home.at).map(a => a.join(','))); outer: for (let y = 0; y < HOME_H; y++) for (let x = 0; x < HOME_W; x++) { const k = ((x * 3 + y * 5 + meta.home.seed) % HOME_W) + ',' + y; const xx = +k.split(',')[0]; if (!used.has(xx + ',' + y)) { meta.home.at[id] = [xx, y]; break outer; } } }
+  if (id === 'garden') fixBeds(meta); if (id === 'orchard' && lv === 0) meta.home.orchard = 0; return true; }
+const HOME_W = 8, HOME_H = 4;
+function placeHome(meta, id, x, y) { if (!meta.home.at[id] || x < 0 || y < 0 || x >= HOME_W || y >= HOME_H) return false; for (const k in meta.home.at) if (k !== id && meta.home.at[k][0] === x && meta.home.at[k][1] === y) meta.home.at[k] = meta.home.at[id].slice(); meta.home.at[id] = [x, y]; return true; }
+function styleHome(meta, id) { meta.home.style[id] = ((meta.home.style[id] || 0) + 1) % 4; return true; }
+function fixBeds(meta) { const n = Math.max(1, 2 * homeLv(meta, 'garden')); while (meta.home.beds.length < n) meta.home.beds.push({ crop: null, age: 0 }); }
+function plant(meta, i, cropId) { const b = meta.home.beds[i]; if (!b || (cropId && !CROPS.find(c => c.id === cropId))) return false; b.crop = cropId || null; b.age = 0; return true; }
+function cropRuns(meta, c) { return Math.max(1, c.runs - (homeLv(meta, 'well') ? 1 : 0)); }
+function pantryTake() { return 2; }
+function homeTown(meta) { const t = {}; for (const p of PARTS) if (p.town && homeLv(meta, p.id)) t[p.town] = homeLv(meta, p.id); return t; }
+function shotById(id) { return Object.assign({}, TREASURES.find(t => t.id === id)); }
+function matDrop(s, r, n, rare, relic) { s.mats = s.mats || {}; const got = {};
+  for (let i = 0; i < n; i++) { const x = r.next(); const pool = MATS.filter(m => m.r === (x < relic ? 3 : x < relic + rare ? 2 : 1)); const m = r.pick(pool); s.mats[m.id] = (s.mats[m.id] || 0) + 1; got[m.id] = (got[m.id] || 0) + 1; }
+  return got; }
+function matLine(got) { return Object.keys(got).map(k => { const m = MATS.find(x => x.id === k); return got[k] + ' ' + m.n; }).join(', '); }
 function townLv(t, id) { return +((t && t[id]) || 0); }
 function upCost(id, lv) { const b = townOf(id); return Math.round(b.cost * [1, 4, 12][lv]); }
 const townOf = id => TOWN.find(b => b.id === id);
@@ -627,9 +693,9 @@ function doorChoices(s) {
 }
 function newMeta() {
   return { gold: 0, folk: {}, town: {}, embers: 0, emberTotal: 0, forge: { drill: 0, armory: 0, hearth: 0, cobbler: 0, satchel: 0, strongbox: 0, lantern: 0 }, cards: [], retired: [], lease: 0, leaseBest: -1, provisions: {},
-    unlocked: { brawler: true, sneak: false, warden: false }, hearth: { spark: 0, reroll: 0, mark: 0, keepsake: 0, wind: 0 }, keepsake: null, deepest: 0, deepBossKills: 0, bossKills: 0, oathUnlocked: false, runs: 0, bestDoor: 0, history: [], bestiary: {}, bestMile: 0 };
+    unlocked: { brawler: true, sneak: false, warden: false }, hearth: { spark: 0, reroll: 0, mark: 0, keepsake: 0, wind: 0 }, keepsake: null, deepest: 0, deepBossKills: 0, bossKills: 0, oathUnlocked: false, runs: 0, bestDoor: 0, history: [], bestiary: {}, bestMile: 0, mats: {}, pantry: [], home: { lv: {}, at: { hearth: [1, 2], garden: [3, 2] }, style: {}, beds: [{ crop: null, age: 0 }], orchard: 0, seed: Math.floor(Math.random() * 9973), name: '' } };
 }
-function fixMeta(m) { const n = newMeta(); m.bestiary = m.bestiary || {}; m.bestMile = m.bestMile || 0; m.folk = m.folk || {}; m.town = m.town || {}; m.forge = Object.assign(n.forge, m.forge || {}); m.unlocked = Object.assign(n.unlocked, m.unlocked || {}); m.hearth = Object.assign(n.hearth, m.hearth || {}); for (const k of ['keepsake', 'deepest', 'deepBossKills', 'cards', 'retired', 'lease', 'leaseBest', 'provisions']) if (m[k] === undefined) m[k] = n[k];
+function fixMeta(m) { const n = newMeta(); m.mats = m.mats || {}; m.pantry = m.pantry || []; m.home = Object.assign(n.home, m.home || {}); for (const k in HOME_START) if (!m.home.at[k]) { const [sx, sy] = HOME_START[k]; let x = sx, y = sy; for (let i = 0; i < HOME_W * HOME_H && !tileFree(m, x, y, k); i++) { x = (x + 1) % HOME_W; if (!x) y = (y + 1) % HOME_H; } m.home.at[k] = [x, y]; } fixBeds(m); m.bestiary = m.bestiary || {}; m.bestMile = m.bestMile || 0; m.folk = m.folk || {}; m.town = m.town || {}; m.forge = Object.assign(n.forge, m.forge || {}); m.unlocked = Object.assign(n.unlocked, m.unlocked || {}); m.hearth = Object.assign(n.hearth, m.hearth || {}); for (const k of ['keepsake', 'deepest', 'deepBossKills', 'cards', 'retired', 'lease', 'leaseBest', 'provisions']) if (m[k] === undefined) m[k] = n[k];
   if (m.leaseBest < 0 && m.bossKills) m.leaseBest = 0; m.lease = Math.max(0, Math.min(m.lease, m.leaseBest + 1)); return m; }
 const forgeRanks = m => Object.values(m.forge).reduce((a, b) => a + (b || 0), 0);
 function buyForge(meta, id) {
@@ -676,10 +742,12 @@ function startRun(meta, opts) {
   };
   s.grit = s.maxGrit; s.cards = s.deck.slice();
   const r = rngOf(s);
-  s.town = Object.assign({}, meta.town); s.honed = {};
+  s.town = homeTown(meta); s.honed = {}; s.mats = {};
+  if (homeLv(meta, 'hearth')) { s.maxGrit += 3 * homeLv(meta, 'hearth'); s.grit = s.maxGrit; }
   s.best = Object.assign({}, meta.bestiary); s.kills = {}; s.bounties = makeBounties(meta, s, r);
-  { const nf = TOWN.find(b => !meta.folk[b.id]); s.captive = nf ? { id: nf.id, door: r.int(nf.from || T.captiveFrom, nf.to || T.captiveTo), freed: false } : null; }
+  s.captive = null;
   s.queue.push(Object.assign({ src: 'start' }, STARTER.hand), Object.assign({ src: 'start' }, STARTER.body));
+  { const n = pantryTake() + (homeLv(meta, 'well') >= 3 ? 1 : 0); for (let i = 0; i < n && meta.pantry.length; i++) { const id = meta.pantry.shift(); s.queue.push(Object.assign(shotById(id), { src: 'pantry' })); } }
   if (meta.keepsake && meta.hearth.keepsake) { s.queue.push(Object.assign({}, meta.keepsake, { src: 'keepsake' })); meta.keepsake = null; }
   for (let i = 0; i < 1 + meta.forge.satchel; i++) s.queue.push(Object.assign(drawShot(r), { src: 'start' }));
   const pv = meta.provisions || {};
@@ -859,7 +927,7 @@ function rerollFavor(s) {
 function rest(s, how, i) { // hearth: 'rest' heals, 'temper' adds 1 Might for the run, 'cull' burns card i out of your deck
   if (s.phase !== 'hearth') return;
   if (how === 'cull') { if (s.deck.length <= T.minDeck || !s.deck[i]) return; const id = s.deck.splice(i, 1)[0]; log(s, `You feed ${CARDS[id].n} to the fire. Your deck is leaner.`); }
-  else if (how === 'hone') { if (!s.town || !s.town.smithy || !s.deck[i]) return; const id = s.deck[i]; s.honed[id] = (s.honed[id] || 0) + 1; log(s, `The Smith hones your ${CARDS[id].n}. Every copy hits and blocks harder for this run.`); }
+  else if (how === 'hone') { if (!s.town || !s.town.smithy || !s.deck[i]) return; const id = s.deck[i]; s.honed[id] = (s.honed[id] || 0) + 1; log(s, `You hone your ${CARDS[id].n} at the forge. Every copy hits and blocks harder for this run.`); }
   else if (how === 'market') { const lv = townLv(s.town, 'market'); if (!lv || s.coins < T.marketPrice) return; const r = rngOf(s); s.coins -= T.marketPrice;
     for (let j = 0; j < (lv >= 3 ? 2 : 1); j++) s.queue.push(Object.assign(drawTreasure(r, s.calling, s.door + (lv >= 2 ? 4 : 0)), { src: 'market' }));
     saveRng(s, r); log(s, `The Peddler sells you ${lv >= 3 ? 'two finds' : 'a find'} for ${T.marketPrice} coins.`); s.phase = 'treasure'; ev(s, { t: 'rested', how }); return; }
@@ -901,6 +969,7 @@ function openDoor(s, k) {
     log(s, `Door ${d}: ${door.mon.n}, ${hp} health${tw.length ? ' — ' + tw.map(t => t.n).join(', ') : ''}.`);
   } else if (door.type === 'treasure') {
     s.coins += T.coinPerWin; s.queue.push(Object.assign(drawTreasure(r, s.calling, d), { src: 'stash' }));
+    { const got = matDrop(s, r, 2, Math.min(0.35, Math.max(0, (d - 4) * 0.03)), 0); log(s, `Among the junk: ${matLine(got)}.`); }
     log(s, `Door ${d}: a forgotten stash. +${T.coinPerWin} coins and a treasure.`);
     s.phase = 'treasure'; ev(s, { t: 'stash' });
   } else if (door.type === 'shrine') {
@@ -1080,7 +1149,7 @@ function canUnleash() { return false; }
 function playCard() { return false; }
 function bossRage(s) {
   const f = s.fight;
-  if (f.mon.boss && !f.raged && f.hp <= f.maxHp * T.rageAt) { f.raged = true; f.dmg += T.rageDmg; f.forceHeavy = true; log(s, f.mon.deep ? `${cap(the(f.mon.n))} is furious now.` : `The Landlord stops smiling. Rent is due.`); }
+  if (f.mon.boss && !f.raged && f.hp <= f.maxHp * T.rageAt) { f.raged = true; f.dmg += T.rageDmg; f.forceHeavy = true; log(s, f.mon.deep ? `${cap(the(f.mon.n))} is furious now.` : `The Old Lord stops smiling. He wants his castle back.`); }
 }
 // end your exchange: the monster acts on its shown intent
 
@@ -1126,6 +1195,9 @@ function win(s, how) {
   const r = rngOf(s); const f = s.fight; const big = f.mon.p >= T.bigMonster;
   if (s.captive && !s.captive.freed && s.door >= s.captive.door) { s.captive.freed = true; log(s, `Behind it you find the ${townOf(s.captive.id).folk}, tied up. They follow you. Get them home alive.`); }
   s.kills[f.mon.n] = (s.kills[f.mon.n] || 0) + 1; bountyHit(s, 'kill', f.mon.n); if (big && !f.mon.boss) bountyHit(s, 'big'); if (!f.took) bountyHit(s, 'flawless', s.door);
+  { const d = s.door, n = (big ? 2 : 1) + (f.mon.boss ? 1 : 0), rare = Math.min(0.35, Math.max(0, (d - 4) * 0.03)), relic = d >= 12 ? Math.min(0.06, (d - 10) * 0.01) : 0;
+    const got = matDrop(s, r, n, rare, relic); if (f.mon.boss) { const m = r.pick(MATS.filter(x => x.r === 3)); s.mats[m.id] = (s.mats[m.id] || 0) + 1; got[m.id] = (got[m.id] || 0) + 1; }
+    log(s, `You salvage ${matLine(got)}.`); }
   const lv = big ? 2 : 1; s.level += lv; if (T.gritPerLevel) { s.maxGrit += lv * T.gritPerLevel; s.grit += lv * T.gritPerLevel; }
   const coins = (T.coinPerWin * (big ? 2 : 1) + (has(s, 'pockets') ? 4 : 0) + gx(s, 'winCoins')) * f.greed; s.coins += coins;
   const heal = Math.min(s.maxGrit - s.grit, T.winHeal + (has(s, 'emberheart') ? 3 : 0) + gx(s, 'winHeal')); s.grit += heal; for (let j = 0; j < T.winMend && s.lost.length; j++) s.cards.push(s.lost.pop());
@@ -1265,8 +1337,8 @@ function endRun(s, how) {
   if (gold && how !== 'dead' && townLv(s.town, 'watchtower') >= 3) gold = Math.floor(gold * 1.25);
   const deep = Math.max(0, cleared - T.doors);
   s.ended = { how, door: s.door, cleared, gold, deep, deepBosses: s.deepBosses, embers: Math.round((Math.max(0, Math.min(cleared, T.doors)) * T.emberPerDoor + deep * T.emberDeepDoor + s.deepBosses * T.emberDeepBoss) * (1 + T.leaseEmber * (s.lease || 0))), lease: s.lease || 0,
-    keep: how !== 'dead' ? bestGear(s) : null, folk: how !== 'dead' && s.captive && s.captive.freed ? s.captive.id : null, kills: Object.assign({}, s.kills || {}) };
-  { const bm = townLv(s.town, 'archive') >= 3 ? 1.5 : 1, done = (s.bounties || []).filter(b => b.done); s.ended.bounty = { n: done.length, of: (s.bounties || []).length, gold: Math.round(done.reduce((a, b) => a + b.g, 0) * bm), embers: Math.round(done.reduce((a, b) => a + b.e, 0) * bm) }; }
+    keep: how !== 'dead' ? bestGear(s) : null, folk: null, mats: (() => { const o = {}; for (const k in (s.mats || {})) { const v = how === 'dead' ? Math.ceil(s.mats[k] / 2) : s.mats[k]; if (v) o[k] = v; } return o; })(), kills: Object.assign({}, s.kills || {}) };
+  { const bm = townLv(s.town, 'archive') >= 3 ? 1.5 : 1, done = (s.bounties || []).filter(b => b.done); s.ended.bounty = { n: done.length, of: (s.bounties || []).length, gold: Math.round(done.reduce((a, b) => a + b.g, 0) * bm), embers: Math.round(done.reduce((a, b) => a + b.e, 0) * bm), mats: (() => { const o = {}, rr = MATS.filter(m => m.r === 2); done.forEach((b, i) => { const m = rr[(i + (s.door || 0)) % rr.length]; o[m.id] = (o[m.id] || 0) + 1; }); return o; })() }; }
   log(s, how === 'dead' ? `Run over. ${gold ? 'Your Strongbox saved ' + gold + ' gold.' : 'Everything you carried is lost.'}` : `You walk home with ${gold} gold.`);
 }
 function settle(meta, s) {
@@ -1277,7 +1349,16 @@ function settle(meta, s) {
   if (e.keep && meta.hearth && meta.hearth.keepsake) meta.keepsake = Object.assign({}, e.keep); 
   meta.deepest = Math.max(meta.deepest || 0, e.deep || 0); meta.deepBossKills = (meta.deepBossKills || 0) + (e.deepBosses || 0);
   if (e.folk) meta.folk[e.folk] = true;
-  if (e.bounty) { meta.gold += e.bounty.gold; embers += e.bounty.embers; }
+  { for (const k in (e.mats || {})) meta.mats[k] = (meta.mats[k] || 0) + e.mats[k];
+    const h = meta.home, grown = [];
+    for (const b of h.beds) { if (!b.crop) continue; const c = CROPS.find(x => x.id === b.crop); b.age++; if (b.age >= cropRuns(meta, c)) { const n = c.yield + (homeLv(meta, 'well') >= 2 ? 1 : 0); for (let i = 0; i < n; i++) meta.pantry.push(c.shot); grown.push(n + ' ' + c.n); b.age = 0; } }
+    if (homeLv(meta, 'orchard')) { h.orchard = (h.orchard || 0) + 1; if (h.orchard > 3) { const ol = homeLv(meta, 'orchard'); meta.pantry.push('tonic'); if (ol >= 2) meta.pantry.push('tonic'); if (ol >= 3) meta.pantry.push('courage'); grown.push('fruit from the orchard'); } }
+    const kl = homeLv(meta, 'kiln'), fired = [];
+    for (let i = 0; i < (kl >= 2 ? 2 : kl); i++) { const com = MATS.filter(m => m.r === 1).sort((a, b) => (meta.mats[b.id] || 0) - (meta.mats[a.id] || 0))[0]; if ((meta.mats[com.id] || 0) < 3) break; meta.mats[com.id] -= 3; const rr = MATS.filter(m => m.r === 2)[(h.kilns = (h.kilns || 0) + 1) % 3]; meta.mats[rr.id] = (meta.mats[rr.id] || 0) + 1; fired.push(rr.n); }
+    if (kl >= 3) { const ra = MATS.filter(m => m.r === 2).sort((a, b) => (meta.mats[b.id] || 0) - (meta.mats[a.id] || 0))[0]; if ((meta.mats[ra.id] || 0) >= 4) { meta.mats[ra.id] -= 4; const rl = MATS.filter(m => m.r === 3)[(h.kilns || 0) % 2]; meta.mats[rl.id] = (meta.mats[rl.id] || 0) + 1; fired.push(rl.n); } }
+    if (meta.pantry.length > 30) meta.pantry.splice(0, meta.pantry.length - 30);
+    e.grown = grown; e.fired = fired; }
+  if (e.bounty) { meta.gold += e.bounty.gold; embers += e.bounty.embers; for (const k in (e.bounty.mats || {})) { meta.mats = meta.mats || {}; meta.mats[k] = (meta.mats[k] || 0) + e.bounty.mats[k]; } }
   meta.bestiary = meta.bestiary || {}; const before = {}; for (const k in (e.kills || {})) { before[k] = meta.bestiary[k] || 0; meta.bestiary[k] = before[k] + e.kills[k]; }
   e.newRanks = Object.keys(e.kills || {}).filter(k => (before[k] < 3 && meta.bestiary[k] >= 3) || (before[k] < 8 && meta.bestiary[k] >= 8));
   { const known = Object.keys(meta.bestiary).filter(k => meta.bestiary[k] >= 3).length, mile = Math.floor(known / 5); if (mile > (meta.bestMile || 0)) { e.bestEmbers = 5 * (mile - (meta.bestMile || 0)); embers += e.bestEmbers; meta.bestMile = mile; } }
@@ -1288,24 +1369,24 @@ function settle(meta, s) {
 }
 
 // ---------- tavern ----------
-const KEEPER = 'Ma Ottery';
+const KEEPER = 'Journal';
 function tavernLine(meta, e) {
-  if (!e) return meta.runs ? 'Back again. The doors missed you.' : 'New face. The doors are under the cellar. Most folk come back. Some come back richer.';
-  if (e.how === 'victory' && e.deep) return e.deep >= 10 ? 'You went deeper than the Landlord’s basement? There is a basement under the basement? Do not tell me what lives there.' : 'Past the Landlord and further down. You smell like old paperwork and glory.';
-  if (e.how === 'victory') return 'You beat the Landlord? Then who do we pay rent to now? ...Nobody tell him.';
-  if (e.how === 'dead') return e.door <= 3 ? 'Door ' + e.door + '? I have seen cats go deeper. Have a stew.' : e.door <= 7 ? 'You got greedy, love. Everyone does. The Ember you brought back still glows.' : 'That deep? Folk will sing about it. Badly, but they will sing.';
-  if (e.how === 'fled-boss') return 'You saw the Landlord and walked away with your purse. That is the smartest thing anyone here has done.';
-  return e.door <= 3 ? 'Home early. Nothing wrong with a short shift.' : e.door <= 6 ? 'Solid haul. Spend it before the Tax Imp hears.' : 'Seven doors and home with the loot? Drinks are on you.';
+  if (!e) return meta.runs ? 'Back at the homestead. The doors under the keep are still there. So am I.' : 'Day one in the ruins. There are doors under the old keep, going down. I should see what I can carry back up.';
+  if (e.how === 'victory' && e.deep) return e.deep >= 10 ? 'Past the Old Lord and still going. There is more castle under the castle. I did not like what I heard down there.' : 'Past the Old Lord and further down. The deep doors pay in stranger stone.';
+  if (e.how === 'victory') return 'The Old Lord is down. For one night the castle is mine, and I slept very well.';
+  if (e.how === 'dead') return e.door <= 3 ? 'Only door ' + e.door + '. I came home bruised. The garden does not mind.' : e.door <= 7 ? 'I got greedy and lost half my haul. The Embers I kept still glow in the hearth.' : 'That deep, and I still crawled home. Half a haul is better than none.';
+  if (e.how === 'fled-boss') return 'I met the Old Lord and walked away with my purse. Smartest thing I have done all season.';
+  return e.door <= 3 ? 'A short trip. Nothing wrong with that. There is always another run.' : e.door <= 6 ? 'A good haul. Enough for a few more boards.' : 'Deep and home with the loot. The homestead grows.';
 }
 const LORE = [
-  { at: 3, t: 'Ma Ottery says the doors were dug by a mason nobody paid. "He is still down there," she adds, "invoicing."' },
-  { at: 10, t: 'An old tenant swears the deepest door has a mail slot. Letters go in. Rent comes out.' },
-  { at: 20, t: 'The Embers you bring back are what is left of everyone who went too deep. Ma keeps them warm.' },
-  { at: 35, t: 'Ma admits she once owned the building above the doors. "Sold it," she says. "To someone below."' },
+  { at: 3, t: 'The doors under the keep were cut by a mason nobody paid. Some nights I hear him down there, still chiselling.' },
+  { at: 10, t: 'Found the Old Lord’s seal on a door. He never left the castle. He just moved downstairs.' },
+  { at: 20, t: 'The Embers I bring back are what is left of everyone who went too deep. I keep them warm in the hearth.' },
+  { at: 35, t: 'The castle was not ruined by war. The Old Lord dug too deep, and the deep came up.' },
 ];
 
 Object.assign(T, {"winMend":0,"lootMend":0,"bossHeal":99,"handCap":99,"bossHp":90,"dmgMul":0.8,"lootRecover":2,"hpMul":5.5,"bossRestore":1,"newFavors":0,"baseMight":2,"winRecover":2,"gritPerLevel":1,"easeStart":0.6,"easeDoor":7,"distOn":0}); for (const [k,v] of Object.entries({"heavy":{"spd":20,"top":{"dmg":2.25},"bot":{"blk":1.75}},"lunge":{"spd":60,"top":{"dmg":3.5,"burn":1,"move":1,"dir":"in"},"bot":{"rec":2}},"brace":{"spd":40,"top":{"blk":1.5},"bot":{"blk":1.25}},"jab":{"spd":85,"top":{"dmg":2},"bot":{"dmg":1}},"reckless":{"spd":50,"top":{"dmg":2.5,"self":2},"bot":{"blk":1.25}},"bash":{"spd":45,"top":{"dmg":2},"bot":{"dmg":1,"blk":0.5}},"feint":{"spd":70,"top":{"dmg":2},"bot":{"rec":1,"blk":0.5}},"bulwark":{"spd":30,"top":{"blk":2},"bot":{"blk":1.75}},"pierce":{"spd":55,"top":{"dmg":2,"pierce":1,"reach":1},"bot":{"rec":2}},"momentum":{"spd":55,"top":{"dmg":2.5},"bot":{"dmg":1.25}},"ironskin":{"spd":35,"top":{"blk":2},"bot":{"blk":3,"burn":1}}})) HALVES[k]=v;
-const api = { GEAR_TOK, tokCapOf, TOKENS, TOKEN_CARDS, TOWN, townLv, upCost, makeBounties, bestKills, MONSTERS, townOf, canBuild, buildTown, doorChoices, DSTATS, DIST_N, atDist, halfModes, moveOf, monType, swapOut, dropCard, HALVES, halfPreview, pairOptions, playPair, restFight, restCamp, canCamp, exhausted, T, MONSTERS, BOSS, TWISTS, TREASURES, SETS, setsOn, gx, tierMax, CURSES, CALLINGS, ORIGIN, FORGE, KEEPER, LORE, STARTER, INTENTS, PATRONS, FAVORS,
+const api = { HOME_START, tileFree, fixBeds, MATS, RAR_N, PARTS, CROPS, HOME_W, HOME_H, homeLv, partOf, partCost, canHome, buildHome, placeHome, styleHome, plant, cropRuns, pantryTake, homeTown, shotById, TOWN, GEAR_TOK, tokCapOf, TOKENS, TOKEN_CARDS, TOWN, townLv, upCost, makeBounties, bestKills, MONSTERS, townOf, canBuild, buildTown, doorChoices, DSTATS, DIST_N, atDist, halfModes, moveOf, monType, swapOut, dropCard, HALVES, halfPreview, pairOptions, playPair, restFight, restCamp, canCamp, exhausted, T, MONSTERS, BOSS, TWISTS, TREASURES, SETS, setsOn, gx, tierMax, CURSES, CALLINGS, ORIGIN, FORGE, KEEPER, LORE, STARTER, INTENTS, PATRONS, FAVORS,
   forgeCost, forgeRanks, newMeta, fixMeta, buyForge, unlockCalling, EMBERS, DEEP_BOSSES, emberCost, emberRank, buyEmber, rerollFavor, lastDoor, isDeepBossDoor, deepOf,
   startRun, openDoor, playShot, fight, flee, takeTreasure, takeFavor, rest, manage, canManage, canKeep, bagRoom, replacedBy,
   bank, settle, peek, might, armor, incoming, incomingRaw, enrage, canUnleash, monStats, monsterTotal, fightMight, cardPreview, canPlay, playCard, endTurn, runAway, chooseSpoils, cardPool,
@@ -1319,8 +1400,9 @@ if (typeof module !== 'undefined' && module.exports) module.exports = api; else 
 <script>
 (function(){
 'use strict';
-const G = window.OMD, KEY = 'omd-2h-save-v2', OLDKEY = 'omd-2h-none';
+const G = window.OMD, KEY = 'omd-home-save-v1', OLDKEY = 'omd-2h-none';
 let meta, run, lastEnd = null;
+let homeSel = null, homeOut = null, homeSpot = null, homePick = null, homeMove = false, homePanel = null;
 let calling = 'brawler', oath = false, tab = 'go', retireSel = null;
 let fx = null, narr = [], manageSel = null, sheet = null, pick = [], capNew = null, pairFx = null, focusI = 0, fanScan = false;
 function load(){ try{ let j = JSON.parse(localStorage.getItem(KEY) || 'null'); if (!j){ const o = JSON.parse(localStorage.getItem(OLDKEY) || 'null'); if (o && o.meta) j = { meta: o.meta, run: null, lastEnd: null }; } if (j && j.meta){ meta = G.fixMeta(Object.assign(G.newMeta(), j.meta)); run = j.run && j.run.maxGrit && j.run.deck && j.run.cards ? j.run : null; lastEnd = j.lastEnd || null; return; } }catch(e){} meta = G.newMeta(); run = null; }
@@ -1344,7 +1426,7 @@ const FLAVOR = {
   rathood:'Warm, itchy, faintly judgmental.', ratslip:'Squeak with purpose.', embergaunt:'Hot to the touch. Hotter to the face.', ashmask:'Breathe through your nose. Or not at all.',
   dagger:'Bets everything on the first swing.', spikebuck:'Blocking is just punching with extra steps.', windcoat:'The big swing slides right off.',
   leech:'It drinks. You heal. Nobody asks how.', apron:'Pockets for mortar, trowel, and one emergency sandwich.', flail:'Perfectly level. Perfectly rude.',
-  cleaver:'Passed down. Sharpened up. Gets better with every grudge.', crook:'Rent is due. Rent is always due.', shell:'The previous tenant left it. And everything inside.',
+  cleaver:'Passed down. Sharpened up. Gets better with every grudge.', crook:'Taxes are due. Taxes are always due.', shell:'The last squire left it. And everything inside.',
   crown:'Every thought under it is a terrible one. Every one works.', leagueboots:'Each stride is a kick. Each kick is a stride.', bell:'Ring it once and the room goes quiet.',
   gravecoat:'Dirt on the hem, coins in the lining.', doorbreaker:'Doors fear it. So do the things behind them.'
 };
@@ -1733,13 +1815,13 @@ function render(){
 // ---------- run screen ----------
 function where(s){
   if (s.phase === 'over') return 'Run over';
-  if (s.door === 0) return 'Cellar stairs';
+  if (s.door === 0) return 'Under the keep';
   if (s.door > G.T.doors) return 'Deep ' + G.deepOf(s.door);
   return 'Door ' + s.door + '/' + G.T.doors;
 }
 function topBar(s){
   const lease = s.lease ? `<span class="tiny ember" data-tip="${esc(G.leaseName(s.lease))}: monsters are tougher, and gold and Embers pay more.">◆${s.lease}</span>` : '';
-  return `<div class="bar1"><span class="where" data-tip="How deep you are. Door ${G.T.doors} is the Landlord. Each door deeper makes your coins worth more when you walk home.">${where(s)}</span>${lease}<span class="money"><span data-tip="Coins you are carrying. You lose them if you die down here.">🪙${s.coins}</span> <span class="gold" data-tip="Gold you would take home if you walked out now: your coins times the depth bonus.">→ ${G.bankValue(s)}g</span></span><span class="sp"></span>`
+  return `<div class="bar1"><span class="where" data-tip="How deep you are. Door ${G.T.doors} is the Old Lord. Each door deeper makes your coins worth more when you walk home.">${where(s)}</span>${lease}<span class="money"><span data-tip="Coins you are carrying. You lose them if you die down here.">🪙${s.coins}</span> <span class="gold" data-tip="Gold you would take home if you walked out now: your coins times the depth bonus.">→ ${G.bankValue(s)}g</span></span><span class="sp"></span>`
     + `<button class="ib lab" data-sheet="gear" data-tip="Your gear, belt and pack.">🎒<span>Gear</span></button><button class="ib lab" data-sheet="deck" data-tip="Every card in your deck, and your favors.">🂠<span>Deck ${s.deck.length}</span></button><button class="ib lab" data-sheet="log" data-tip="What has happened this run.">📜<span>Log</span></button></div>`;
 }
 function statBar(s){
@@ -1749,14 +1831,24 @@ function statBar(s){
 function energyDots_unused(s){ const e = s.fight ? s.fight.energy : G.T.energy, n = Math.max(G.T.energy, e); return Array.from({ length: n }, (_, i) => `<i class="${i < e ? 'on' : ''}"></i>`).join(''); }
 function track(s){
   if (s.door > G.T.doors) return '';
-  let h = `<div class="track" data-tip="Your way through the ${G.T.doors} doors. The red one at the end is the Landlord.">`;
+  let h = `<div class="track" data-tip="Your way through the ${G.T.doors} doors. The red one at the end is the Old Lord.">`;
   for (let d = 1; d <= G.T.doors; d++) h += `<div class="pip ${d === G.T.doors ? 'boss' : ''} ${d < s.door || (d === s.door && s.phase !== 'fight') ? 'done' : ''} ${d === s.door && s.phase === 'fight' ? 'now' : ''}"></div>`;
   return h + '</div>';
 }
 function narrBox(){ const lines = narr.length ? narr.slice(-2) : (run ? run.log.slice(-1) : []); return lines.length ? `<div class="narr">${lines.map(l => `<p>${esc(l)}</p>`).join('')}</div>` : ''; }
+function packStrip(s){
+  if (s.phase === 'over') return '';
+  const m = s.mats || {}, ks = G.MATS.filter(x => m[x.id]);
+  const mats = ks.length ? ks.map(x => `<span class="pk" data-tip="${esc(x.n)}: ${m[x.id]} carried. Bring it home to build. You keep half if you die.">${x.i}<b>${m[x.id]}</b></span>`).join('') : `<span class="pk muted" data-tip="Materials you find down here show up here. Bring them home to build.">🧺 nothing yet</span>`;
+  const tk = s.fight ? (s.fight.tok || {}) : (s.tokCarry || {}), cap = G.tokCapOf ? G.tokCapOf(s) : 0;
+  const tdesc = { edge: 'Spend it with Cash In or Flourish for big hits.', guard: 'Spend it with Riposte or Hold the Line.', ember: 'Each one burns the monster for 1 every round. Stoke the Fire spends them.' };
+  const has = ['edge', 'guard', 'ember'].some(k => tk[k]);
+  const toks = has ? ['edge', 'guard', 'ember'].map(k => `<span class="tk ${tk[k] ? '' : 'off'}" data-tip="${G.TOKENS[k].n}: ${tk[k] || 0} of ${cap}. ${tdesc[k]} Tokens carry into your next fight.">${G.TOKENS[k].i}<b>${tk[k] || 0}</b></span>`).join('') : '';
+  return `<div class="pack"><span class="pmats">${mats}</span>${toks ? `<span class="ptoks">${toks}</span>` : ''}</div>`;
+}
 function renderRun(){
   const s = run;
-  let h = topBar(s) + statBar(s) + track(s);
+  let h = topBar(s) + statBar(s) + packStrip(s) + track(s);
   h += s.phase === 'fight' ? fightScene(s) : s.phase === 'over' ? overScene(s) : doorScene(s);
   h += `<div class="panel">${s.phase === 'fight' ? fightPanel(s) : s.phase === 'door' ? doorPanel(s) : s.phase === 'hearth' ? hearthPanel(s) : s.phase === 'over' ? overPanel(s) : waitPanel(s)}</div>`;
   return h;
@@ -1770,7 +1862,7 @@ function doorScene(s){
   const nextDoor = s.phase === 'door' ? s.door + 1 : Math.max(1, s.door);
   const here = s.phase !== 'door';
   const chest = s.phase === 'treasure' && (e.t === 'stash' || e.t === 'start');
-  const tagTxt = s.door === 0 ? 'The cellar stairs' : here ? 'Door ' + s.door : 'Before door ' + nextDoor + ' · pays ×' + G.multAt(nextDoor);
+  const tagTxt = s.door === 0 ? 'Under the keep' : here ? 'Door ' + s.door : 'Before door ' + nextDoor + ' · pays ×' + G.multAt(nextDoor);
   let floats = '';
   if (fx === 'heal' && e.item) floats = `<div class="float h good">+${Math.min(e.item.v, 99)} Grit</div>`;
   if (fx === 'win' && e.coins) floats = `<div class="float m">+${e.coins} coins</div>`;
@@ -1815,7 +1907,7 @@ function fightScene(s){
   if (fx === 'fizzle') floats += `<div class="float h bad">Fizzled</div>`;
   const hpP = Math.max(0, f.hp) / f.maxHp;
   const tk = f.tok || {}, tkh = ['edge', 'guard', 'ember'].filter(k => tk[k]).map(k => `<span data-tip="${G.TOKENS[k].n}: ${k === 'ember' ? 'each one burns the monster for 1 every round. Stoke the Fire spends them.' : k === 'edge' ? 'spend it with Cash In or Flourish for big hits.' : 'spend it with Riposte or Hold the Line.'} Tokens carry into your next fight.">${G.TOKENS[k].i} ${tk[k]}</span>`).join(' ');
-  const shield = (tkh ? `<div class="tiny" style="margin:2px 0">${tkh}</div>` : '') + (f.block ? `<div class="shield" data-tip="Block: stops this much of the monster's next hit. It resets every turn.">⛨ ${f.block}</div>` : '');
+  const shield = (f.block ? `<div class="shield" data-tip="Block: stops this much of the monster's next hit. It resets every turn.">⛨ ${f.block}</div>` : '');
   return `<div class="scene ${fx === 'open' ? 'fx-enter' : ''}">${corridorSVG({ num: s.door, boss: f.mon.boss, open: true })}<div class="actors dist${f.dist}">${heroSVG(s, heroFx, shield + `<div class="hpbar me" data-tip="Your Grit."><i style="width:${s.grit / s.maxGrit * 100}%"></i><span>${s.grit}/${s.maxGrit}</span></div>`)}${monsterSVG(f.mon, monFx, intentBadge(s) + `<div class="hpbar" data-tip="Monster health. Bring it to zero to win.${f.mon.f ? ' ' + esc(f.mon.f) : ''}"><i style="width:${hpP * 100}%"></i><span>${Math.max(0, f.hp)}/${f.maxHp}</span></div>`)}</div><span class="tag">${esc(f.mon.n)}${G.T.distOn ? ' · ' + (TYPE_N[f.mtype] || '') : ''} · round ${f.round}</span><div class="chips">${chips}</div>${floats}${narrBox()}${ex && ex.took ? '<div class="redflash"></div>' : ''}</div>`;
 }
 function fightPanel(s){
@@ -1837,28 +1929,28 @@ function fightPanel(s){
   const belt = s.hand.map((c, i) => `<button class="ib bi" data-shot="${i}" aria-label="${esc(c.n)}: ${esc(shotText(c))}" data-tip="${esc(c.n)}: ${esc(shotText(c))}. One use, free, any time in a fight.">${icon(c)}</button>`).join('');
   h += `<div class="pilerow">${pileLine(s)}</div>`;
   const canRest = s.spent.length > 0;
-  h += `<div class="ctl"><span class="belt">${belt}</span><button class="ib" data-act="run" style="min-height:44px" data-tip="Try to escape: ${pct(ec)} chance. If it fails, the monster gets its move anyway. Running from the Landlord ends the run with your coins.">Run<br><span class="tiny">${pct(ec)}</span></button><button class="ib" data-act="rest" style="min-height:44px" ${canRest ? '' : 'disabled'} data-tip="Rest mid-fight: your ${s.spent.length} spent cards come back, you lose one card of your choice for the run, and the monster still gets its move.">Rest<br><span class="tiny">+${s.spent.length} −1</span></button><button class="primary endt" data-act="play" ${pv ? '' : 'disabled'}>${pv ? 'Play' : pick.length ? 'Pick one more' : 'Pick 2 halves'}</button></div>`;
+  h += `<div class="ctl"><span class="belt">${belt}</span><button class="ib" data-act="run" style="min-height:44px" data-tip="Try to escape: ${pct(ec)} chance. If it fails, the monster gets its move anyway. Running from the Old Lord ends the run with your coins.">Run<br><span class="tiny">${pct(ec)}</span></button><button class="ib" data-act="rest" style="min-height:44px" ${canRest ? '' : 'disabled'} data-tip="Rest mid-fight: your ${s.spent.length} spent cards come back, you lose one card of your choice for the run, and the monster still gets its move.">Rest<br><span class="tiny">+${s.spent.length} −1</span></button><button class="primary endt" data-act="play" ${pv ? '' : 'disabled'}>${pv ? 'Play' : pick.length ? 'Pick one more' : 'Pick 2 halves'}</button></div>`;
   return h;
 }
 function doorLabel(d){ return d.type === 'monster' ? [esc(d.mon.n), 'a monster'] : d.type === 'hearth' ? ['A hearth', 'rest or improve'] : d.type === 'shrine' ? ['A shrine', 'a favor'] : d.type === 'treasure' ? ['Treasure', 'loot, no fight'] : d.type === 'curse' ? ['Something foul', 'a curse'] : [esc(d.type), '']; }
 function doorPanel(s){
   let h = doorPanel0(s); const c = s.captive;
   if (c && !c.freed) { const b = G.townOf(c.id); h = `<p class="say small">🪢 Word is the ${b.folk} is held somewhere past door ${c.door - 1}. Free them and walk home alive to build the ${b.n}.</p>` + h; }
-  else if (c && c.freed) { const b = G.townOf(c.id); h = `<p class="say small">🪢 The ${b.folk} is with you. Walk home alive to bring them to town.</p>` + h; }
+  else if (c && c.freed) { const b = G.townOf(c.id); h = `<p class="say small">🪢 The ${b.folk} is with you. Walk home alive to bring them home.</p>` + h; }
   if (s.bounties && s.bounties.length) h = `<p class="tiny muted" style="margin:0 0 6px">📜 Bounties: ${s.bounties.map(b => b.done ? `<span class="okc">✓ ${esc(b.t)}</span>` : esc(b.t)).join(' · ')}</p>` + h;
   const ch = G.doorChoices(s);
   if (ch) h = h.replace(/<button class="primary[^"]*" id="open"[^>]*>[\s\S]*?<\/button>/, ch.map((d, k) => { const [a, b] = doorLabel(d); return `<button class="primary" data-openk="${k}" data-tip="The Watchtower shows what waits behind each door.">${ch.length > 2 ? ['Left', 'Middle', 'Right'][k] : k ? 'Right' : 'Left'}: ${a}<small>${b}</small></button>`; }).join(''));
   return h;
 }
 function doorPanel0(s){
-  if (s.door === 0) return `<p class="say"><b>Ten doors down, the Landlord waits.</b> Grit and cards carry between doors. Walk home after any door; deeper doors make each coin worth more. Beat a boss and every lost card comes back.</p><button class="primary go" id="open">Open door 1</button><p class="tiny muted" style="margin:0;text-align:center">Hold your finger on anything to read about it.</p>`;
+  if (s.door === 0) return `<p class="say"><b>Ten doors down, the Old Lord waits.</b> Grit and cards carry between doors. Walk home after any door; deeper doors make each coin worth more. Beat a boss and every lost card comes back.</p><button class="primary go" id="open">Open door 1</button><p class="tiny muted" style="margin:0;text-align:center">Hold your finger on anything to read about it.</p>`;
   const nd = s.door + 1, bv = G.bankValue(s), pk = G.peek(s);
   const dboss = G.isDeepBossDoor(nd), p = nd === G.T.doors ? G.BOSS.p : Math.round(G.T.monBase + G.T.monPerDoor * Math.min(nd, 9.5));
   const mon = nd === G.T.doors ? { p, boss: true } : dboss ? { p, boss: true, tier: G.deepOf(nd) / G.T.deepBossEvery } : nd > G.T.doors ? { p: 17, depth: G.deepOf(nd) } : { p };
   if (s.lease) mon.lease = s.lease;
   const st = G.monStats(mon);
-  let say = s.bossDown && s.door === G.T.doors ? '<b>The Landlord is down.</b> Home, or deeper? ' : '';
-  say += nd === G.T.doors ? `The Landlord: ${st.hp} health, swings for ${st.dmg}, doubled on a Wind-up.` : dboss ? `A boss: about ${st.hp} health, swings for ${st.dmg}.` : `Next monsters swing for about ${st.dmg}, doubled on a Wind-up.`;
+  let say = s.bossDown && s.door === G.T.doors ? '<b>The Old Lord is down.</b> Home, or deeper? ' : '';
+  say += nd === G.T.doors ? `The Old Lord: ${st.hp} health, swings for ${st.dmg}, doubled on a Wind-up.` : dboss ? `A boss: about ${st.hp} health, swings for ${st.dmg}.` : `Next monsters swing for about ${st.dmg}, doubled on a Wind-up.`;
   if (pk) say += ` 🏮 Next: <b>${pk.type === 'monster' ? esc(pk.mon.n) : pk.type}</b>.`;
   say += ` You hold <b>${s.cards.length}</b> card${s.cards.length === 1 ? '' : 's'}${s.spent.length ? `, ${s.spent.length} spent` : ''}.`;
   const camp = G.canCamp(s) ? `<button class="campb" data-act="camp" data-tip="Rest here: your ${s.spent.length} spent cards come back and you lose one card of your choice for the run.">Camp<small>+${s.spent.length} cards back, lose 1</small></button>` : '';
@@ -1866,7 +1958,7 @@ function doorPanel0(s){
 }
 function hearthPanel(s){
   const can = s.deck.length > G.T.minDeck, lost = s.lost.length + s.burned.length, mend = Math.min(G.T.mendN, lost);
-  return `<p class="say"><b>A hearth, burning low.</b> Pick one.</p><div class="two"><button class="safe" data-rest="rest" data-tip="Heal Grit.">Rest<small>+${Math.min(G.T.restHeal, s.maxGrit - s.grit)} Grit</small></button><button class="primary" data-rest="mend" ${mend ? '' : 'disabled'} data-tip="Bring back up to ${G.T.mendN} lost cards.">Mend<small>${mend ? '+' + mend + ' lost card' + (mend > 1 ? 's' : '') : 'nothing lost'}</small></button><button data-rest="temper" data-tip="+1 Might for the rest of this run.">Sharpen<small>+1 Might</small></button>${s.town && s.town.smithy ? `<button data-sheet="hone" data-tip="The Smith hones one card for the rest of this run.">Hone<small>one card +${50 + 25 * (G.townLv(s.town, 'smithy') - 1)}%</small></button>` : ''}${s.town && s.town.market ? `<button data-rest="market" ${s.coins < G.T.marketPrice ? 'disabled' : ''} data-tip="The Peddler trades a treasure for coins.">Market<small>${G.townLv(s.town, 'market') >= 3 ? 'two finds' : 'a find'} for ${G.T.marketPrice} coins</small></button>` : ''}<button data-sheet="cull" data-tip="Remove one card from your deck for this run." ${can ? '' : 'disabled'}>Burn a card<small>${can ? 'thin your deck' : 'deck too small'}</small></button></div>`;
+  return `<p class="say"><b>A hearth, burning low.</b> Pick one.</p><div class="two"><button class="safe" data-rest="rest" data-tip="Heal Grit.">Rest<small>+${Math.min(G.T.restHeal, s.maxGrit - s.grit)} Grit</small></button><button class="primary" data-rest="mend" ${mend ? '' : 'disabled'} data-tip="Bring back up to ${G.T.mendN} lost cards.">Mend<small>${mend ? '+' + mend + ' lost card' + (mend > 1 ? 's' : '') : 'nothing lost'}</small></button><button data-rest="temper" data-tip="+1 Might for the rest of this run.">Sharpen<small>+1 Might</small></button>${s.town && s.town.smithy ? `<button data-sheet="hone" data-tip="Your forge hones one card for the rest of this run.">Hone<small>one card +${50 + 25 * (G.townLv(s.town, 'smithy') - 1)}%</small></button>` : ''}${s.town && s.town.market ? `<button data-rest="market" ${s.coins < G.T.marketPrice ? 'disabled' : ''} data-tip="The Peddler trades a treasure for coins.">Market<small>${G.townLv(s.town, 'market') >= 3 ? 'two finds' : 'a find'} for ${G.T.marketPrice} coins</small></button>` : ''}<button data-sheet="cull" data-tip="Remove one card from your deck for this run." ${can ? '' : 'disabled'}>Burn a card<small>${can ? 'thin your deck' : 'deck too small'}</small></button></div>`;
 }
 function waitPanel(s){
   const t = { treasure: 'Sort what you found.', favor: 'Choose a favor.', spoils: 'Choose your spoils.' }[s.phase] || '';
@@ -1878,9 +1970,9 @@ function overScene(s){
 }
 function overPanel(s){
   const e = s.ended;
-  const title = e.how === 'victory' && e.deep ? 'Home from the Deep' : { dead: 'You died', banked: 'You made it home', victory: 'The Landlord falls', 'fled-boss': 'You fled the Landlord', exhausted: 'Out of cards' }[e.how];
-  const nl = e.newLease ? ` <b>New Lease opened:</b> ${esc(G.leaseName(e.lease + 1))}, and Forge limits rose.` : '';
-  return `<p class="say"><b>${title}.</b> ${e.how === 'dead' ? `Door ${e.door} was one too many.` : `Home from door ${e.door}.`}${e.folk ? ` <b>The ${G.townOf(e.folk).folk} is safe in town.</b> Build the ${G.townOf(e.folk).n} in the Town tab.` : ''}${e.bounty && e.bounty.n ? ` 📜 ${e.bounty.n} of ${e.bounty.of} bounties done: +${e.bounty.gold} gold, +${e.bounty.embers} embers (counted below).` : ''}${e.newRanks && e.newRanks.length ? ` Bestiary: you know the ${e.newRanks.map(n => esc(n.replace(/^The /, ''))).join(', the ')} better now.` : ''}${e.bestEmbers ? ` +${e.bestEmbers} embers for your Bestiary.` : ''} <b class="gold">${e.gold + (e.bounty ? e.bounty.gold : 0)} gold</b>, <b class="ember">+${s._emb != null ? s._emb : e.embers} embers</b>.${nl}</p><button class="primary go" id="town">Back to town</button>`;
+  const title = e.how === 'victory' && e.deep ? 'Home from the Deep' : { dead: 'You died', banked: 'You made it home', victory: 'The Old Lord falls', 'fled-boss': 'You fled the Old Lord', exhausted: 'Out of cards' }[e.how];
+  const nl = e.newLease ? ` <b>The ruins stir:</b> ${esc(G.leaseName(e.lease + 1))}, and Workshop limits rose.` : '';
+  return `<p class="say"><b>${title}.</b> ${e.how === 'dead' ? `Door ${e.door} was one too many.` : `Home from door ${e.door}.`}${e.folk ? ` <b>The ${G.townOf(e.folk).folk} is safe in town.</b> Build the ${G.townOf(e.folk).n} in the Town tab.` : ''}${e.mats && Object.keys(e.mats).length ? ` 🧺 Home with ${Object.keys(e.mats).map(k => { const x = G.MATS.find(q => q.id === k); return x.i + ' ' + e.mats[k] + ' ' + x.n; }).join(', ')}${e.how === 'dead' ? ' (half of what you carried)' : ''}.` : ''}${e.grown && e.grown.length ? ` 🌱 Ripe while you were away: ${e.grown.join(', ')}.` : ''}${e.fired && e.fired.length ? ` 🔥 The kiln made ${e.fired.join(', ')}.` : ''}${e.bounty && e.bounty.n ? ` 📜 ${e.bounty.n} of ${e.bounty.of} bounties done: +${e.bounty.gold} gold, +${e.bounty.embers} embers${Object.keys(e.bounty.mats || {}).map(k => { const m = G.MATS.find(x => x.id === k); return `, +${e.bounty.mats[k]} ${m.i} ${m.n}`; }).join('')} (counted below).` : ''}${e.newRanks && e.newRanks.length ? ` Bestiary: you know the ${e.newRanks.map(n => esc(n.replace(/^The /, ''))).join(', the ')} better now.` : ''}${e.bestEmbers ? ` +${e.bestEmbers} embers for your Bestiary.` : ''} <b class="gold">${e.gold + (e.bounty ? e.bounty.gold : 0)} gold</b>, <b class="ember">+${s._emb != null ? s._emb : e.embers} embers</b>.${nl}</p><button class="primary go" id="town">Back home</button>`;
 }
 
 // ---------- sheets ----------
@@ -1897,7 +1989,7 @@ function renderSheet(){
     const hone = sheet === 'hone' && s.phase === 'hearth', cull = (sheet === 'cull' && s.phase === 'hearth') || hone;
     title = hone ? 'Hone a card' : cull ? 'Burn a card' : `Your deck · ${s.deck.length} cards`;
     const ids = s.deck.map((id, i) => [id, i]).sort((a, b) => a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0);
-    body = `<p class="small muted" style="margin:0 0 8px">${hone ? 'Tap a card. The Smith hones every copy of it: it hits and blocks 50% harder for the rest of this run.' : cull ? 'Tap a card to burn it for the rest of this run. A smaller deck draws your best cards more often.' : `Hand ${s.cards.length} · spent ${s.spent.length} · lost ${s.lost.length + s.burned.length}. Each card has a top half and a bottom half; play one of each per turn.`}</p><div class="cgrid">${ids.map(([id, i]) => tileCard(id, s.honed && s.honed[id] ? '<span class="tiny okc">honed</span>' : '', hone ? `data-hone="${i}"` : cull ? `data-cull="${i}"` : 'tabindex="-1"')).join('')}</div>`;
+    body = `<p class="small muted" style="margin:0 0 8px">${hone ? 'Tap a card. Your forge hones every copy of it: it hits and blocks 50% harder for the rest of this run.' : cull ? 'Tap a card to burn it for the rest of this run. A smaller deck draws your best cards more often.' : `Hand ${s.cards.length} · spent ${s.spent.length} · lost ${s.lost.length + s.burned.length}. Each card has a top half and a bottom half; play one of each per turn.`}</p><div class="cgrid">${ids.map(([id, i]) => tileCard(id, s.honed && s.honed[id] ? '<span class="tiny okc">honed</span>' : '', hone ? `data-hone="${i}"` : cull ? `data-cull="${i}"` : 'tabindex="-1"')).join('')}</div>`;
     if (s.favors.length) body += `<div class="sec"><h3>Favors</h3></div><div class="favs">${s.favors.map(id => { const f = G.FAVORS.find(x => x.id === id); return `<span class="fav" data-tip="${esc(f.d)}">${patronIcon(f.p, 16)} ${esc(f.n)}</span>`; }).join('')}</div><p class="tiny muted">${s.favors.map(id => { const f = G.FAVORS.find(x => x.id === id); return `<b>${esc(f.n)}:</b> ${esc(f.d)}`; }).join(' ')}</p>`;
   }
   return `<div class="sheetbg" data-close="1"><div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(title)}"><div class="hd"><h2 style="font-size:18px">${esc(title)}</h2><button class="ib" id="sclose" aria-label="Close">✕</button></div>${body}</div></div>`;
@@ -1915,14 +2007,14 @@ function gearBody(s){
   return h + `</div>`;
 }
 function helpBody(){
-  return `<div class="small"><p><b>Doors.</b> Open them one at a time. After any door you can walk home and bank your coins, multiplied by how deep you got. Die and you lose what you carry. Door 10 is the Landlord.</p>
+  return `<div class="small"><p><b>Your homestead.</b> You claimed the ruins of an old castle to build a home. Under the keep, ten doors go down to the Old Lord, who still thinks the castle is his. Everything you build comes from what you carry back up.</p><p><b>Doors.</b> Open them one at a time. After any door you can walk home and bank your coins, multiplied by how deep you got. Die and you lose what you carry. Door 10 is the Old Lord.</p>
 <p><b>Your hand is your stamina.</b> You start with 8 cards and no deck to draw from. Each turn you play two: the <b>top half</b> of one and the <b>bottom half</b> of the other. Played cards are <b>spent</b>.</p>
 <p><b>Speed.</b> The card you pick first leads. If its ⚡ beats the monster's ⚡, you act before its move, so a killing blow means it never swings. Block always lands.</p>
 <p><b>Getting cards back.</b> Rest (mid-fight or at a camp between doors) returns all spent cards but loses one for good. Every win returns ${G.T.winRecover} spent cards, and loot picks return ${G.T.lootRecover} more. Smelling Salts return 3. Hearths and Mending Thread bring back lost cards. <b>Beating a boss is a checkpoint:</b> every card comes back and you heal fully.</p>
 <p><b>Moves to watch:</b> a <b>Swipe</b> hits for the number shown; a <b>Wind-up</b> hits double but is slow; <b>Guard</b> halves your attacks; a <b>Hex</b> curses you; a <b>Rend</b> tears a card from your hand if it hits. Run out of cards and you stagger home with half your coins.</p>
 ${G.T.distOn ? '' : '<!--'}<p><b>Distance.</b> You and the monster are Close, Near, Far or Distant. Near is normal. Each step closer adds a third to Might, and each step further takes a third off (rounded down), for you and the monster alike. Any half can be played as a move of 1 instead (◀ ▶), and movement cards move 2 or 3 and are quick. Ranged attacks ignore distance. Brutes charge in, Skirmishers back off and shoot, Lurkers pounce from afar, and Wardens never move.</p>${G.T.distOn ? '' : '-->'}
-<p><b>Town.</b> Townsfolk are held captive in the cellar. Free one by winning a fight at or past their door, then walk home alive. Their building goes up for gold in the Town tab and changes every run after. Later townsfolk are held deeper, and every building can be raised to level 3.</p>
-<p><b>Bounties and Bestiary.</b> Each run posts a bounty, and the Archive posts more. Finish one, even if you die, for gold and embers. Beat a monster 3 times to hit it 20% harder for good, and 8 times for an extra loot choice.</p>
+<p><b>Homestead.</b> Every fight and stash gives materials: common Wood, Brick and Iron, rare Heartwood, Dressed Stone and Silver, and relic Castle Glass and Starmetal. Deeper doors give rarer ones. Walk home to keep them all, or keep half if you die. You start with a shack and one garden bed. Tap an empty spot in the picture to build there, or tap a building to raise, move or restyle it. Each part helps every run, and crops and the orchard ripen into one-shots as runs go by. Share a picture or a code from the Homestead tab. The Bestiary lives in the Library tab.</p>
+<p><b>Bounties and Bestiary.</b> Each run posts a bounty, and the Study posts more. Finish one, even if you die, for gold, embers and a rare building material. Beat a monster 3 times to hit it 20% harder for good, and 8 times for an extra loot choice.</p>
 <p><b>Tokens.</b> Some halves make tokens: ⚔ Edge, 🛡 Stance or 🔥 Ember. Others spend them all at once for a big hit or a big block. Tokens you make are ready from your next exchange and carry into the next fight. Each Ember also burns the monster for 1 every round.</p>
 <p><b>Numbers.</b> Attacks use your <b>Might</b> (level + weapons). Blocks use your <b>Armor</b>.</p></div>`;
 }
@@ -2009,26 +2101,151 @@ function renderModal(){
   return '';
 }
 
+// ---------- homestead ----------
+const PAL = [ { n: 'Timber', wall: '#b9875a', trim: '#7a5233', roof: '#8a3b2a' }, { n: 'Brick', wall: '#b4583e', trim: '#6e3022', roof: '#4b4f5c' },
+  { n: 'Stone', wall: '#a9a59a', trim: '#6c6a63', roof: '#3f6b5a' }, { n: 'Whitewash', wall: '#eee6d6', trim: '#9b8b72', roof: '#3d5a8a' } ];
+const CROPC = { dustcorn: '#d9b44a', mint: '#5fbf7a', pepper: '#d8442f', brave: '#c76bd1', flax: '#6c8fd9', puff: '#e9e3cf', clover: '#3e9b4a', wake: '#b0703a' };
+function rngH(seed){ let x = (seed >>> 0) || 1; return () => (x = (x * 16807) % 2147483647) / 2147483647; }
+const HCX = 46, HS = 48, HSY = 58, HT0 = 60, HW = HCX + 8 * 48 + 6, HH = HT0 + 4 * 58 + 4, HZ = 1.4;
+function castleHint(R, hue){ // a broken tower and a stub of wall at the left edge
+  let o = `<path d="M0 ${HT0 + 8} V${HT0 - 70} h8 v-7 h7 v7 h8 v-4 h7 v10 l6 8 V${HT0 - 38} l10 -6 v-8 h7 v9 l9 4 v${36 + 10} Z" fill="#8f8a80" stroke="#6b665d"/>`;
+  o += `<path d="M14 ${HT0 - 30} v-10 a6 6 0 0 1 12 0 v10z" fill="#4d4943"/><path d="M5 ${HT0 - 66} q5 26 -2 52 M38 ${HT0 - 40} q4 16 -1 34" stroke="#4f8a43" stroke-width="3" fill="none"/>`;
+  o += `<path d="M${HCX + 4} ${HT0 + 2} v-12 h10 v4 h9 v-7 h12 v15z" fill="#9b968b" stroke="#6b665d" opacity=".9"/>`;
+  for (let i = 0; i < 5; i++) o += `<ellipse cx="${30 + R() * 50}" cy="${HT0 + 10 + R() * 30}" rx="${3 + R() * 3}" ry="${2 + R() * 2}" fill="#9b968b" stroke="#6b665d"/>`;
+  return o;
+}
+function shackArt(x, y, p){ const cx = x + HS / 2, gy = y + HS - 6;
+  let o = `<rect x="${cx - 14}" y="${gy - 17}" width="28" height="17" fill="#a07a52" stroke="#6b4a2b"/>`;
+  for (let i = 1; i < 4; i++) o += `<path d="M${cx - 14 + i * 7} ${gy - 17} v17" stroke="#6b4a2b" stroke-width=".8"/>`;
+  o += `<path d="M${cx - 17} ${gy - 15} L${cx + 16} ${gy - 25} L${cx + 17} ${gy - 20} L${cx - 16} ${gy - 11}Z" fill="#7a6a55" stroke="#4d4033"/>`;
+  o += `<rect x="${cx - 4}" y="${gy - 10}" width="7" height="10" fill="#4d4033"/><rect x="${cx + 8}" y="${gy - 33}" width="3" height="11" fill="#555"/><path d="M${cx + 9.5} ${gy - 35} q-4 -5 0 -9 q4 -5 0 -9" stroke="#ccc" fill="none" opacity=".8"/>`;
+  return o + `<rect x="${cx - 22}" y="${gy - 7}" width="7" height="7" fill="#b9875a" stroke="#6b4a2b"/>`;
+}
+function starterBed(x, y, h){ const b = (h.beds || [])[0] || {};
+  let o = `<rect x="${x + 9}" y="${y + 16}" width="30" height="22" rx="3" fill="#6b4a2b"/>`;
+  for (let i = 0; i < 3; i++) o += `<path d="M${x + 12} ${y + 22 + i * 6} h24" stroke="#563a21" stroke-width="1.5"/>`;
+  if (b.crop) for (let i = 0; i < 6; i++) o += `<circle cx="${x + 15 + (i % 3) * 9}" cy="${y + 21 + Math.floor(i / 3) * 10}" r="${1.8 + Math.min(2, b.age || 0)}" fill="${CROPC[b.crop] || '#5fbf7a'}"/>`;
+  o += `<path d="M${x + 5} ${y + 40} v-12 M${x + 43} ${y + 40} v-12 M${x + 5} ${y + 33} h38 M${x + 5} ${y + 37} h38" stroke="#8a6a44" stroke-width="1.8"/>`;
+  return o + `<path d="M${x + 36} ${y + 13} h7 l-1 6 h-5z M${x + 43} ${y + 14} l4 -3" fill="#7d8b99" stroke="#55606b" stroke-width="1"/>`;
+}
+function homeSVG(h, hero){
+  const S = HS, T0 = HT0, W = HW, Hh = HH, R = rngH(h.seed + 7), hue = Math.floor(R() * 40) - 20;
+  let o = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${Hh}" ${hero ? 'preserveAspectRatio="xMidYMid slice"' : ''} class="homesvg" role="img" aria-label="Your homestead">`;
+  o += `<defs><linearGradient id="hsky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(${205 + hue},55%,78%)"/><stop offset="1" stop-color="hsl(${40 + hue},70%,88%)"/></linearGradient></defs>`;
+  o += `<rect width="${W}" height="${Hh}" fill="url(#hsky)"/><circle cx="${W - 50 - R() * 60}" cy="${18 + R() * 10}" r="11" fill="#fff4c2" opacity=".9"/>`;
+  for (let i = 0; i < 2; i++){ const cx = 90 + R() * (W - 160), cy = 14 + R() * 18; o += `<g fill="#fff" opacity=".75"><ellipse cx="${cx}" cy="${cy}" rx="16" ry="6"/><ellipse cx="${cx + 10}" cy="${cy - 4}" rx="10" ry="6"/></g>`; }
+  o += `<path d="M0 ${T0 - 6} Q${W * 0.3} ${T0 - 34 - R() * 12} ${W * 0.55} ${T0 - 14} T${W} ${T0 - 20} V${T0} H0Z" fill="hsl(${110 + hue},28%,64%)"/>`;
+  o += `<rect y="${T0}" width="${W}" height="${Hh - T0}" fill="hsl(${100 + hue},38%,54%)"/>`;
+  for (let ty = 0; ty < G.HOME_H; ty++) o += `<rect y="${T0 + ty * HSY}" width="${W}" height="${HSY}" fill="hsl(${100 + hue},38%,${50 + ty * 2}%)" opacity=".5"/>`;
+  o += castleHint(R, hue);
+  for (let i = 0; i < 34; i++){ const fx = HCX + R() * (W - HCX), fy = T0 + 4 + R() * (Hh - T0 - 8); o += R() < 0.3 ? `<circle cx="${fx}" cy="${fy}" r="1.6" fill="${['#f4e04d', '#f29bd0', '#ffffff'][Math.floor(R() * 3)]}"/>` : `<path d="M${fx} ${fy} l2 -5 l2 5" stroke="hsl(${100 + hue},40%,38%)" fill="none"/>`; }
+  const tx0 = tx => HCX + tx * S, ty0 = ty => T0 + ty * HSY, art = (x, y, f) => { const ax = x + S / 2, ay = y + HSY - 6; return `<g transform="translate(${ax} ${ay}) scale(${HZ}) translate(${-ax} ${-ay})">${f(x, y + HSY - S)}</g>`; }, taken = new Set();
+  const ids = Object.keys(h.at || {}).filter(id => (+(h.lv[id] || 0)) || G.HOME_START[id]).sort((a, b) => h.at[a][1] - h.at[b][1]);
+  for (const id of ids) taken.add(h.at[id].join(','));
+  if (!hero) for (let ty = 0; ty < G.HOME_H; ty++) for (let tx = 0; tx < G.HOME_W; tx++) if (!taken.has(tx + ',' + ty)) { const cx = tx0(tx) + S / 2, cy = ty0(ty) + HSY / 2, on = homeSpot && homeSpot[0] === tx && homeSpot[1] === ty;
+    o += on ? `<rect x="${tx0(tx) + 3}" y="${ty0(ty) + 3}" width="${S - 6}" height="${HSY - 6}" rx="8" fill="rgba(255,255,255,.35)" stroke="#fff" stroke-width="2"/><path d="M${cx - 8} ${cy} h16 M${cx} ${cy - 8} v16" stroke="#fff" stroke-width="3" stroke-linecap="round"/>`
+      : `<path d="M${cx - 4} ${cy} h8 M${cx} ${cy - 4} v8" stroke="#fff" stroke-width="${homeMove ? 2.5 : 1.5}" stroke-linecap="round" opacity="${homeMove ? .9 : .32}"/>`; }
+  for (const id of ids){ const lv = +(h.lv[id] || 0), [cx, cy] = h.at[id], pal = PAL[(h.style || {})[id] || 0];
+    if (id === 'hearth' && !lv) o += art(tx0(cx), ty0(cy), (x, y) => shackArt(x, y, pal));
+    else if (id === 'garden' && !lv) o += art(tx0(cx), ty0(cy), (x, y) => starterBed(x, y, h));
+    else o += art(tx0(cx), ty0(cy), (x, y) => partArt(id, lv, pal, x, y, S, h, false)); }
+  if (!hero && homeSel && h.at[homeSel]) { const [sx, sy] = h.at[homeSel]; o += `<rect x="${tx0(sx) + 1}" y="${ty0(sy) + 1}" width="${S - 2}" height="${HSY - 2}" rx="8" fill="none" stroke="#fff" stroke-width="2.5" stroke-dasharray="5 3"/>`; }
+  if (!hero) for (let ty = 0; ty < G.HOME_H; ty++) for (let tx = 0; tx < G.HOME_W; tx++) o += `<rect data-tile="${tx},${ty}" x="${tx0(tx)}" y="${ty0(ty)}" width="${S}" height="${HSY}" fill="transparent" style="cursor:pointer"/>`;
+  return o + `</svg>`;
+}
+function house(x, y, S, p, lv, f){ // a little building that grows with level
+  const w = S * (0.55 + 0.12 * lv), hh = S * (0.3 + 0.12 * lv), bx = x + (S - w) / 2, by = y + S - 6 - hh;
+  let o = `<rect x="${bx}" y="${by}" width="${w}" height="${hh}" fill="${p.wall}" stroke="${p.trim}"/>`;
+  o += `<path d="M${bx - 3} ${by} L${bx + w / 2} ${by - S * 0.22 - 2 * lv} L${bx + w + 3} ${by}Z" fill="${p.roof}" stroke="${p.trim}"/>`;
+  o += `<rect x="${bx + w / 2 - 4}" y="${by + hh - 11}" width="8" height="11" fill="${p.trim}"/>`;
+  for (let i = 0; i < lv; i++) o += `<rect x="${bx + 4 + i * (w - 14) / Math.max(1, lv - 1 || 1) * (lv > 1 ? 1 : 0)}" y="${by + 4}" width="6" height="6" fill="${lv >= 3 ? '#ffd770' : '#cfe6f2'}" stroke="${p.trim}"/>`;
+  return o + (f || '');
+}
+function partArt(id, lv, p, x, y, S, h, live){
+  const cx = x + S / 2, gy = y + S - 6; let o = `<g ${live ? `data-hpick="${id}" style="cursor:pointer"` : ''}>`;
+  if (id === 'tower') { const ht = S * (0.6 + 0.15 * lv); o += `<rect x="${cx - 9}" y="${gy - ht}" width="18" height="${ht}" fill="${p.wall}" stroke="${p.trim}"/>`; for (let c = 0; c < 3; c++) o += `<rect x="${cx - 9 + c * 7}" y="${gy - ht - 5}" width="4" height="5" fill="${p.wall}" stroke="${p.trim}"/>`; o += `<rect x="${cx - 2}" y="${gy - ht + 8}" width="4" height="7" fill="#2b2b2b"/><path d="M${cx + 8} ${gy - ht - 5} v-12 l10 4 l-10 4" fill="${lv >= 3 ? '#e0a83a' : '#c0392b'}" stroke="${p.trim}"/>`; }
+  else if (id === 'hearth') o += house(x, y, S, p, lv, `<rect x="${cx + 6}" y="${gy - S * 0.72 - lv * 3}" width="6" height="12" fill="${p.trim}"/><path d="M${cx + 9} ${gy - S * 0.75 - lv * 3} q-5 -6 0 -12 q5 -6 0 -12" stroke="#ccc" fill="none" opacity=".8"/>`);
+  else if (id === 'forge') o += house(x, y, S, p, lv, `<rect x="${cx - 14}" y="${gy - 12}" width="9" height="7" fill="#ff7a2a"/><rect x="${cx + 8}" y="${gy - S * 0.75 - lv * 3}" width="7" height="14" fill="#4a4a4a"/>`);
+  else if (id === 'bunk') o += house(x, y, S, p, lv, `<rect x="${cx + 10}" y="${gy - 8}" width="8" height="3" fill="#7a5233"/>`);
+  else if (id === 'study') o += house(x, y, S, p, lv, `<circle cx="${cx}" cy="${gy - S * 0.42 - lv * 3}" r="4" fill="#ffd770" stroke="${p.trim}"/>`);
+  else if (id === 'chapel') o += house(x, y, S, p, lv, `<path d="M${cx} ${gy - S * 0.62 - lv * 5} v-9 M${cx - 3} ${gy - S * 0.62 - lv * 5 - 6} h6" stroke="${p.trim}" stroke-width="2"/>`);
+  else if (id === 'cart') { o += `<rect x="${x + 8}" y="${gy - 18}" width="${S - 16}" height="12" fill="${p.wall}" stroke="${p.trim}"/><path d="M${x + 6} ${gy - 18} q${S / 2 - 6} -${10 + lv * 3} ${S - 12} 0" fill="${p.roof}" stroke="${p.trim}"/><circle cx="${x + 14}" cy="${gy - 4}" r="5" fill="#5a3b22"/><circle cx="${x + S - 14}" cy="${gy - 4}" r="5" fill="#5a3b22"/>`; for (let i = 0; i < lv; i++) o += `<circle cx="${x + 15 + i * 8}" cy="${gy - 12}" r="2.5" fill="${['#d8442f', '#f4e04d', '#5fbf7a'][i]}"/>`; }
+  else if (id === 'doghouse') { o += `<rect x="${cx - 12}" y="${gy - 16}" width="24" height="16" fill="${p.wall}" stroke="${p.trim}"/><path d="M${cx - 15} ${gy - 16} L${cx} ${gy - 28} L${cx + 15} ${gy - 16}Z" fill="${p.roof}"/><path d="M${cx - 5} ${gy} v-8 a5 5 0 0 1 10 0 v8" fill="#2b2b2b"/>`; o += `<ellipse cx="${cx + 18}" cy="${gy - 3}" rx="6" ry="4" fill="#8a5a33"/><circle cx="${cx + 23}" cy="${gy - 7}" r="3" fill="#8a5a33"/>`; }
+  else if (id === 'garden') { const beds = h.beds || []; const n = Math.min(6, Math.max(1, 2 * lv)); for (let i = 0; i < n; i++){ const b = beds[i] || {}, rx = x + 4 + (i % 3) * 14, ry = y + 10 + Math.floor(i / 3) * 18; o += `<rect x="${rx}" y="${ry}" width="12" height="14" fill="#6b4a2b"/>`; if (b.crop) for (let k = 0; k < 3; k++) o += `<circle cx="${rx + 3 + k * 3}" cy="${ry + 4 + (k % 2) * 5}" r="${1.5 + Math.min(2, (b.age || 0))}" fill="${CROPC[b.crop] || '#5fbf7a'}"/>`; } }
+  else if (id === 'orchard') { for (let i = 0; i < lv + 1; i++){ const tx = x + 10 + i * 13, ty = gy - 4 - (i % 2) * 8; o += `<rect x="${tx - 1.5}" y="${ty - 10}" width="3" height="10" fill="#6b4a2b"/><circle cx="${tx}" cy="${ty - 14}" r="${6 + Math.min(3, (h.orchard || 0))}" fill="#3e8f45"/>${(h.orchard || 0) > 3 ? `<circle cx="${tx + 2}" cy="${ty - 13}" r="1.8" fill="#d8442f"/><circle cx="${tx - 3}" cy="${ty - 16}" r="1.8" fill="#d8442f"/>` : ''}`; } }
+  else if (id === 'well') { o += `<ellipse cx="${cx}" cy="${gy - 8}" rx="12" ry="5" fill="#2f4f6a" stroke="${p.trim}"/><rect x="${cx - 12}" y="${gy - 8}" width="24" height="9" fill="${p.wall}" stroke="${p.trim}"/><path d="M${cx - 10} ${gy - 8} v-${12 + lv * 2} M${cx + 10} ${gy - 8} v-${12 + lv * 2}" stroke="${p.trim}" stroke-width="2"/><path d="M${cx - 14} ${gy - 18 - lv * 2} L${cx} ${gy - 28 - lv * 2} L${cx + 14} ${gy - 18 - lv * 2}Z" fill="${p.roof}"/>`; }
+  else if (id === 'kiln') { o += `<path d="M${cx - 14} ${gy} v-10 a14 ${12 + lv * 2} 0 0 1 28 0 v10z" fill="${p.wall}" stroke="${p.trim}"/><path d="M${cx - 5} ${gy} v-6 a5 5 0 0 1 10 0 v6z" fill="#ff7a2a"/><rect x="${cx + 6}" y="${gy - 30 - lv * 2}" width="5" height="10" fill="${p.trim}"/>`; }
+  return o + `</g>`;
+}
+function homeCode(){ const h = meta.home; return 'OMDH1.' + btoa(JSON.stringify({ s: h.seed, n: h.name || '', lv: h.lv, at: h.at, st: h.style, b: h.beds.map(b => b.crop || ''), o: h.orchard || 0 })); }
+function readCode(c){ try{ const j = JSON.parse(atob(String(c).trim().replace(/^OMDH1\./, ''))); if (!j || typeof j.s !== 'number' || typeof j.lv !== 'object') return null;
+  const lv = {}, at = {}, style = {}; for (const p of G.PARTS){ const l = +j.lv[p.id] || 0; if ((l > 0 && l <= 3) || (G.HOME_START[p.id] && (j.at || {})[p.id])) { if (l)  lv[p.id] = l; const a = (j.at || {})[p.id]; at[p.id] = Array.isArray(a) ? [Math.max(0, Math.min(G.HOME_W - 1, +a[0] || 0)), Math.max(0, Math.min(G.HOME_H - 1, +a[1] || 0))] : [0, 0]; style[p.id] = Math.max(0, Math.min(3, +((j.st || {})[p.id]) || 0)); } }
+  return { seed: j.s | 0, name: String(j.n || '').slice(0, 30), lv, at, style, beds: (Array.isArray(j.b) ? j.b : []).slice(0, 6).map(c => ({ crop: CROPC[c] ? c : null, age: 2 })), orchard: Math.min(9, +j.o || 0) }; }catch(e){ return null; } }
+function gallery(){ try{ return JSON.parse(localStorage.getItem('omd-home-gallery') || '[]'); }catch(e){ return []; } }
+function matChips(c, have){ return Object.keys(c).map(k => { const m = G.MATS.find(x => x.id === k), ok = !have || (meta.mats[k] || 0) >= c[k]; return `<span class="tiny ${ok ? '' : 'badc'}" title="${m.n}">${m.i}${c[k]}</span>`; }).join(' '); }
+function partAt(x, y){ const h = meta.home; return Object.keys(h.at).find(k => h.at[k][0] === x && h.at[k][1] === y && (G.homeLv(meta, k) || G.HOME_START[k])); }
+function lvName(id, lv){ return !lv ? (id === 'hearth' ? 'Shack' : id === 'garden' ? 'One bed' : '') : 'Level ' + lv; }
+function pantryLine(){ const cnt = {}; meta.pantry.forEach(id => cnt[id] = (cnt[id] || 0) + 1); const ks = Object.keys(cnt);
+  return `<p class="tiny" style="margin:4px 0 0"><b>Pantry</b> <span class="muted">(next run takes ${G.pantryTake() + (G.homeLv(meta, 'well') >= 3 ? 1 : 0)})</span>: ${ks.length ? ks.map(id => `${esc(G.shotById(id).n)} ×${cnt[id]}`).join(', ') : 'empty for now'}</p>`; }
+function homeTab(){
+  const h = meta.home;
+  let o = `<div class="hmats">${G.MATS.map(m => `<span class="${meta.mats[m.id] ? '' : 'z'}" title="${m.n}, ${G.RAR_N[m.r]}">${m.i}<b>${meta.mats[m.id] || 0}</b></span>`).join('')}</div>`;
+  o += `<div class="hscene">${homeSVG(h, false)}</div><div class="box hinsp">`;
+  if (homePanel === 'share') {
+    o += `<div class="hrow"><b class="small">Share your homestead</b><button class="tinybtn" data-hclose>Back</button></div>`;
+    o += `<div class="hrow"><input data-hname maxlength="30" value="${esc(h.name || '')}" placeholder="Name your homestead" style="flex:1"><button class="tinybtn" data-hpic>Picture</button><button class="tinybtn" data-hcode>Code</button></div>`;
+    if (homeOut && homeOut.k === 'pic') o += `<p class="tiny muted" style="margin:4px 0">Long-press or right-click to save.</p><img src="${homeOut.v}" alt="Your homestead" style="width:100%;border-radius:10px"><p class="tiny"><a href="${homeOut.v}" download="homestead.png">Download homestead.png</a></p>`;
+    if (homeOut && homeOut.k === 'code') o += `<textarea readonly rows="2" style="width:100%" onfocus="this.select()">${homeOut.v}</textarea>`;
+    o += `<div class="hrow" style="margin-top:6px"><textarea data-hvisit rows="1" style="flex:1" placeholder="Paste a friend’s code to visit"></textarea><button class="tinybtn" data-hvisitgo>Visit</button></div>${homeOut && homeOut.k === 'bad' ? '<p class="tiny badc">That code did not work.</p>' : ''}`;
+    const gl = gallery(); if (gl.length) o += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px">${gl.map((c, i) => { const v = readCode(c); return v ? `<div><div style="pointer-events:none">${homeSVG(v, true)}</div><span class="tiny">${esc(v.name || 'A homestead')}</span> <button class="tinybtn" data-hdrop="${i}">remove</button></div>` : ''; }).join('')}</div>`;
+  } else if (homeSel) {
+    const p = G.partOf(homeSel), lv = G.homeLv(meta, homeSel), c = G.partCost(homeSel, lv);
+    o += `<div class="hrow"><span><b class="small">${lv || homeSel !== 'hearth' ? esc(p.n) : 'Your shack'}</b> <span class="tiny muted">${lvName(homeSel, lv)}</span></span><span><button class="tinybtn" data-hmove>${homeMove ? 'Cancel move' : 'Move'}</button>${lv ? ` <button class="tinybtn" data-hstyle="${homeSel}">${PAL[h.style[homeSel] || 0].n}</button>` : ''} <button class="tinybtn" data-hclose aria-label="Close">✕</button></span></div>`;
+    if (homeMove) o += `<p class="tiny" style="margin:4px 0">Tap any spot in the picture to move it there. Tapping a building swaps the two.</p>`;
+    else {
+      o += `<p class="tiny muted" style="margin:3px 0">${esc(p.d)}</p>`;
+      if (lv) o += `<p class="tiny okc" style="margin:2px 0">✓ ${p.L[lv - 1]}</p>`;
+      if (c) o += `<div class="hrow"><span class="tiny">Next: ${p.L[lv]}</span><button data-home="${homeSel}" ${G.canHome(meta, homeSel) ? '' : 'disabled'} class="hbuild">${lv ? 'Raise' : homeSel === 'hearth' ? 'Build cottage' : 'Build'}<small>${matChips(c, true)}</small></button></div>`;
+      else o += `<p class="tiny okc" style="margin:2px 0">Fully built.</p>`;
+      if (homeSel === 'garden') { o += `<div class="hbeds">${h.beds.map((b, i) => { const cr = b.crop && G.CROPS.find(x => x.id === b.crop), left = cr ? G.cropRuns(meta, cr) - b.age : 0;
+          return `<label class="tiny">Bed ${i + 1}${cr ? ` · ripe in ${left}` : ''}<select data-bed="${i}"><option value="">Empty</option>${G.CROPS.map(x => `<option value="${x.id}" ${b.crop === x.id ? 'selected' : ''}>${x.n}: ${x.yield} ${esc(G.shotById(x.shot).n)}, ${G.cropRuns(meta, x)} run${G.cropRuns(meta, x) > 1 ? 's' : ''}</option>`).join('')}</select></label>`; }).join('')}</div>` + pantryLine(); }
+      if (homeSel === 'orchard' && lv) o += `<p class="tiny" style="margin:4px 0 0">${(h.orchard || 0) > 3 ? 'Bearing fruit every run.' : `Bears fruit after ${4 - (h.orchard || 0)} more run${4 - (h.orchard || 0) === 1 ? '' : 's'}.`}</p>` + pantryLine();
+    }
+  } else if (homeSpot) {
+    const left = G.PARTS.filter(p => !G.homeLv(meta, p.id) && !G.HOME_START[p.id]);
+    o += `<div class="hrow"><b class="small">Build here</b><button class="tinybtn" data-hclose aria-label="Close">✕</button></div>`;
+    if (!left.length) o += `<p class="tiny muted">Everything is built. Tap a building to raise it.</p>`;
+    else { o += `<div class="hgrid">${left.map(p => `<button data-hpickp="${p.id}" class="${homePick === p.id ? 'on' : ''} ${G.canHome(meta, p.id) ? '' : 'dim'}">${esc(p.n)}<small>${matChips(G.partCost(p.id, 0), true)}</small></button>`).join('')}</div>`;
+      if (homePick) { const p = G.partOf(homePick); o += `<div class="hrow" style="margin-top:6px"><span class="tiny"><b>${esc(p.n)}.</b> ${esc(p.d)} <span class="okc">${p.L[0]}</span></span><button data-home="${p.id}" class="hbuild" ${G.canHome(meta, p.id) ? '' : 'disabled'}>Build</button></div>`; }
+      else o += `<p class="tiny muted" style="margin:6px 0 0">Pick something to build on this spot.</p>`; }
+  } else {
+    const built = G.PARTS.filter(p => G.homeLv(meta, p.id)).length, ready = G.PARTS.filter(p => G.canHome(meta, p.id)).length;
+    o += `<p class="small" style="margin:0 0 4px">Tap an empty spot to build, or tap a building to raise, move or restyle it.</p>`;
+    o += `<p class="tiny muted" style="margin:0">${built} of ${G.PARTS.length} built${ready ? ` · <span class="okc">${ready} ready to build or raise</span>` : ''}. Bring materials home from runs. Nothing runs on a clock: crops grow by runs.</p>`;
+    o += pantryLine() + `<div class="hrow" style="margin-top:6px"><span></span><button class="tinybtn" data-hshare>Share or visit</button></div>`;
+  }
+  return o + `</div>`;
+}
 // ---------- town ----------
 function renderTown(){
-  let h = `<div class="thead"><h1>One More Door</h1><span class="money"><span data-tip="Gold: bank it by walking home from a run. Spend it in the Forge, Library and on provisions."><b class="gold">${meta.gold}</b> <span class="small muted">gold</span></span> · <span data-tip="Embers: earned for every door you clear, even if you die. Spend them in the Embers tab."><b class="ember">${meta.embers}</b> <span class="small muted">embers</span></span></span></div>`;
-  h += `<div class="tscene">${townSVG()}<div class="keeper"><b>${G.KEEPER}:</b> “${esc(G.tavernLine(meta, lastEnd))}”</div></div>`;
+  let h = `<div class="thead"><h1>One More Door <span class="small muted">Homestead</span></h1><span class="money"><span data-tip="Gold: bank it by walking home from a run. Spend it in the Workshop, Library and on provisions."><b class="gold">${meta.gold}</b> <span class="small muted">gold</span></span> · <span data-tip="Embers: earned for every door you clear, even if you die. Spend them in the Embers tab."><b class="ember">${meta.embers}</b> <span class="small muted">embers</span></span></span></div>`;
+  if (tab !== 'town') h += `<div class="tscene">${homeSVG(meta.home, true)}<div class="keeper"><b>📓</b> <i>${esc(G.tavernLine(meta, lastEnd))}</i></div></div>`;
   const dot = has => has ? '<span class="dot"></span>' : '';
   const canForge = G.FORGE.some(f => meta.forge[f.id] < G.forgeMax(meta, f) && meta.gold >= G.forgeCost(f, meta.forge[f.id]));
   const canEmb = G.EMBERS.some(e => { const r = G.emberRank(meta, e); return r < e.cost.length && meta.embers >= G.emberCost(e, r); });
   const canLib = G.LIBRARY.some(id => !meta.cards.includes(id) && meta.gold >= G.CARDS[id].price) || (G.canRetire(meta) && meta.gold >= G.retireCost(meta));
-  h += `<div class="tabs" role="tablist">${[['go', 'Go'], ['town', 'Town' + dot(G.TOWN.some(b => G.canBuild(meta, b.id)))], ['forge', 'Forge' + dot(canForge)], ['library', 'Library' + dot(canLib)], ['embers', 'Embers' + dot(canEmb)]].map(([k, n]) => `<button role="tab" aria-selected="${tab === k}" class="${tab === k ? 'on' : ''}" data-tab="${k}" data-tip="${{ go: 'Set up and start a run.', forge: 'Permanent upgrades bought with gold.', library: 'Retire weak starting cards, and buy new cards that can show up as rewards.', embers: 'Lasting gifts bought with Embers, which you earn even when you die.' }[k]}">${n}</button>`).join('')}</div>`;
-  h += `<div class="tbody">${tab === 'town' ? townTab() : tab === 'forge' ? forgeTab() : tab === 'library' ? libraryTab() : tab === 'embers' ? embersTab() : goTab()}</div>`;
-  if (tab === 'go') h += `<button class="primary go" id="go">Go down the cellar</button>`;
+  h += `<div class="tabs" role="tablist">${[['go', 'Go'], ['town', 'Homestead' + dot(G.PARTS.some(p => G.canHome(meta, p.id)))], ['forge', 'Workshop' + dot(canForge)], ['library', 'Library' + dot(canLib)], ['embers', 'Embers' + dot(canEmb)]].map(([k, n]) => `<button role="tab" aria-selected="${tab === k}" class="${tab === k ? 'on' : ''}" data-tab="${k}" data-tip="${{ go: 'Set up and start a run.', town: 'Build your house and farm in the castle ruins with the materials you bring home.', forge: 'Permanent upgrades bought with gold.', library: 'Retire weak starting cards, and buy new cards that can show up as rewards.', embers: 'Lasting gifts bought with Embers, which you earn even when you die.' }[k]}">${n}</button>`).join('')}</div>`;
+  h += `<div class="tbody">${tab === 'town' ? homeTab() : tab === 'forge' ? forgeTab() : tab === 'library' ? libraryTab() : tab === 'embers' ? embersTab() : goTab()}</div>`;
+  if (tab === 'go') h += `<button class="primary go" id="go">Go down under the keep</button>`;
   return h;
 }
 function goTab(){
-  let h = `<div class="box"><div class="row" style="justify-content:space-between;margin-bottom:6px"><b class="small" data-tip="Your class for this run. Unlock more in the Embers tab.">Calling</b>${!meta.runs ? '<button class="ib" data-sheet="help" style="font-size:12px">How to play</button>' : `<span class="tiny muted">Runs ${meta.runs} · best door ${meta.bestDoor} · Landlord ×${meta.bossKills}</span>`}</div><div class="calls">`;
+  let h = `<div class="box"><div class="row" style="justify-content:space-between;margin-bottom:6px"><b class="small" data-tip="Your class for this run. Unlock more in the Embers tab.">Calling</b>${!meta.runs ? '<button class="ib" data-sheet="help" style="font-size:12px">How to play</button>' : `<span class="tiny muted">Runs ${meta.runs} · best door ${meta.bestDoor} · Old Lord ×${meta.bossKills}</span>`}</div><div class="calls">`;
   for (const id in G.CALLINGS){ const c = G.CALLINGS[id], un = meta.unlocked[id];
     h += `<button class="call ${calling === id ? 'sel' : ''}" data-call="${id}" ${un ? '' : 'disabled'} data-tip="${esc(c.d)}">${c.n}<small>${un ? ({ brawler: '+2 Might vs big', sneak: 'Easy escapes', warden: '+2 Armor' }[id] || '') : c.unlock + ' embers'}</small></button>`; }
   h += `</div></div>`;
   const L = meta.lease, top = meta.leaseBest + 1, lp = 1 + G.T.leaseGold * L;
-  h += `<div class="box"><div class="lease"><button data-lease="${L - 1}" data-tip="Easier Lease." ${L <= 0 ? 'disabled' : ''} aria-label="Easier lease">◀</button><div><b>${esc(G.leaseName(L))}</b><div class="tiny muted">${L ? `Monsters +${Math.round(G.T.leaseHp * L * 100)}% health, +${Math.floor(G.T.leaseDmg * L)} damage · gold ×${lp}` : 'The doors as they are'}${L >= top && meta.leaseBest >= 0 ? '' : ''}</div></div><button data-lease="${L + 1}" data-tip="Harder Lease: tougher monsters, more gold and Embers." ${L >= top ? 'disabled' : ''} aria-label="Harder lease">▶</button></div>${L >= top ? `<p class="tiny muted" style="margin:4px 0 0;text-align:center">${meta.leaseBest < 0 ? 'Beat the Landlord to open harder Leases.' : 'Beat the Landlord here to open the next Lease and raise Forge limits.'}</p>` : ''}</div>`;
+  h += `<div class="box"><div class="lease"><button data-lease="${L - 1}" data-tip="Quieter ruins." ${L <= 0 ? 'disabled' : ''} aria-label="Quieter ruins">◀</button><div><b>${esc(G.leaseName(L))}</b><div class="tiny muted">${L ? `Monsters +${Math.round(G.T.leaseHp * L * 100)}% health, +${Math.floor(G.T.leaseDmg * L)} damage · gold ×${lp}` : 'The doors as they are'}${L >= top && meta.leaseBest >= 0 ? '' : ''}</div></div><button data-lease="${L + 1}" data-tip="Wake the ruins: tougher monsters, more gold and Embers." ${L >= top ? 'disabled' : ''} aria-label="Wake the ruins">▶</button></div>${L >= top ? `<p class="tiny muted" style="margin:4px 0 0;text-align:center">${meta.leaseBest < 0 ? 'Beat the Old Lord to wake harder ruins.' : 'Beat the Old Lord here to wake the next ruins and raise Workshop limits.'}</p>` : ''}</div>`;
   h += `<div class="box"><b class="small" data-tip="Bought with gold before a run. Used up when the run starts.">Provisions</b> <span class="tiny muted">one run only</span><div class="prov" style="margin-top:6px">${G.PROVISIONS.map(p => { const on = meta.provisions[p.id], c = G.provisionCost(meta, p); return `<button class="${on ? 'on' : ''}" data-prov="${p.id}" ${on || meta.gold < c ? 'disabled' : ''} data-tip="${esc(p.d)}">${esc(p.n)}<small class="pe">${esc({ whet: '+1 Might', tonic: '+1 healing tonic', trick: '+1 random card' }[p.id] || p.d)}</small><small>${on ? 'packed' : c + ' gold'}</small></button>`; }).join('')}</div></div>`;
   if (meta.oathUnlocked) h += `<label class="row small box"><input type="checkbox" id="oath" ${oath ? 'checked' : ''}> <span><b>Oath of the Deep:</b> one more Twist per monster, gold ×1.5.</span></label>`;
   h += `<p class="tiny muted" style="text-align:center;margin:0">Progress saves in this browser. <button id="reset" class="ghost" style="min-height:0;padding:2px 6px;font-size:11px">Reset save</button></p>`;
@@ -2060,9 +2277,9 @@ function townTab0(){
   return h + `</div>`;
 }
 function forgeTab(){
-  let h = `<p class="tiny muted" style="margin:0">Permanent, paid in gold. Beating the Landlord on a new Lease raises the limits.</p><div class="box">`;
+  let h = `<p class="tiny muted" style="margin:0">Permanent, paid in gold. Beating the Old Lord in wilder ruins raises the limits.</p><div class="box">`;
   for (const f of G.FORGE){ const r = meta.forge[f.id], mx = G.forgeMax(meta, f), maxed = r >= mx, cost = maxed ? 0 : G.forgeCost(f, r);
-    h += `<div class="fitem"><div><b class="small">${f.n}</b> <span class="pips">${'●'.repeat(r)}${'○'.repeat(Math.max(0, mx - r))}</span><div class="d">${f.d}</div></div><button data-buy="${f.id}" ${maxed || meta.gold < cost ? 'disabled' : ''}>${maxed ? (f.grow ? 'Next Lease' : 'Maxed') : cost + ' gold'}</button></div>`; }
+    h += `<div class="fitem"><div><b class="small">${f.n}</b> <span class="pips">${'●'.repeat(r)}${'○'.repeat(Math.max(0, mx - r))}</span><div class="d">${f.d}</div></div><button data-buy="${f.id}" ${maxed || meta.gold < cost ? 'disabled' : ''}>${maxed ? (f.grow ? 'Wake ruins' : 'Maxed') : cost + ' gold'}</button></div>`; }
   return h + `</div>`;
 }
 function libraryTab(){
@@ -2073,7 +2290,7 @@ function libraryTab(){
   h += `<div class="sec" style="margin:4px 0 0"><h3>New cards</h3><span class="tiny muted">once bought, they can turn up as rewards</span></div><div class="cgrid">`;
   for (const id of G.LIBRARY){ const c = G.CARDS[id], own = meta.cards.includes(id);
     h += tileCard(id, `<span class="tiny ${own ? 'okc' : 'gold'}">${own ? 'Owned' : c.price + ' gold'}</span>`, `data-lib="${id}" ${own || meta.gold < c.price ? 'disabled' : ''}`); }
-  return h + `</div>`;
+  return h + `</div>` + bestiaryBox();
 }
 function embersTab(){
   let h = `<p class="tiny muted" style="margin:0">Embers come home from every door you clear, even when you die.</p><div class="box">`;
@@ -2130,6 +2347,21 @@ function bind(){
   all('[data-prov]', b => { G.buyProvision(meta, b.dataset.prov); save(); render(); });
   all('[data-buy]', b => { G.buyForge(meta, b.dataset.buy); save(); render(); });
   all('[data-build]', b => { G.buildTown(meta, b.dataset.build); save(); render(); });
+  all('[data-home]', b => { const id = b.dataset.home, sp = homeSpot; if (G.buildHome(meta, id, sp ? sp[0] : null, sp ? sp[1] : null)) { homeSel = id; homeSpot = null; homePick = null; } save(); render(); });
+  all('[data-tile]', b => { const [x, y] = b.dataset.tile.split(',').map(Number); homePanel = null;
+    if (homeMove && homeSel) { G.placeHome(meta, homeSel, x, y); homeMove = false; save(); render(); return; }
+    const id = partAt(x, y); if (id) { homeSel = homeSel === id ? null : id; homeSpot = null; } else { homeSpot = homeSpot && homeSpot[0] === x && homeSpot[1] === y ? null : [x, y]; homeSel = null; homePick = null; } homeMove = false; render(); });
+  all('[data-hpickp]', b => { homePick = b.dataset.hpickp; render(); });
+  all('[data-hmove]', () => { homeMove = !homeMove; render(); });
+  all('[data-hclose]', () => { homeSel = null; homeSpot = null; homePick = null; homeMove = false; homePanel = null; homeOut = null; render(); });
+  all('[data-hshare]', () => { homePanel = 'share'; homeOut = null; render(); });
+  all('[data-hstyle]', b => { G.styleHome(meta, b.dataset.hstyle); save(); render(); });
+  document.querySelectorAll('[data-bed]').forEach(el => el.onchange = () => { G.plant(meta, +el.dataset.bed, el.value); save(); render(); });
+  document.querySelectorAll('[data-hname]').forEach(el => el.onchange = () => { meta.home.name = el.value.slice(0, 30); save(); });
+  all('[data-hcode]', () => { homeOut = { k: 'code', v: homeCode() }; render(); });
+  all('[data-hpic]', () => { const svg = homeSVG(meta.home, true).replace('<svg ', '<svg width="768" height="507" '); const img = new Image(); img.onload = () => { try{ const c = document.createElement('canvas'); c.width = 768; c.height = 548; const x = c.getContext('2d'); x.fillStyle = '#efe7d8'; x.fillRect(0, 0, 768, 548); x.drawImage(img, 0, 0, 768, 507); x.fillStyle = '#3b3226'; x.font = 'bold 22px Georgia, serif'; x.fillText((meta.home.name || 'My homestead') + ' · One More Door', 16, 534); homeOut = { k: 'pic', v: c.toDataURL('image/png') }; }catch(e){ homeOut = { k: 'pic', v: 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg) }; } render(); }; img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg); });
+  all('[data-hvisitgo]', () => { const t = ($('[data-hvisit]') || {}).value || ''; const v = readCode(t); if (!v) { homeOut = { k: 'bad' }; } else { const gl = gallery(); gl.unshift(t.trim()); try{ localStorage.setItem('omd-home-gallery', JSON.stringify(gl.slice(0, 12))); }catch(e){} homeOut = null; } render(); });
+  all('[data-hdrop]', b => { const gl = gallery(); gl.splice(+b.dataset.hdrop, 1); try{ localStorage.setItem('omd-home-gallery', JSON.stringify(gl)); }catch(e){} render(); });
   all('[data-openk]', b => act(() => G.openDoor(run, +b.dataset.openk)));
   all('[data-hone]', b => { sheet = null; act(() => G.rest(run, 'hone', +b.dataset.hone)); });
   all('[data-retire]', b => { const i = +b.dataset.retire; if (retireSel === i){ G.retireCard(meta, G.startDeck(meta)[i]); retireSel = null; save(); } else retireSel = i; render(); });

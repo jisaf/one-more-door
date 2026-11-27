@@ -227,7 +227,7 @@ span[data-tip],div[data-tip],b[data-tip]{cursor:help}
 .dtrack .dc.to{border-color:var(--accent);border-style:dashed;color:var(--ink)}
 .actors.dist0{justify-content:center;gap:0}.actors.dist1{padding-left:14%;padding-right:14%}.actors.dist2{padding-left:8%;padding-right:8%}.actors.dist3{padding-left:1%;padding-right:1%}
 .intent.i-charge,.intent.i-pounce{border-color:#d8443a}.next.i-charge,.next.i-pounce{border-left-color:var(--bad)}.next.i-shoot{border-left-color:var(--accent)}
-.tinybtn{padding:2px 8px;font-size:12px;min-height:0;display:inline-block;width:auto}.tabs{grid-template-columns:repeat(5,1fr)}.hmats{display:flex;justify-content:space-between;gap:2px;font-size:13px;flex:none}.hmats span{white-space:nowrap}.hmats span b{margin-left:1px}.hmats .z{opacity:.35}.hscene{flex:none}.hscene svg{width:100%;height:auto;display:block;border-radius:12px;box-shadow:var(--shadow)}.hinsp{flex:none;padding:8px 10px}.hrow{display:flex;gap:6px;align-items:center;justify-content:space-between}.hgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:4px}.hgrid button{padding:4px 2px;font-size:12px;min-height:38px;line-height:1.15}.hgrid button small{display:block;font-size:11px}.hgrid button.on{box-shadow:0 0 0 2px var(--accent)}.hgrid button.dim{opacity:.55}.hbuild{width:auto;min-width:96px;padding:4px 10px;font-size:13px}.hbuild small{display:block;font-size:11px}.hbeds{display:grid;grid-template-columns:1fr 1fr;gap:4px 8px;margin-top:4px}.hbeds label{display:flex;flex-direction:column;gap:2px}.hbeds select{font-size:12px;padding:2px}</style>
+.pack{display:flex;justify-content:space-between;align-items:center;gap:8px;flex:none;margin:4px 0 2px;padding:5px 8px;border-radius:10px;background:var(--panel2,rgba(255,255,255,.05));border:1px solid var(--line,rgba(255,255,255,.12));font-size:14px;font-variant-numeric:tabular-nums}.pack .pmats,.pack .ptoks{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.pack .pk b,.pack .tk b{margin-left:3px}.pack .tk{padding:1px 7px;border-radius:8px;background:rgba(255,200,80,.14);font-weight:600}.pack .tk.off{opacity:.35;background:none}.tinybtn{padding:2px 8px;font-size:12px;min-height:0;display:inline-block;width:auto}.tabs{grid-template-columns:repeat(5,1fr)}.hmats{display:flex;justify-content:space-between;gap:2px;font-size:13px;flex:none}.hmats span{white-space:nowrap}.hmats span b{margin-left:1px}.hmats .z{opacity:.35}.hscene{flex:none}.hscene svg{width:100%;height:auto;display:block;border-radius:12px;box-shadow:var(--shadow)}.hinsp{flex:none;padding:8px 10px}.hrow{display:flex;gap:6px;align-items:center;justify-content:space-between}.hgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:4px}.hgrid button{padding:4px 2px;font-size:12px;min-height:38px;line-height:1.15}.hgrid button small{display:block;font-size:11px}.hgrid button.on{box-shadow:0 0 0 2px var(--accent)}.hgrid button.dim{opacity:.55}.hbuild{width:auto;min-width:96px;padding:4px 10px;font-size:13px}.hbuild small{display:block;font-size:11px}.hbeds{display:grid;grid-template-columns:1fr 1fr;gap:4px 8px;margin-top:4px}.hbeds label{display:flex;flex-direction:column;gap:2px}.hbeds select{font-size:12px;padding:2px}</style>
 <div class="app" id="app"><p class="muted">Loading…</p></div>
 <div id="sheet"></div>
 <div id="modal"></div>
@@ -267,7 +267,7 @@ const MONSTERS = [
   { n: 'Sock Goblin', p: 1, bad: 'shot', f: 'Steals exactly one of every pair.' },
   { n: 'Damp Rat King', p: 2, bad: 'coins', f: 'Crowned with a bottle cap. Demands tribute.' },
   { n: 'Gnawing Ledger', p: 3, bad: 'coins', f: 'An account book with teeth. It is always overdue.' },
-  { n: 'Mildew Knight', p: 3, bad: 'gear', f: 'Rusted shut since the last renovation.' },
+  { n: 'Mildew Knight', p: 3, bad: 'gear', f: 'Rusted shut since the castle fell.' },
   { n: 'Grudge Badger', p: 4, bad: 'level', f: 'Remembers something you did. You do not.' },
   { n: 'Candle Thief', p: 4, bad: 'shot', f: 'Takes the light and anything near it.' },
   { n: 'Tax Imp', p: 5, bad: 'coins', f: 'Has a form for this. Has a form for everything.' },
@@ -291,14 +291,14 @@ const MONSTERS = [
   { n: 'Velvet Horror', p: 15, bad: 'level', f: 'Soft in all the wrong places.' },
   { n: 'Debt Collector Below', p: 16, bad: 'coins', f: 'You signed something once. It remembers.' },
   { n: 'Weeping Colossus', p: 17, bad: 'level', f: 'Cries rocks.' },
-  { n: 'The Unpaid Mason', p: 18, bad: 'gear', f: 'Built this dungeon. Was never paid. Takes it out on you.' },
+  { n: 'The Unpaid Mason', p: 18, bad: 'gear', f: 'Built this castle. Was never paid. Takes it out on you.' },
 ];
-const BOSS = { n: 'The Landlord Beneath', p: 34, bad: 'coins', boss: true, f: 'Owns every door you opened. Wants rent.' };
+const BOSS = { n: 'The Old Lord Beneath', p: 34, bad: 'coins', boss: true, f: 'Still thinks the castle is his. Wants it back, with taxes.' };
 const DEEP_BOSSES = [
-  { n: 'The Assessor', p: 36, bad: 'gear', boss: true, deep: true, f: 'Values everything you own. Takes a cut of the estimate.' },
-  { n: 'Foreclosure Wyrm', p: 38, bad: 'coins', boss: true, deep: true, f: 'Coiled around the building’s foundations. Hungry for equity.' },
-  { n: 'The Underwriter', p: 40, bad: 'level', boss: true, deep: true, f: 'Has already calculated how you die. Wants you to sign here.' },
-  { n: 'Mother of Mortgages', p: 42, bad: 'coins', boss: true, deep: true, f: 'Every debt in the city started as one of her eggs.' },
+  { n: 'The Steward', p: 36, bad: 'gear', boss: true, deep: true, f: 'Counts everything you own. Takes the lord’s share.' },
+  { n: 'Moat Wyrm', p: 38, bad: 'coins', boss: true, deep: true, f: 'Coiled around the castle’s foundations. Hungry for stone.' },
+  { n: 'The Chronicler', p: 40, bad: 'level', boss: true, deep: true, f: 'Has already written how you die. Wants you to sign it.' },
+  { n: 'Mother of Moles', p: 42, bad: 'coins', boss: true, deep: true, f: 'Every tunnel under the castle started as one of her children.' },
 ];
 
 // what a monster does next exchange; shown before you choose
@@ -370,8 +370,8 @@ const GEAR2 = [
   { id: 'flail', n: 'Plumb-Bob Flail', k: 'gear', slot: 'hand', b: 3, tier: 2, fx: { pierce: 1 }, set: 'mason', v: 3, d: 'Your hits ignore Guard. Mason set.' },
   // tier 3: from door 9, and from bosses
   { id: 'cleaver', n: 'Heirloom Cleaver', k: 'gear', slot: 'hand', b: 4, tier: 3, fx: { mpl: 3 }, v: 6, d: '+1 Might for every 3 levels.' },
-  { id: 'crook', n: 'Rent-Collector’s Crook', k: 'gear', slot: 'hand', two: true, b: 9, tier: 3, fx: { winCoins: 6 }, v: 3, d: '+6 coins every win.' },
-  { id: 'shell', n: 'Shell of the Old Tenant', k: 'gear', slot: 'body', b: 4, tier: 3, fx: { apl: 4 }, v: 5, d: '+1 Armor for every 4 levels.' },
+  { id: 'crook', n: 'Tax-Collector’s Crook', k: 'gear', slot: 'hand', two: true, b: 9, tier: 3, fx: { winCoins: 6 }, v: 3, d: '+6 coins every win.' },
+  { id: 'shell', n: 'Shell of the Old Squire', k: 'gear', slot: 'body', b: 4, tier: 3, fx: { apl: 4 }, v: 5, d: '+1 Armor for every 4 levels.' },
   { id: 'crown', n: 'Crown of Bad Ideas', k: 'gear', slot: 'head', b: 3, tier: 3, fx: { top: 6 }, v: 5, d: 'Top halves that hit deal 6 more.' },
   { id: 'leagueboots', n: 'Seven-League Boots', k: 'gear', slot: 'feet', b: 3, esc: 2, tier: 3, fx: { bot: 4 }, v: 4, d: 'Bottom halves that hit deal 4 more.' },
   { id: 'bell', n: 'Warden’s Bell', k: 'gear', slot: 'head', b: 4, tier: 3, fx: { startBlk: 8 }, v: 5, d: 'Start each fight with 8 Block.' },
@@ -501,13 +501,13 @@ const LIBRARY = Object.keys(CARDS).filter(k => CARDS[k].price);
 const STARTER_DECK = ['strike', 'strike', 'sidestep', 'brace', 'brace', 'heavy', 'jab', 'lunge'];
 // Leases: chosen difficulty. Harder doors, bigger pay. Beating the Landlord on a Lease opens the next one and raises Forge limits.
 const LEASES = [
-  { n: 'Tenancy', d: 'The doors as they are.' },
-  { n: 'Short Lease', d: 'Monsters are tougher. Gold and Embers pay more.' },
-  { n: 'Hard Lease', d: 'Tougher still, and they hit harder.' },
-  { n: 'Iron Lease', d: 'Every fight is a grind.' },
-  { n: 'Blood Lease', d: 'For people who have bought everything.' },
+  { n: 'Quiet Ruins', d: 'The doors as they are.' },
+  { n: 'Stirring Ruins', d: 'Monsters are tougher. Gold and Embers pay more.' },
+  { n: 'Restless Ruins', d: 'Tougher still, and they hit harder.' },
+  { n: 'Waking Ruins', d: 'Every fight is a grind.' },
+  { n: 'Raging Ruins', d: 'For people who have built everything.' },
 ];
-const leaseName = t => t < LEASES.length ? LEASES[t].n : 'Lease ' + (t + 1);
+const leaseName = t => t < LEASES.length ? LEASES[t].n : 'Ruins ' + (t + 1);
 // Provisions: one-run edges bought with gold before you go down
 const PROVISIONS = [
   { id: 'whet', n: 'Whetstone', d: '+1 Might for this run.', cost: 40 },
@@ -552,8 +552,8 @@ const CALLINGS = {
 const ORIGIN = { n: 'Wanderer', d: 'Once per run, a failed escape is rerolled automatically.' };
 
 const FORGE = [
-  { id: 'drill', n: 'Drill Yard', d: 'Start each run 1 level higher.', base: 60, max: 3, grow: true },
-  { id: 'armory', n: 'Armory', d: '+1 Armor every run.', base: 70, max: 2, grow: true },
+  { id: 'drill', n: 'Practice Yard', d: 'Start each run 1 level higher.', base: 60, max: 3, grow: true },
+  { id: 'armory', n: 'Armor Rack', d: '+1 Armor every run.', base: 70, max: 2, grow: true },
   { id: 'hearth', n: 'Hearthstone', d: '+3 max Grit.', base: 80, max: 3, grow: true },
   { id: 'cobbler', n: 'Cobbler', d: 'Escape is 1 easier.', base: 120, max: 2 },
   { id: 'satchel', n: 'Satchel', d: 'Start with 1 more one-shot.', base: 60, max: 2, grow: true },
@@ -927,7 +927,7 @@ function rerollFavor(s) {
 function rest(s, how, i) { // hearth: 'rest' heals, 'temper' adds 1 Might for the run, 'cull' burns card i out of your deck
   if (s.phase !== 'hearth') return;
   if (how === 'cull') { if (s.deck.length <= T.minDeck || !s.deck[i]) return; const id = s.deck.splice(i, 1)[0]; log(s, `You feed ${CARDS[id].n} to the fire. Your deck is leaner.`); }
-  else if (how === 'hone') { if (!s.town || !s.town.smithy || !s.deck[i]) return; const id = s.deck[i]; s.honed[id] = (s.honed[id] || 0) + 1; log(s, `The Smith hones your ${CARDS[id].n}. Every copy hits and blocks harder for this run.`); }
+  else if (how === 'hone') { if (!s.town || !s.town.smithy || !s.deck[i]) return; const id = s.deck[i]; s.honed[id] = (s.honed[id] || 0) + 1; log(s, `You hone your ${CARDS[id].n} at the forge. Every copy hits and blocks harder for this run.`); }
   else if (how === 'market') { const lv = townLv(s.town, 'market'); if (!lv || s.coins < T.marketPrice) return; const r = rngOf(s); s.coins -= T.marketPrice;
     for (let j = 0; j < (lv >= 3 ? 2 : 1); j++) s.queue.push(Object.assign(drawTreasure(r, s.calling, s.door + (lv >= 2 ? 4 : 0)), { src: 'market' }));
     saveRng(s, r); log(s, `The Peddler sells you ${lv >= 3 ? 'two finds' : 'a find'} for ${T.marketPrice} coins.`); s.phase = 'treasure'; ev(s, { t: 'rested', how }); return; }
@@ -1149,7 +1149,7 @@ function canUnleash() { return false; }
 function playCard() { return false; }
 function bossRage(s) {
   const f = s.fight;
-  if (f.mon.boss && !f.raged && f.hp <= f.maxHp * T.rageAt) { f.raged = true; f.dmg += T.rageDmg; f.forceHeavy = true; log(s, f.mon.deep ? `${cap(the(f.mon.n))} is furious now.` : `The Landlord stops smiling. Rent is due.`); }
+  if (f.mon.boss && !f.raged && f.hp <= f.maxHp * T.rageAt) { f.raged = true; f.dmg += T.rageDmg; f.forceHeavy = true; log(s, f.mon.deep ? `${cap(the(f.mon.n))} is furious now.` : `The Old Lord stops smiling. He wants his castle back.`); }
 }
 // end your exchange: the monster acts on its shown intent
 
@@ -1338,7 +1338,7 @@ function endRun(s, how) {
   const deep = Math.max(0, cleared - T.doors);
   s.ended = { how, door: s.door, cleared, gold, deep, deepBosses: s.deepBosses, embers: Math.round((Math.max(0, Math.min(cleared, T.doors)) * T.emberPerDoor + deep * T.emberDeepDoor + s.deepBosses * T.emberDeepBoss) * (1 + T.leaseEmber * (s.lease || 0))), lease: s.lease || 0,
     keep: how !== 'dead' ? bestGear(s) : null, folk: null, mats: (() => { const o = {}; for (const k in (s.mats || {})) { const v = how === 'dead' ? Math.ceil(s.mats[k] / 2) : s.mats[k]; if (v) o[k] = v; } return o; })(), kills: Object.assign({}, s.kills || {}) };
-  { const bm = townLv(s.town, 'archive') >= 3 ? 1.5 : 1, done = (s.bounties || []).filter(b => b.done); s.ended.bounty = { n: done.length, of: (s.bounties || []).length, gold: Math.round(done.reduce((a, b) => a + b.g, 0) * bm), embers: Math.round(done.reduce((a, b) => a + b.e, 0) * bm) }; }
+  { const bm = townLv(s.town, 'archive') >= 3 ? 1.5 : 1, done = (s.bounties || []).filter(b => b.done); s.ended.bounty = { n: done.length, of: (s.bounties || []).length, gold: Math.round(done.reduce((a, b) => a + b.g, 0) * bm), embers: Math.round(done.reduce((a, b) => a + b.e, 0) * bm), mats: (() => { const o = {}, rr = MATS.filter(m => m.r === 2); done.forEach((b, i) => { const m = rr[(i + (s.door || 0)) % rr.length]; o[m.id] = (o[m.id] || 0) + 1; }); return o; })() }; }
   log(s, how === 'dead' ? `Run over. ${gold ? 'Your Strongbox saved ' + gold + ' gold.' : 'Everything you carried is lost.'}` : `You walk home with ${gold} gold.`);
 }
 function settle(meta, s) {
@@ -1358,7 +1358,7 @@ function settle(meta, s) {
     if (kl >= 3) { const ra = MATS.filter(m => m.r === 2).sort((a, b) => (meta.mats[b.id] || 0) - (meta.mats[a.id] || 0))[0]; if ((meta.mats[ra.id] || 0) >= 4) { meta.mats[ra.id] -= 4; const rl = MATS.filter(m => m.r === 3)[(h.kilns || 0) % 2]; meta.mats[rl.id] = (meta.mats[rl.id] || 0) + 1; fired.push(rl.n); } }
     if (meta.pantry.length > 30) meta.pantry.splice(0, meta.pantry.length - 30);
     e.grown = grown; e.fired = fired; }
-  if (e.bounty) { meta.gold += e.bounty.gold; embers += e.bounty.embers; }
+  if (e.bounty) { meta.gold += e.bounty.gold; embers += e.bounty.embers; for (const k in (e.bounty.mats || {})) { meta.mats = meta.mats || {}; meta.mats[k] = (meta.mats[k] || 0) + e.bounty.mats[k]; } }
   meta.bestiary = meta.bestiary || {}; const before = {}; for (const k in (e.kills || {})) { before[k] = meta.bestiary[k] || 0; meta.bestiary[k] = before[k] + e.kills[k]; }
   e.newRanks = Object.keys(e.kills || {}).filter(k => (before[k] < 3 && meta.bestiary[k] >= 3) || (before[k] < 8 && meta.bestiary[k] >= 8));
   { const known = Object.keys(meta.bestiary).filter(k => meta.bestiary[k] >= 3).length, mile = Math.floor(known / 5); if (mile > (meta.bestMile || 0)) { e.bestEmbers = 5 * (mile - (meta.bestMile || 0)); embers += e.bestEmbers; meta.bestMile = mile; } }
@@ -1369,20 +1369,20 @@ function settle(meta, s) {
 }
 
 // ---------- tavern ----------
-const KEEPER = 'Ma Ottery';
+const KEEPER = 'Journal';
 function tavernLine(meta, e) {
-  if (!e) return meta.runs ? 'Back again. The doors missed you.' : 'New face. The doors are under the cellar. Most folk come back. Some come back richer.';
-  if (e.how === 'victory' && e.deep) return e.deep >= 10 ? 'You went deeper than the Landlord’s basement? There is a basement under the basement? Do not tell me what lives there.' : 'Past the Landlord and further down. You smell like old paperwork and glory.';
-  if (e.how === 'victory') return 'You beat the Landlord? Then who do we pay rent to now? ...Nobody tell him.';
-  if (e.how === 'dead') return e.door <= 3 ? 'Door ' + e.door + '? I have seen cats go deeper. Have a stew.' : e.door <= 7 ? 'You got greedy, love. Everyone does. The Ember you brought back still glows.' : 'That deep? Folk will sing about it. Badly, but they will sing.';
-  if (e.how === 'fled-boss') return 'You saw the Landlord and walked away with your purse. That is the smartest thing anyone here has done.';
-  return e.door <= 3 ? 'Home early. Nothing wrong with a short shift.' : e.door <= 6 ? 'Solid haul. Spend it before the Tax Imp hears.' : 'Seven doors and home with the loot? Drinks are on you.';
+  if (!e) return meta.runs ? 'Back at the homestead. The doors under the keep are still there. So am I.' : 'Day one in the ruins. There are doors under the old keep, going down. I should see what I can carry back up.';
+  if (e.how === 'victory' && e.deep) return e.deep >= 10 ? 'Past the Old Lord and still going. There is more castle under the castle. I did not like what I heard down there.' : 'Past the Old Lord and further down. The deep doors pay in stranger stone.';
+  if (e.how === 'victory') return 'The Old Lord is down. For one night the castle is mine, and I slept very well.';
+  if (e.how === 'dead') return e.door <= 3 ? 'Only door ' + e.door + '. I came home bruised. The garden does not mind.' : e.door <= 7 ? 'I got greedy and lost half my haul. The Embers I kept still glow in the hearth.' : 'That deep, and I still crawled home. Half a haul is better than none.';
+  if (e.how === 'fled-boss') return 'I met the Old Lord and walked away with my purse. Smartest thing I have done all season.';
+  return e.door <= 3 ? 'A short trip. Nothing wrong with that. There is always another run.' : e.door <= 6 ? 'A good haul. Enough for a few more boards.' : 'Deep and home with the loot. The homestead grows.';
 }
 const LORE = [
-  { at: 3, t: 'Ma Ottery says the doors were dug by a mason nobody paid. "He is still down there," she adds, "invoicing."' },
-  { at: 10, t: 'An old tenant swears the deepest door has a mail slot. Letters go in. Rent comes out.' },
-  { at: 20, t: 'The Embers you bring back are what is left of everyone who went too deep. Ma keeps them warm.' },
-  { at: 35, t: 'Ma admits she once owned the building above the doors. "Sold it," she says. "To someone below."' },
+  { at: 3, t: 'The doors under the keep were cut by a mason nobody paid. Some nights I hear him down there, still chiselling.' },
+  { at: 10, t: 'Found the Old Lord’s seal on a door. He never left the castle. He just moved downstairs.' },
+  { at: 20, t: 'The Embers I bring back are what is left of everyone who went too deep. I keep them warm in the hearth.' },
+  { at: 35, t: 'The castle was not ruined by war. The Old Lord dug too deep, and the deep came up.' },
 ];
 
 Object.assign(T, {"winMend":0,"lootMend":0,"bossHeal":99,"handCap":99,"bossHp":90,"dmgMul":0.8,"lootRecover":2,"hpMul":5.5,"bossRestore":1,"newFavors":0,"baseMight":2,"winRecover":2,"gritPerLevel":1,"easeStart":0.6,"easeDoor":7,"distOn":0}); for (const [k,v] of Object.entries({"heavy":{"spd":20,"top":{"dmg":2.25},"bot":{"blk":1.75}},"lunge":{"spd":60,"top":{"dmg":3.5,"burn":1,"move":1,"dir":"in"},"bot":{"rec":2}},"brace":{"spd":40,"top":{"blk":1.5},"bot":{"blk":1.25}},"jab":{"spd":85,"top":{"dmg":2},"bot":{"dmg":1}},"reckless":{"spd":50,"top":{"dmg":2.5,"self":2},"bot":{"blk":1.25}},"bash":{"spd":45,"top":{"dmg":2},"bot":{"dmg":1,"blk":0.5}},"feint":{"spd":70,"top":{"dmg":2},"bot":{"rec":1,"blk":0.5}},"bulwark":{"spd":30,"top":{"blk":2},"bot":{"blk":1.75}},"pierce":{"spd":55,"top":{"dmg":2,"pierce":1,"reach":1},"bot":{"rec":2}},"momentum":{"spd":55,"top":{"dmg":2.5},"bot":{"dmg":1.25}},"ironskin":{"spd":35,"top":{"blk":2},"bot":{"blk":3,"burn":1}}})) HALVES[k]=v;
@@ -1426,7 +1426,7 @@ const FLAVOR = {
   rathood:'Warm, itchy, faintly judgmental.', ratslip:'Squeak with purpose.', embergaunt:'Hot to the touch. Hotter to the face.', ashmask:'Breathe through your nose. Or not at all.',
   dagger:'Bets everything on the first swing.', spikebuck:'Blocking is just punching with extra steps.', windcoat:'The big swing slides right off.',
   leech:'It drinks. You heal. Nobody asks how.', apron:'Pockets for mortar, trowel, and one emergency sandwich.', flail:'Perfectly level. Perfectly rude.',
-  cleaver:'Passed down. Sharpened up. Gets better with every grudge.', crook:'Rent is due. Rent is always due.', shell:'The previous tenant left it. And everything inside.',
+  cleaver:'Passed down. Sharpened up. Gets better with every grudge.', crook:'Taxes are due. Taxes are always due.', shell:'The last squire left it. And everything inside.',
   crown:'Every thought under it is a terrible one. Every one works.', leagueboots:'Each stride is a kick. Each kick is a stride.', bell:'Ring it once and the room goes quiet.',
   gravecoat:'Dirt on the hem, coins in the lining.', doorbreaker:'Doors fear it. So do the things behind them.'
 };
@@ -1815,13 +1815,13 @@ function render(){
 // ---------- run screen ----------
 function where(s){
   if (s.phase === 'over') return 'Run over';
-  if (s.door === 0) return 'Cellar stairs';
+  if (s.door === 0) return 'Under the keep';
   if (s.door > G.T.doors) return 'Deep ' + G.deepOf(s.door);
   return 'Door ' + s.door + '/' + G.T.doors;
 }
 function topBar(s){
   const lease = s.lease ? `<span class="tiny ember" data-tip="${esc(G.leaseName(s.lease))}: monsters are tougher, and gold and Embers pay more.">◆${s.lease}</span>` : '';
-  return `<div class="bar1"><span class="where" data-tip="How deep you are. Door ${G.T.doors} is the Landlord. Each door deeper makes your coins worth more when you walk home.">${where(s)}</span>${lease}<span class="money"><span data-tip="Coins you are carrying. You lose them if you die down here.">🪙${s.coins}</span> <span class="gold" data-tip="Gold you would take home if you walked out now: your coins times the depth bonus.">→ ${G.bankValue(s)}g</span></span><span class="sp"></span>`
+  return `<div class="bar1"><span class="where" data-tip="How deep you are. Door ${G.T.doors} is the Old Lord. Each door deeper makes your coins worth more when you walk home.">${where(s)}</span>${lease}<span class="money"><span data-tip="Coins you are carrying. You lose them if you die down here.">🪙${s.coins}</span> <span class="gold" data-tip="Gold you would take home if you walked out now: your coins times the depth bonus.">→ ${G.bankValue(s)}g</span></span><span class="sp"></span>`
     + `<button class="ib lab" data-sheet="gear" data-tip="Your gear, belt and pack.">🎒<span>Gear</span></button><button class="ib lab" data-sheet="deck" data-tip="Every card in your deck, and your favors.">🂠<span>Deck ${s.deck.length}</span></button><button class="ib lab" data-sheet="log" data-tip="What has happened this run.">📜<span>Log</span></button></div>`;
 }
 function statBar(s){
@@ -1831,14 +1831,24 @@ function statBar(s){
 function energyDots_unused(s){ const e = s.fight ? s.fight.energy : G.T.energy, n = Math.max(G.T.energy, e); return Array.from({ length: n }, (_, i) => `<i class="${i < e ? 'on' : ''}"></i>`).join(''); }
 function track(s){
   if (s.door > G.T.doors) return '';
-  let h = `<div class="track" data-tip="Your way through the ${G.T.doors} doors. The red one at the end is the Landlord.">`;
+  let h = `<div class="track" data-tip="Your way through the ${G.T.doors} doors. The red one at the end is the Old Lord.">`;
   for (let d = 1; d <= G.T.doors; d++) h += `<div class="pip ${d === G.T.doors ? 'boss' : ''} ${d < s.door || (d === s.door && s.phase !== 'fight') ? 'done' : ''} ${d === s.door && s.phase === 'fight' ? 'now' : ''}"></div>`;
   return h + '</div>';
 }
 function narrBox(){ const lines = narr.length ? narr.slice(-2) : (run ? run.log.slice(-1) : []); return lines.length ? `<div class="narr">${lines.map(l => `<p>${esc(l)}</p>`).join('')}</div>` : ''; }
+function packStrip(s){
+  if (s.phase === 'over') return '';
+  const m = s.mats || {}, ks = G.MATS.filter(x => m[x.id]);
+  const mats = ks.length ? ks.map(x => `<span class="pk" data-tip="${esc(x.n)}: ${m[x.id]} carried. Bring it home to build. You keep half if you die.">${x.i}<b>${m[x.id]}</b></span>`).join('') : `<span class="pk muted" data-tip="Materials you find down here show up here. Bring them home to build.">🧺 nothing yet</span>`;
+  const tk = s.fight ? (s.fight.tok || {}) : (s.tokCarry || {}), cap = G.tokCapOf ? G.tokCapOf(s) : 0;
+  const tdesc = { edge: 'Spend it with Cash In or Flourish for big hits.', guard: 'Spend it with Riposte or Hold the Line.', ember: 'Each one burns the monster for 1 every round. Stoke the Fire spends them.' };
+  const has = ['edge', 'guard', 'ember'].some(k => tk[k]);
+  const toks = has ? ['edge', 'guard', 'ember'].map(k => `<span class="tk ${tk[k] ? '' : 'off'}" data-tip="${G.TOKENS[k].n}: ${tk[k] || 0} of ${cap}. ${tdesc[k]} Tokens carry into your next fight.">${G.TOKENS[k].i}<b>${tk[k] || 0}</b></span>`).join('') : '';
+  return `<div class="pack"><span class="pmats">${mats}</span>${toks ? `<span class="ptoks">${toks}</span>` : ''}</div>`;
+}
 function renderRun(){
   const s = run;
-  let h = topBar(s) + statBar(s) + track(s);
+  let h = topBar(s) + statBar(s) + packStrip(s) + track(s);
   h += s.phase === 'fight' ? fightScene(s) : s.phase === 'over' ? overScene(s) : doorScene(s);
   h += `<div class="panel">${s.phase === 'fight' ? fightPanel(s) : s.phase === 'door' ? doorPanel(s) : s.phase === 'hearth' ? hearthPanel(s) : s.phase === 'over' ? overPanel(s) : waitPanel(s)}</div>`;
   return h;
@@ -1852,7 +1862,7 @@ function doorScene(s){
   const nextDoor = s.phase === 'door' ? s.door + 1 : Math.max(1, s.door);
   const here = s.phase !== 'door';
   const chest = s.phase === 'treasure' && (e.t === 'stash' || e.t === 'start');
-  const tagTxt = s.door === 0 ? 'The cellar stairs' : here ? 'Door ' + s.door : 'Before door ' + nextDoor + ' · pays ×' + G.multAt(nextDoor);
+  const tagTxt = s.door === 0 ? 'Under the keep' : here ? 'Door ' + s.door : 'Before door ' + nextDoor + ' · pays ×' + G.multAt(nextDoor);
   let floats = '';
   if (fx === 'heal' && e.item) floats = `<div class="float h good">+${Math.min(e.item.v, 99)} Grit</div>`;
   if (fx === 'win' && e.coins) floats = `<div class="float m">+${e.coins} coins</div>`;
@@ -1897,7 +1907,7 @@ function fightScene(s){
   if (fx === 'fizzle') floats += `<div class="float h bad">Fizzled</div>`;
   const hpP = Math.max(0, f.hp) / f.maxHp;
   const tk = f.tok || {}, tkh = ['edge', 'guard', 'ember'].filter(k => tk[k]).map(k => `<span data-tip="${G.TOKENS[k].n}: ${k === 'ember' ? 'each one burns the monster for 1 every round. Stoke the Fire spends them.' : k === 'edge' ? 'spend it with Cash In or Flourish for big hits.' : 'spend it with Riposte or Hold the Line.'} Tokens carry into your next fight.">${G.TOKENS[k].i} ${tk[k]}</span>`).join(' ');
-  const shield = (tkh ? `<div class="tiny" style="margin:2px 0">${tkh}</div>` : '') + (f.block ? `<div class="shield" data-tip="Block: stops this much of the monster's next hit. It resets every turn.">⛨ ${f.block}</div>` : '');
+  const shield = (f.block ? `<div class="shield" data-tip="Block: stops this much of the monster's next hit. It resets every turn.">⛨ ${f.block}</div>` : '');
   return `<div class="scene ${fx === 'open' ? 'fx-enter' : ''}">${corridorSVG({ num: s.door, boss: f.mon.boss, open: true })}<div class="actors dist${f.dist}">${heroSVG(s, heroFx, shield + `<div class="hpbar me" data-tip="Your Grit."><i style="width:${s.grit / s.maxGrit * 100}%"></i><span>${s.grit}/${s.maxGrit}</span></div>`)}${monsterSVG(f.mon, monFx, intentBadge(s) + `<div class="hpbar" data-tip="Monster health. Bring it to zero to win.${f.mon.f ? ' ' + esc(f.mon.f) : ''}"><i style="width:${hpP * 100}%"></i><span>${Math.max(0, f.hp)}/${f.maxHp}</span></div>`)}</div><span class="tag">${esc(f.mon.n)}${G.T.distOn ? ' · ' + (TYPE_N[f.mtype] || '') : ''} · round ${f.round}</span><div class="chips">${chips}</div>${floats}${narrBox()}${ex && ex.took ? '<div class="redflash"></div>' : ''}</div>`;
 }
 function fightPanel(s){
@@ -1919,29 +1929,28 @@ function fightPanel(s){
   const belt = s.hand.map((c, i) => `<button class="ib bi" data-shot="${i}" aria-label="${esc(c.n)}: ${esc(shotText(c))}" data-tip="${esc(c.n)}: ${esc(shotText(c))}. One use, free, any time in a fight.">${icon(c)}</button>`).join('');
   h += `<div class="pilerow">${pileLine(s)}</div>`;
   const canRest = s.spent.length > 0;
-  h += `<div class="ctl"><span class="belt">${belt}</span><button class="ib" data-act="run" style="min-height:44px" data-tip="Try to escape: ${pct(ec)} chance. If it fails, the monster gets its move anyway. Running from the Landlord ends the run with your coins.">Run<br><span class="tiny">${pct(ec)}</span></button><button class="ib" data-act="rest" style="min-height:44px" ${canRest ? '' : 'disabled'} data-tip="Rest mid-fight: your ${s.spent.length} spent cards come back, you lose one card of your choice for the run, and the monster still gets its move.">Rest<br><span class="tiny">+${s.spent.length} −1</span></button><button class="primary endt" data-act="play" ${pv ? '' : 'disabled'}>${pv ? 'Play' : pick.length ? 'Pick one more' : 'Pick 2 halves'}</button></div>`;
+  h += `<div class="ctl"><span class="belt">${belt}</span><button class="ib" data-act="run" style="min-height:44px" data-tip="Try to escape: ${pct(ec)} chance. If it fails, the monster gets its move anyway. Running from the Old Lord ends the run with your coins.">Run<br><span class="tiny">${pct(ec)}</span></button><button class="ib" data-act="rest" style="min-height:44px" ${canRest ? '' : 'disabled'} data-tip="Rest mid-fight: your ${s.spent.length} spent cards come back, you lose one card of your choice for the run, and the monster still gets its move.">Rest<br><span class="tiny">+${s.spent.length} −1</span></button><button class="primary endt" data-act="play" ${pv ? '' : 'disabled'}>${pv ? 'Play' : pick.length ? 'Pick one more' : 'Pick 2 halves'}</button></div>`;
   return h;
 }
 function doorLabel(d){ return d.type === 'monster' ? [esc(d.mon.n), 'a monster'] : d.type === 'hearth' ? ['A hearth', 'rest or improve'] : d.type === 'shrine' ? ['A shrine', 'a favor'] : d.type === 'treasure' ? ['Treasure', 'loot, no fight'] : d.type === 'curse' ? ['Something foul', 'a curse'] : [esc(d.type), '']; }
 function doorPanel(s){
   let h = doorPanel0(s); const c = s.captive;
   if (c && !c.freed) { const b = G.townOf(c.id); h = `<p class="say small">🪢 Word is the ${b.folk} is held somewhere past door ${c.door - 1}. Free them and walk home alive to build the ${b.n}.</p>` + h; }
-  else if (c && c.freed) { const b = G.townOf(c.id); h = `<p class="say small">🪢 The ${b.folk} is with you. Walk home alive to bring them to town.</p>` + h; }
-  { const m = s.mats || {}, ks = Object.keys(m).filter(k => m[k]); if (ks.length) h = `<p class="tiny muted" style="margin:0 0 6px">🧺 Carrying ${ks.map(k => { const x = G.MATS.find(q => q.id === k); return x.i + ' ' + m[k] + ' ' + x.n; }).join(', ')}. You keep half if you die.</p>` + h; }
+  else if (c && c.freed) { const b = G.townOf(c.id); h = `<p class="say small">🪢 The ${b.folk} is with you. Walk home alive to bring them home.</p>` + h; }
   if (s.bounties && s.bounties.length) h = `<p class="tiny muted" style="margin:0 0 6px">📜 Bounties: ${s.bounties.map(b => b.done ? `<span class="okc">✓ ${esc(b.t)}</span>` : esc(b.t)).join(' · ')}</p>` + h;
   const ch = G.doorChoices(s);
   if (ch) h = h.replace(/<button class="primary[^"]*" id="open"[^>]*>[\s\S]*?<\/button>/, ch.map((d, k) => { const [a, b] = doorLabel(d); return `<button class="primary" data-openk="${k}" data-tip="The Watchtower shows what waits behind each door.">${ch.length > 2 ? ['Left', 'Middle', 'Right'][k] : k ? 'Right' : 'Left'}: ${a}<small>${b}</small></button>`; }).join(''));
   return h;
 }
 function doorPanel0(s){
-  if (s.door === 0) return `<p class="say"><b>Ten doors down, the Landlord waits.</b> Grit and cards carry between doors. Walk home after any door; deeper doors make each coin worth more. Beat a boss and every lost card comes back.</p><button class="primary go" id="open">Open door 1</button><p class="tiny muted" style="margin:0;text-align:center">Hold your finger on anything to read about it.</p>`;
+  if (s.door === 0) return `<p class="say"><b>Ten doors down, the Old Lord waits.</b> Grit and cards carry between doors. Walk home after any door; deeper doors make each coin worth more. Beat a boss and every lost card comes back.</p><button class="primary go" id="open">Open door 1</button><p class="tiny muted" style="margin:0;text-align:center">Hold your finger on anything to read about it.</p>`;
   const nd = s.door + 1, bv = G.bankValue(s), pk = G.peek(s);
   const dboss = G.isDeepBossDoor(nd), p = nd === G.T.doors ? G.BOSS.p : Math.round(G.T.monBase + G.T.monPerDoor * Math.min(nd, 9.5));
   const mon = nd === G.T.doors ? { p, boss: true } : dboss ? { p, boss: true, tier: G.deepOf(nd) / G.T.deepBossEvery } : nd > G.T.doors ? { p: 17, depth: G.deepOf(nd) } : { p };
   if (s.lease) mon.lease = s.lease;
   const st = G.monStats(mon);
-  let say = s.bossDown && s.door === G.T.doors ? '<b>The Landlord is down.</b> Home, or deeper? ' : '';
-  say += nd === G.T.doors ? `The Landlord: ${st.hp} health, swings for ${st.dmg}, doubled on a Wind-up.` : dboss ? `A boss: about ${st.hp} health, swings for ${st.dmg}.` : `Next monsters swing for about ${st.dmg}, doubled on a Wind-up.`;
+  let say = s.bossDown && s.door === G.T.doors ? '<b>The Old Lord is down.</b> Home, or deeper? ' : '';
+  say += nd === G.T.doors ? `The Old Lord: ${st.hp} health, swings for ${st.dmg}, doubled on a Wind-up.` : dboss ? `A boss: about ${st.hp} health, swings for ${st.dmg}.` : `Next monsters swing for about ${st.dmg}, doubled on a Wind-up.`;
   if (pk) say += ` 🏮 Next: <b>${pk.type === 'monster' ? esc(pk.mon.n) : pk.type}</b>.`;
   say += ` You hold <b>${s.cards.length}</b> card${s.cards.length === 1 ? '' : 's'}${s.spent.length ? `, ${s.spent.length} spent` : ''}.`;
   const camp = G.canCamp(s) ? `<button class="campb" data-act="camp" data-tip="Rest here: your ${s.spent.length} spent cards come back and you lose one card of your choice for the run.">Camp<small>+${s.spent.length} cards back, lose 1</small></button>` : '';
@@ -1949,7 +1958,7 @@ function doorPanel0(s){
 }
 function hearthPanel(s){
   const can = s.deck.length > G.T.minDeck, lost = s.lost.length + s.burned.length, mend = Math.min(G.T.mendN, lost);
-  return `<p class="say"><b>A hearth, burning low.</b> Pick one.</p><div class="two"><button class="safe" data-rest="rest" data-tip="Heal Grit.">Rest<small>+${Math.min(G.T.restHeal, s.maxGrit - s.grit)} Grit</small></button><button class="primary" data-rest="mend" ${mend ? '' : 'disabled'} data-tip="Bring back up to ${G.T.mendN} lost cards.">Mend<small>${mend ? '+' + mend + ' lost card' + (mend > 1 ? 's' : '') : 'nothing lost'}</small></button><button data-rest="temper" data-tip="+1 Might for the rest of this run.">Sharpen<small>+1 Might</small></button>${s.town && s.town.smithy ? `<button data-sheet="hone" data-tip="The Smith hones one card for the rest of this run.">Hone<small>one card +${50 + 25 * (G.townLv(s.town, 'smithy') - 1)}%</small></button>` : ''}${s.town && s.town.market ? `<button data-rest="market" ${s.coins < G.T.marketPrice ? 'disabled' : ''} data-tip="The Peddler trades a treasure for coins.">Market<small>${G.townLv(s.town, 'market') >= 3 ? 'two finds' : 'a find'} for ${G.T.marketPrice} coins</small></button>` : ''}<button data-sheet="cull" data-tip="Remove one card from your deck for this run." ${can ? '' : 'disabled'}>Burn a card<small>${can ? 'thin your deck' : 'deck too small'}</small></button></div>`;
+  return `<p class="say"><b>A hearth, burning low.</b> Pick one.</p><div class="two"><button class="safe" data-rest="rest" data-tip="Heal Grit.">Rest<small>+${Math.min(G.T.restHeal, s.maxGrit - s.grit)} Grit</small></button><button class="primary" data-rest="mend" ${mend ? '' : 'disabled'} data-tip="Bring back up to ${G.T.mendN} lost cards.">Mend<small>${mend ? '+' + mend + ' lost card' + (mend > 1 ? 's' : '') : 'nothing lost'}</small></button><button data-rest="temper" data-tip="+1 Might for the rest of this run.">Sharpen<small>+1 Might</small></button>${s.town && s.town.smithy ? `<button data-sheet="hone" data-tip="Your forge hones one card for the rest of this run.">Hone<small>one card +${50 + 25 * (G.townLv(s.town, 'smithy') - 1)}%</small></button>` : ''}${s.town && s.town.market ? `<button data-rest="market" ${s.coins < G.T.marketPrice ? 'disabled' : ''} data-tip="The Peddler trades a treasure for coins.">Market<small>${G.townLv(s.town, 'market') >= 3 ? 'two finds' : 'a find'} for ${G.T.marketPrice} coins</small></button>` : ''}<button data-sheet="cull" data-tip="Remove one card from your deck for this run." ${can ? '' : 'disabled'}>Burn a card<small>${can ? 'thin your deck' : 'deck too small'}</small></button></div>`;
 }
 function waitPanel(s){
   const t = { treasure: 'Sort what you found.', favor: 'Choose a favor.', spoils: 'Choose your spoils.' }[s.phase] || '';
@@ -1961,9 +1970,9 @@ function overScene(s){
 }
 function overPanel(s){
   const e = s.ended;
-  const title = e.how === 'victory' && e.deep ? 'Home from the Deep' : { dead: 'You died', banked: 'You made it home', victory: 'The Landlord falls', 'fled-boss': 'You fled the Landlord', exhausted: 'Out of cards' }[e.how];
-  const nl = e.newLease ? ` <b>New Lease opened:</b> ${esc(G.leaseName(e.lease + 1))}, and Forge limits rose.` : '';
-  return `<p class="say"><b>${title}.</b> ${e.how === 'dead' ? `Door ${e.door} was one too many.` : `Home from door ${e.door}.`}${e.folk ? ` <b>The ${G.townOf(e.folk).folk} is safe in town.</b> Build the ${G.townOf(e.folk).n} in the Town tab.` : ''}${e.mats && Object.keys(e.mats).length ? ` 🧺 Home with ${Object.keys(e.mats).map(k => { const x = G.MATS.find(q => q.id === k); return x.i + ' ' + e.mats[k] + ' ' + x.n; }).join(', ')}${e.how === 'dead' ? ' (half of what you carried)' : ''}.` : ''}${e.grown && e.grown.length ? ` 🌱 Ripe while you were away: ${e.grown.join(', ')}.` : ''}${e.fired && e.fired.length ? ` 🔥 The kiln made ${e.fired.join(', ')}.` : ''}${e.bounty && e.bounty.n ? ` 📜 ${e.bounty.n} of ${e.bounty.of} bounties done: +${e.bounty.gold} gold, +${e.bounty.embers} embers (counted below).` : ''}${e.newRanks && e.newRanks.length ? ` Bestiary: you know the ${e.newRanks.map(n => esc(n.replace(/^The /, ''))).join(', the ')} better now.` : ''}${e.bestEmbers ? ` +${e.bestEmbers} embers for your Bestiary.` : ''} <b class="gold">${e.gold + (e.bounty ? e.bounty.gold : 0)} gold</b>, <b class="ember">+${s._emb != null ? s._emb : e.embers} embers</b>.${nl}</p><button class="primary go" id="town">Back to town</button>`;
+  const title = e.how === 'victory' && e.deep ? 'Home from the Deep' : { dead: 'You died', banked: 'You made it home', victory: 'The Old Lord falls', 'fled-boss': 'You fled the Old Lord', exhausted: 'Out of cards' }[e.how];
+  const nl = e.newLease ? ` <b>The ruins stir:</b> ${esc(G.leaseName(e.lease + 1))}, and Workshop limits rose.` : '';
+  return `<p class="say"><b>${title}.</b> ${e.how === 'dead' ? `Door ${e.door} was one too many.` : `Home from door ${e.door}.`}${e.folk ? ` <b>The ${G.townOf(e.folk).folk} is safe in town.</b> Build the ${G.townOf(e.folk).n} in the Town tab.` : ''}${e.mats && Object.keys(e.mats).length ? ` 🧺 Home with ${Object.keys(e.mats).map(k => { const x = G.MATS.find(q => q.id === k); return x.i + ' ' + e.mats[k] + ' ' + x.n; }).join(', ')}${e.how === 'dead' ? ' (half of what you carried)' : ''}.` : ''}${e.grown && e.grown.length ? ` 🌱 Ripe while you were away: ${e.grown.join(', ')}.` : ''}${e.fired && e.fired.length ? ` 🔥 The kiln made ${e.fired.join(', ')}.` : ''}${e.bounty && e.bounty.n ? ` 📜 ${e.bounty.n} of ${e.bounty.of} bounties done: +${e.bounty.gold} gold, +${e.bounty.embers} embers${Object.keys(e.bounty.mats || {}).map(k => { const m = G.MATS.find(x => x.id === k); return `, +${e.bounty.mats[k]} ${m.i} ${m.n}`; }).join('')} (counted below).` : ''}${e.newRanks && e.newRanks.length ? ` Bestiary: you know the ${e.newRanks.map(n => esc(n.replace(/^The /, ''))).join(', the ')} better now.` : ''}${e.bestEmbers ? ` +${e.bestEmbers} embers for your Bestiary.` : ''} <b class="gold">${e.gold + (e.bounty ? e.bounty.gold : 0)} gold</b>, <b class="ember">+${s._emb != null ? s._emb : e.embers} embers</b>.${nl}</p><button class="primary go" id="town">Back home</button>`;
 }
 
 // ---------- sheets ----------
@@ -1980,7 +1989,7 @@ function renderSheet(){
     const hone = sheet === 'hone' && s.phase === 'hearth', cull = (sheet === 'cull' && s.phase === 'hearth') || hone;
     title = hone ? 'Hone a card' : cull ? 'Burn a card' : `Your deck · ${s.deck.length} cards`;
     const ids = s.deck.map((id, i) => [id, i]).sort((a, b) => a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0);
-    body = `<p class="small muted" style="margin:0 0 8px">${hone ? 'Tap a card. The Smith hones every copy of it: it hits and blocks 50% harder for the rest of this run.' : cull ? 'Tap a card to burn it for the rest of this run. A smaller deck draws your best cards more often.' : `Hand ${s.cards.length} · spent ${s.spent.length} · lost ${s.lost.length + s.burned.length}. Each card has a top half and a bottom half; play one of each per turn.`}</p><div class="cgrid">${ids.map(([id, i]) => tileCard(id, s.honed && s.honed[id] ? '<span class="tiny okc">honed</span>' : '', hone ? `data-hone="${i}"` : cull ? `data-cull="${i}"` : 'tabindex="-1"')).join('')}</div>`;
+    body = `<p class="small muted" style="margin:0 0 8px">${hone ? 'Tap a card. Your forge hones every copy of it: it hits and blocks 50% harder for the rest of this run.' : cull ? 'Tap a card to burn it for the rest of this run. A smaller deck draws your best cards more often.' : `Hand ${s.cards.length} · spent ${s.spent.length} · lost ${s.lost.length + s.burned.length}. Each card has a top half and a bottom half; play one of each per turn.`}</p><div class="cgrid">${ids.map(([id, i]) => tileCard(id, s.honed && s.honed[id] ? '<span class="tiny okc">honed</span>' : '', hone ? `data-hone="${i}"` : cull ? `data-cull="${i}"` : 'tabindex="-1"')).join('')}</div>`;
     if (s.favors.length) body += `<div class="sec"><h3>Favors</h3></div><div class="favs">${s.favors.map(id => { const f = G.FAVORS.find(x => x.id === id); return `<span class="fav" data-tip="${esc(f.d)}">${patronIcon(f.p, 16)} ${esc(f.n)}</span>`; }).join('')}</div><p class="tiny muted">${s.favors.map(id => { const f = G.FAVORS.find(x => x.id === id); return `<b>${esc(f.n)}:</b> ${esc(f.d)}`; }).join(' ')}</p>`;
   }
   return `<div class="sheetbg" data-close="1"><div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(title)}"><div class="hd"><h2 style="font-size:18px">${esc(title)}</h2><button class="ib" id="sclose" aria-label="Close">✕</button></div>${body}</div></div>`;
@@ -1998,14 +2007,14 @@ function gearBody(s){
   return h + `</div>`;
 }
 function helpBody(){
-  return `<div class="small"><p><b>Doors.</b> Open them one at a time. After any door you can walk home and bank your coins, multiplied by how deep you got. Die and you lose what you carry. Door 10 is the Landlord.</p>
+  return `<div class="small"><p><b>Your homestead.</b> You claimed the ruins of an old castle to build a home. Under the keep, ten doors go down to the Old Lord, who still thinks the castle is his. Everything you build comes from what you carry back up.</p><p><b>Doors.</b> Open them one at a time. After any door you can walk home and bank your coins, multiplied by how deep you got. Die and you lose what you carry. Door 10 is the Old Lord.</p>
 <p><b>Your hand is your stamina.</b> You start with 8 cards and no deck to draw from. Each turn you play two: the <b>top half</b> of one and the <b>bottom half</b> of the other. Played cards are <b>spent</b>.</p>
 <p><b>Speed.</b> The card you pick first leads. If its ⚡ beats the monster's ⚡, you act before its move, so a killing blow means it never swings. Block always lands.</p>
 <p><b>Getting cards back.</b> Rest (mid-fight or at a camp between doors) returns all spent cards but loses one for good. Every win returns ${G.T.winRecover} spent cards, and loot picks return ${G.T.lootRecover} more. Smelling Salts return 3. Hearths and Mending Thread bring back lost cards. <b>Beating a boss is a checkpoint:</b> every card comes back and you heal fully.</p>
 <p><b>Moves to watch:</b> a <b>Swipe</b> hits for the number shown; a <b>Wind-up</b> hits double but is slow; <b>Guard</b> halves your attacks; a <b>Hex</b> curses you; a <b>Rend</b> tears a card from your hand if it hits. Run out of cards and you stagger home with half your coins.</p>
 ${G.T.distOn ? '' : '<!--'}<p><b>Distance.</b> You and the monster are Close, Near, Far or Distant. Near is normal. Each step closer adds a third to Might, and each step further takes a third off (rounded down), for you and the monster alike. Any half can be played as a move of 1 instead (◀ ▶), and movement cards move 2 or 3 and are quick. Ranged attacks ignore distance. Brutes charge in, Skirmishers back off and shoot, Lurkers pounce from afar, and Wardens never move.</p>${G.T.distOn ? '' : '-->'}
-<p><b>Homestead.</b> Every fight and stash gives materials: common Wood, Brick and Iron, rare Heartwood, Dressed Stone and Silver, and relic Castle Glass and Starmetal. Deeper doors give rarer ones. Walk home to keep them all, or keep half if you die. Build your house and farm in the castle ruins. Each part helps every run, and crops and the orchard ripen into one-shots as runs go by. Move and restyle parts as you like, then save a picture or share your code.</p>
-<p><b>Bounties and Bestiary.</b> Each run posts a bounty, and the Archive posts more. Finish one, even if you die, for gold and embers. Beat a monster 3 times to hit it 20% harder for good, and 8 times for an extra loot choice.</p>
+<p><b>Homestead.</b> Every fight and stash gives materials: common Wood, Brick and Iron, rare Heartwood, Dressed Stone and Silver, and relic Castle Glass and Starmetal. Deeper doors give rarer ones. Walk home to keep them all, or keep half if you die. You start with a shack and one garden bed. Tap an empty spot in the picture to build there, or tap a building to raise, move or restyle it. Each part helps every run, and crops and the orchard ripen into one-shots as runs go by. Share a picture or a code from the Homestead tab. The Bestiary lives in the Library tab.</p>
+<p><b>Bounties and Bestiary.</b> Each run posts a bounty, and the Study posts more. Finish one, even if you die, for gold, embers and a rare building material. Beat a monster 3 times to hit it 20% harder for good, and 8 times for an extra loot choice.</p>
 <p><b>Tokens.</b> Some halves make tokens: ⚔ Edge, 🛡 Stance or 🔥 Ember. Others spend them all at once for a big hit or a big block. Tokens you make are ready from your next exchange and carry into the next fight. Each Ember also burns the monster for 1 every round.</p>
 <p><b>Numbers.</b> Attacks use your <b>Might</b> (level + weapons). Blocks use your <b>Armor</b>.</p></div>`;
 }
@@ -2219,24 +2228,24 @@ function homeTab(){
 }
 // ---------- town ----------
 function renderTown(){
-  let h = `<div class="thead"><h1>One More Door <span class="small muted">Homestead</span></h1><span class="money"><span data-tip="Gold: bank it by walking home from a run. Spend it in the Forge, Library and on provisions."><b class="gold">${meta.gold}</b> <span class="small muted">gold</span></span> · <span data-tip="Embers: earned for every door you clear, even if you die. Spend them in the Embers tab."><b class="ember">${meta.embers}</b> <span class="small muted">embers</span></span></span></div>`;
-  if (tab !== 'town') h += `<div class="tscene">${homeSVG(meta.home, true)}<div class="keeper"><b>${G.KEEPER}:</b> “${esc(G.tavernLine(meta, lastEnd))}”</div></div>`;
+  let h = `<div class="thead"><h1>One More Door <span class="small muted">Homestead</span></h1><span class="money"><span data-tip="Gold: bank it by walking home from a run. Spend it in the Workshop, Library and on provisions."><b class="gold">${meta.gold}</b> <span class="small muted">gold</span></span> · <span data-tip="Embers: earned for every door you clear, even if you die. Spend them in the Embers tab."><b class="ember">${meta.embers}</b> <span class="small muted">embers</span></span></span></div>`;
+  if (tab !== 'town') h += `<div class="tscene">${homeSVG(meta.home, true)}<div class="keeper"><b>📓</b> <i>${esc(G.tavernLine(meta, lastEnd))}</i></div></div>`;
   const dot = has => has ? '<span class="dot"></span>' : '';
   const canForge = G.FORGE.some(f => meta.forge[f.id] < G.forgeMax(meta, f) && meta.gold >= G.forgeCost(f, meta.forge[f.id]));
   const canEmb = G.EMBERS.some(e => { const r = G.emberRank(meta, e); return r < e.cost.length && meta.embers >= G.emberCost(e, r); });
   const canLib = G.LIBRARY.some(id => !meta.cards.includes(id) && meta.gold >= G.CARDS[id].price) || (G.canRetire(meta) && meta.gold >= G.retireCost(meta));
-  h += `<div class="tabs" role="tablist">${[['go', 'Go'], ['town', 'Homestead' + dot(G.PARTS.some(p => G.canHome(meta, p.id)))], ['forge', 'Forge' + dot(canForge)], ['library', 'Library' + dot(canLib)], ['embers', 'Embers' + dot(canEmb)]].map(([k, n]) => `<button role="tab" aria-selected="${tab === k}" class="${tab === k ? 'on' : ''}" data-tab="${k}" data-tip="${{ go: 'Set up and start a run.', town: 'Build your house and farm in the castle ruins with the materials you bring home.', forge: 'Permanent upgrades bought with gold.', library: 'Retire weak starting cards, and buy new cards that can show up as rewards.', embers: 'Lasting gifts bought with Embers, which you earn even when you die.' }[k]}">${n}</button>`).join('')}</div>`;
+  h += `<div class="tabs" role="tablist">${[['go', 'Go'], ['town', 'Homestead' + dot(G.PARTS.some(p => G.canHome(meta, p.id)))], ['forge', 'Workshop' + dot(canForge)], ['library', 'Library' + dot(canLib)], ['embers', 'Embers' + dot(canEmb)]].map(([k, n]) => `<button role="tab" aria-selected="${tab === k}" class="${tab === k ? 'on' : ''}" data-tab="${k}" data-tip="${{ go: 'Set up and start a run.', town: 'Build your house and farm in the castle ruins with the materials you bring home.', forge: 'Permanent upgrades bought with gold.', library: 'Retire weak starting cards, and buy new cards that can show up as rewards.', embers: 'Lasting gifts bought with Embers, which you earn even when you die.' }[k]}">${n}</button>`).join('')}</div>`;
   h += `<div class="tbody">${tab === 'town' ? homeTab() : tab === 'forge' ? forgeTab() : tab === 'library' ? libraryTab() : tab === 'embers' ? embersTab() : goTab()}</div>`;
-  if (tab === 'go') h += `<button class="primary go" id="go">Go down the cellar</button>`;
+  if (tab === 'go') h += `<button class="primary go" id="go">Go down under the keep</button>`;
   return h;
 }
 function goTab(){
-  let h = `<div class="box"><div class="row" style="justify-content:space-between;margin-bottom:6px"><b class="small" data-tip="Your class for this run. Unlock more in the Embers tab.">Calling</b>${!meta.runs ? '<button class="ib" data-sheet="help" style="font-size:12px">How to play</button>' : `<span class="tiny muted">Runs ${meta.runs} · best door ${meta.bestDoor} · Landlord ×${meta.bossKills}</span>`}</div><div class="calls">`;
+  let h = `<div class="box"><div class="row" style="justify-content:space-between;margin-bottom:6px"><b class="small" data-tip="Your class for this run. Unlock more in the Embers tab.">Calling</b>${!meta.runs ? '<button class="ib" data-sheet="help" style="font-size:12px">How to play</button>' : `<span class="tiny muted">Runs ${meta.runs} · best door ${meta.bestDoor} · Old Lord ×${meta.bossKills}</span>`}</div><div class="calls">`;
   for (const id in G.CALLINGS){ const c = G.CALLINGS[id], un = meta.unlocked[id];
     h += `<button class="call ${calling === id ? 'sel' : ''}" data-call="${id}" ${un ? '' : 'disabled'} data-tip="${esc(c.d)}">${c.n}<small>${un ? ({ brawler: '+2 Might vs big', sneak: 'Easy escapes', warden: '+2 Armor' }[id] || '') : c.unlock + ' embers'}</small></button>`; }
   h += `</div></div>`;
   const L = meta.lease, top = meta.leaseBest + 1, lp = 1 + G.T.leaseGold * L;
-  h += `<div class="box"><div class="lease"><button data-lease="${L - 1}" data-tip="Easier Lease." ${L <= 0 ? 'disabled' : ''} aria-label="Easier lease">◀</button><div><b>${esc(G.leaseName(L))}</b><div class="tiny muted">${L ? `Monsters +${Math.round(G.T.leaseHp * L * 100)}% health, +${Math.floor(G.T.leaseDmg * L)} damage · gold ×${lp}` : 'The doors as they are'}${L >= top && meta.leaseBest >= 0 ? '' : ''}</div></div><button data-lease="${L + 1}" data-tip="Harder Lease: tougher monsters, more gold and Embers." ${L >= top ? 'disabled' : ''} aria-label="Harder lease">▶</button></div>${L >= top ? `<p class="tiny muted" style="margin:4px 0 0;text-align:center">${meta.leaseBest < 0 ? 'Beat the Landlord to open harder Leases.' : 'Beat the Landlord here to open the next Lease and raise Forge limits.'}</p>` : ''}</div>`;
+  h += `<div class="box"><div class="lease"><button data-lease="${L - 1}" data-tip="Quieter ruins." ${L <= 0 ? 'disabled' : ''} aria-label="Quieter ruins">◀</button><div><b>${esc(G.leaseName(L))}</b><div class="tiny muted">${L ? `Monsters +${Math.round(G.T.leaseHp * L * 100)}% health, +${Math.floor(G.T.leaseDmg * L)} damage · gold ×${lp}` : 'The doors as they are'}${L >= top && meta.leaseBest >= 0 ? '' : ''}</div></div><button data-lease="${L + 1}" data-tip="Wake the ruins: tougher monsters, more gold and Embers." ${L >= top ? 'disabled' : ''} aria-label="Wake the ruins">▶</button></div>${L >= top ? `<p class="tiny muted" style="margin:4px 0 0;text-align:center">${meta.leaseBest < 0 ? 'Beat the Old Lord to wake harder ruins.' : 'Beat the Old Lord here to wake the next ruins and raise Workshop limits.'}</p>` : ''}</div>`;
   h += `<div class="box"><b class="small" data-tip="Bought with gold before a run. Used up when the run starts.">Provisions</b> <span class="tiny muted">one run only</span><div class="prov" style="margin-top:6px">${G.PROVISIONS.map(p => { const on = meta.provisions[p.id], c = G.provisionCost(meta, p); return `<button class="${on ? 'on' : ''}" data-prov="${p.id}" ${on || meta.gold < c ? 'disabled' : ''} data-tip="${esc(p.d)}">${esc(p.n)}<small class="pe">${esc({ whet: '+1 Might', tonic: '+1 healing tonic', trick: '+1 random card' }[p.id] || p.d)}</small><small>${on ? 'packed' : c + ' gold'}</small></button>`; }).join('')}</div></div>`;
   if (meta.oathUnlocked) h += `<label class="row small box"><input type="checkbox" id="oath" ${oath ? 'checked' : ''}> <span><b>Oath of the Deep:</b> one more Twist per monster, gold ×1.5.</span></label>`;
   h += `<p class="tiny muted" style="text-align:center;margin:0">Progress saves in this browser. <button id="reset" class="ghost" style="min-height:0;padding:2px 6px;font-size:11px">Reset save</button></p>`;
@@ -2268,9 +2277,9 @@ function townTab0(){
   return h + `</div>`;
 }
 function forgeTab(){
-  let h = `<p class="tiny muted" style="margin:0">Permanent, paid in gold. Beating the Landlord on a new Lease raises the limits.</p><div class="box">`;
+  let h = `<p class="tiny muted" style="margin:0">Permanent, paid in gold. Beating the Old Lord in wilder ruins raises the limits.</p><div class="box">`;
   for (const f of G.FORGE){ const r = meta.forge[f.id], mx = G.forgeMax(meta, f), maxed = r >= mx, cost = maxed ? 0 : G.forgeCost(f, r);
-    h += `<div class="fitem"><div><b class="small">${f.n}</b> <span class="pips">${'●'.repeat(r)}${'○'.repeat(Math.max(0, mx - r))}</span><div class="d">${f.d}</div></div><button data-buy="${f.id}" ${maxed || meta.gold < cost ? 'disabled' : ''}>${maxed ? (f.grow ? 'Next Lease' : 'Maxed') : cost + ' gold'}</button></div>`; }
+    h += `<div class="fitem"><div><b class="small">${f.n}</b> <span class="pips">${'●'.repeat(r)}${'○'.repeat(Math.max(0, mx - r))}</span><div class="d">${f.d}</div></div><button data-buy="${f.id}" ${maxed || meta.gold < cost ? 'disabled' : ''}>${maxed ? (f.grow ? 'Wake ruins' : 'Maxed') : cost + ' gold'}</button></div>`; }
   return h + `</div>`;
 }
 function libraryTab(){
