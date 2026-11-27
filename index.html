@@ -254,7 +254,7 @@ const T = {
   furyMax: 3,
   // two-half prototype
   ispd: { strike: 50, heavy: 25, guard: 70, hex: 40, rend: 60, dazed: 0, shoot: 55, charge: 55, pounce: 30, retreat: 75 },
-  distOn: 1, distStep: 1 / 3, defMove: 1, chargeMove: 2, startDist: { brute: 2, skirmisher: 2, lurker: 3, warden: 1 }, wardenDmg: 1.3, wardenHp: 1.15, bruteHp: 1.15, newFavors: 0, winRecover: 0, restPer: 0, baseMight: 0, gritPerLevel: 0, shotShare: 0.45, tier2At: 5, tier3At: 9, hireMul: 0.5, marketPrice: 16, tokCap: 4, tokOn: 1, tokCarry: 1, tokMul: 1.5, honeMul: 0.5, captiveFrom: 3, captiveTo: 7, easeStart: 0, easeDoor: 8, bruteDmg: 1.1, retreatShot: 0.75, skirmDmg: 1.25, pounceDist: 1, bruteCharge: 0.85, skirmRetreat: 0.8, spdJitter: 15,
+  distOn: 1, distStep: 1 / 3, defMove: 1, chargeMove: 2, startDist: { brute: 2, skirmisher: 2, lurker: 3, warden: 1 }, wardenDmg: 1.3, wardenHp: 1.15, bruteHp: 1.15, newFavors: 0, winRecover: 0, restPer: 0, baseMight: 0, gritPerLevel: 0, shotShare: 0.45, tier2At: 5, tier3At: 9, hireMul: 0.5, marketPrice: 16, tokCap: 4, tokFeed: 4, tokGearW: 0.6, tokOn: 1, tokCarry: 1, tokMul: 1.5, honeMul: 0.5, captiveFrom: 3, captiveTo: 7, easeStart: 0, easeDoor: 8, bruteDmg: 1.1, retreatShot: 0.75, skirmDmg: 1.25, pounceDist: 1, bruteCharge: 0.85, skirmRetreat: 0.8, spdJitter: 15,
   campLose: 1, fightLose: 1, mendN: 2, exhaustGold: 0.5, winMend: 0, rendLost: 1, lootMend: 1, normHpMul: 1, bossRestore: 0, bossHeal: 0, handCap: 99, dmgMul: 1, antechamber: 0, swapKeepsPlace: 1, lootRecover: 0,
   intents: { strike: 38, heavy: 20, guard: 15, hex: 17, rend: 10 }, bossIntents: { strike: 42, heavy: 20, guard: 13, hex: 13, rend: 12 }, bossRage: { strike: 38, heavy: 30, guard: 8, hex: 12, rend: 12 }, rageAt: 0.5, rageDmg: 1,
   emberPerDoor: 1, emberBoss: 5, emberDeepDoor: 1, emberDeepBoss: 3,
@@ -470,13 +470,33 @@ Object.assign(CARDS, {
   steady: { n: 'Steady Hands', c: 0, t: 'skill', d: 'A bit of everything.' },
   flourish: { n: 'Flourish', c: 0, t: 'atk', d: 'Show off your Edge.' },
 });
+const GEAR_TOK = [
+  // tier 1: a token to start every fight
+  { id: 'whetbelt', n: 'Whetstone Belt', k: 'gear', slot: 'body', b: 1, tier: 1, tokg: 1, fx: { stEdge: 2 }, v: 2, d: 'Start each fight with 2 Edge.' },
+  { id: 'drillboots', n: 'Drill-Yard Boots', k: 'gear', slot: 'feet', b: 1, tier: 1, tokg: 1, fx: { stGuard: 2 }, v: 2, d: 'Start each fight with 2 Stance.' },
+  { id: 'tinderbox', n: 'Tinderbox Cap', k: 'gear', slot: 'head', b: 1, tier: 1, tokg: 1, fx: { stEmber: 2 }, v: 2, d: 'Start each fight with 2 Ember.' },
+  // tier 2: bigger stacks, better payoffs
+  { id: 'bandolier', n: 'Bandolier', k: 'gear', slot: 'body', b: 2, tier: 2, tokg: 1, fx: { tokCap: 2, stEdge: 1, stGuard: 1, stEmber: 1 }, v: 3, d: 'Hold 2 more of each token, and start each fight with 1 of each.' },
+  { id: 'bellows', n: 'Bellows Glove', k: 'gear', slot: 'hand', b: 2, tier: 2, tokg: 1, fx: { emberX: 1, stEmber: 2 }, v: 3, d: 'Each Ember burns for 2. Start each fight with 2 Ember.' },
+  { id: 'rapier', n: 'Duelist’s Rapier', k: 'gear', slot: 'hand', b: 2, tier: 2, tokg: 1, fx: { edgePct: 100 }, set: 'duel', v: 3, d: 'Spent Edge hits twice as hard. Duel set.' },
+  { id: 'plumehat', n: 'Duelist’s Plumed Hat', k: 'gear', slot: 'head', b: 3, tier: 2, tokg: 1, fx: { mkEdge: 1 }, set: 'duel', v: 3, d: 'When you make Edge, make 1 more. Duel set.' },
+  // tier 3: build-defining
+  { id: 'pavise', n: 'Tower Pavise', k: 'gear', slot: 'hand', b: 2, armor: 3, tier: 3, tokg: 1, fx: { guardPct: 100, mkGuard: 1 }, v: 5, d: 'Spent Stance counts double. When you make Stance, make 1 more.' },
+  { id: 'locket', n: 'Hoarder’s Locket', k: 'gear', slot: 'head', b: 3, tier: 3, tokg: 1, fx: { refund: 2, tokCap: 1 }, v: 5, d: 'After you spend tokens, keep 2. Hold 1 more of each.' },
+  { id: 'forgeheart', n: 'Forgeheart Mail', k: 'gear', slot: 'body', b: 5, tier: 3, tokg: 1, fx: { mkAll: 1 }, v: 5, d: 'Every card that makes a token makes 1 Ember too.' },
+];
+TREASURES.push(...GEAR_TOK);
+SETS.duel = { n: 'Duel set', d: 'Both pieces: start each fight with 2 Edge, and hold 1 more of each token.', fx: { stEdge: 2, tokCap: 1 } };
 const TOKENS = { edge: { n: 'Edge', i: '⚔' }, guard: { n: 'Stance', i: '🛡' }, ember: { n: 'Ember', i: '🔥' } };
 const TOKEN_CARDS = ['whetcut', 'setup', 'cashin', 'digin', 'riposte', 'holdline', 'kindling', 'stoke', 'steady', 'flourish'];
-function tokUnit(s, k, m, B) { return (T.tokMul || 1) * (k === 'edge' ? m : k === 'guard' ? B : Math.ceil(m / 2)); }
+function tokUnit(s, k, m, B) { return (T.tokMul || 1) * (1 + gx(s, k + 'Pct') / 100) * (k === 'edge' ? m : k === 'guard' ? B : Math.ceil(m / 2)); }
+function tokCapOf(s) { return T.tokCap + gx(s, 'tokCap'); }
 function spAdd(s, h, m, B, to) { if (!h.sp || !s || !s.fight || !s.fight.tok || (h.spTo || 'dmg') !== to) return 0; return Math.floor((s.fight.tok[h.sp] || 0) * tokUnit(s, h.sp, m, B) * (h.spX || 1)); }
 function tokAfter(s, halves) { const f = s.fight; if (!f) return; f.tok = f.tok || { edge: 0, guard: 0, ember: 0 };
-  for (const h of halves) if (h && h.sp && !h.keep && f.tok[h.sp]) { log(s, `You spend ${f.tok[h.sp]} ${TOKENS[h.sp].n}.`); f.tok[h.sp] = 0; }
-  for (const h of halves) if (h && h.mk) for (const k in h.mk) f.tok[k] = Math.min(T.tokCap, (f.tok[k] || 0) + h.mk[k]); }
+  const rf = Math.min(2, gx(s, 'refund')), cap = tokCapOf(s);
+  for (const h of halves) if (h && h.sp && !h.keep && f.tok[h.sp]) { log(s, `You spend ${f.tok[h.sp]} ${TOKENS[h.sp].n}.`); f.tok[h.sp] = Math.min(rf, f.tok[h.sp]); }
+  for (const h of halves) if (h && h.mk) { for (const k in h.mk) { const ex = k === 'edge' ? gx(s, 'mkEdge') : k === 'guard' ? gx(s, 'mkGuard') : 0; f.tok[k] = Math.min(cap, (f.tok[k] || 0) + h.mk[k] + ex); }
+    if (gx(s, 'mkAll')) f.tok.ember = Math.min(cap, (f.tok.ember || 0) + gx(s, 'mkAll')); } }
 const LIBRARY = Object.keys(CARDS).filter(k => CARDS[k].price);
 const STARTER_DECK = ['strike', 'strike', 'sidestep', 'brace', 'brace', 'heavy', 'jab', 'lunge'];
 // Leases: chosen difficulty. Harder doors, bigger pay. Beating the Landlord on a Lease opens the next one and raises Forge limits.
@@ -682,7 +702,7 @@ function tierMax(d) { return d >= T.tier3At ? 3 : d >= T.tier2At ? 2 : 1; }
 function drawTreasure(r, calling, d) {
   if (r.next() < T.shotShare) return drawShot(r);
   const tm = tierMax(d || 1), pool = [], w = [];
-  for (const t of TREASURES) { if (t.k !== 'gear' || (t.only && t.only !== calling)) continue; const ti = t.tier || 1; if (ti > tm) continue; pool.push(t); w.push(ti === tm ? 1.6 : ti === 1 && tm === 3 ? 0.5 : 1); }
+  for (const t of TREASURES) { if (t.k !== 'gear' || (t.only && t.only !== calling)) continue; const ti = t.tier || 1; if (ti > tm) continue; pool.push(t); w.push((ti === tm ? 1.6 : ti === 1 && tm === 3 ? 0.5 : 1) * (t.tokg ? T.tokGearW : 1)); }
   let x = r.next() * w.reduce((a, b) => a + b, 0); for (let i = 0; i < pool.length; i++) if ((x -= w[i]) < 0) return Object.assign({}, pool[i]);
   return Object.assign({}, pool[0]);
 }
@@ -868,6 +888,7 @@ function openDoor(s, k) {
       escBonus: 0, autoEscape: false, greed: 1, played: [], round: 1, burning: false, intent: 'strike',
       energy: 0, mspd: 50, block: 0, attacks: 0, rally: 0, dealt: 0, tok: { edge: 0, guard: 0, ember: 0 } };
     if (T.tokCarry && s.tokCarry) Object.assign(s.fight.tok, s.tokCarry);
+    { const tk = s.fight.tok, cp = tokCapOf(s); tk.edge = Math.min(cp, tk.edge + gx(s, 'stEdge')); tk.guard = Math.min(cp, tk.guard + gx(s, 'stGuard')); tk.ember = Math.min(cp, tk.ember + gx(s, 'stEmber')); }
     if (has(s, 'wick')) s.fury = Math.min(T.furyMax, s.fury + 1);
     s.fight.warm = 2 * (s.hearth.spark || 0) + gx(s, 'startBlk');
     s.fight.hound = [0, 3, 5, 8][townLv(s.town, 'kennel')];
@@ -1036,7 +1057,7 @@ function monsterAct(s) {
     if (s.phase === 'over') { saveRng(s, r); return false; }
   } else if (intent === 'dazed') log(s, `${cap(the(f.mon.n))} reels, dazed.`);
   else if (intent === 'guard') log(s, `${cap(the(f.mon.n))} keeps its guard up.`);
-  if (f.tok && f.tok.ember && f.hp > 0) { f.hp -= f.tok.ember; log(s, `Your Embers burn it for ${f.tok.ember}.`); }
+  if (f.tok && f.tok.ember && f.hp > 0) { const eb = f.tok.ember * (1 + gx(s, 'emberX')); f.hp -= eb; log(s, `Your Embers burn it for ${eb}.`); }
   if (f.burning && f.hp > 0) { const bn = ((has(s, 'kindle') ? 2 : 0) + gx(s, 'burn')) * (gx(s, 'burnX') ? 2 : 1); if (bn) { f.hp -= bn; log(s, `It burns for ${bn}.`); } }
   ev(s, { t: 'exchange', took, intent });
   f.took = (f.took || 0) + took;
@@ -1179,7 +1200,9 @@ function equipDelta(s, t) {
   const d = {}; for (const k of ['might', 'armor', 'esc']) d[k] = sum(t, k) - off.reduce((a, g) => a + sum(g, k), 0);
   return d;
 }
-function equipGain(s, t) { const d = equipDelta(s, t); return d.might + d.armor + d.esc * 0.5 + (t.v || 0) - replacedBy(s, t).reduce((a, g) => a + (g.v || 0), 0) + setGain(s, t); }
+function tokFeed(s) { return Math.min(1, (s.deck || []).filter(id => TOKEN_CARDS.includes(id)).length / T.tokFeed); }
+function gv(s, g) { return (g.v || 0) * (g.tokg ? tokFeed(s) : 1); }
+function equipGain(s, t) { const d = equipDelta(s, t); return d.might + d.armor + d.esc * 0.5 + gv(s, t) - replacedBy(s, t).reduce((a, g) => a + gv(s, g), 0) + setGain(s, t) * (t.tokg ? tokFeed(s) : 1); }
 function setGain(s, t) { if (!t.set) return 0; let has1 = false; eachGear(s, g => { if (g.set === t.set && g.id !== t.id && !replacedBy(s, t).includes(g)) has1 = true; }); return has1 ? 3 : 0; }
 function canKeep(s, t) { return t.k === 'shot' && s.hand.length < T.handMax; }
 function bagRoom(s) { return s.bag.length < T.bagMax; }
@@ -1282,7 +1305,7 @@ const LORE = [
 ];
 
 Object.assign(T, {"winMend":0,"lootMend":0,"bossHeal":99,"handCap":99,"bossHp":90,"dmgMul":0.8,"lootRecover":2,"hpMul":5.5,"bossRestore":1,"newFavors":0,"baseMight":2,"winRecover":2,"gritPerLevel":1,"easeStart":0.6,"easeDoor":7,"distOn":0}); for (const [k,v] of Object.entries({"heavy":{"spd":20,"top":{"dmg":2.25},"bot":{"blk":1.75}},"lunge":{"spd":60,"top":{"dmg":3.5,"burn":1,"move":1,"dir":"in"},"bot":{"rec":2}},"brace":{"spd":40,"top":{"blk":1.5},"bot":{"blk":1.25}},"jab":{"spd":85,"top":{"dmg":2},"bot":{"dmg":1}},"reckless":{"spd":50,"top":{"dmg":2.5,"self":2},"bot":{"blk":1.25}},"bash":{"spd":45,"top":{"dmg":2},"bot":{"dmg":1,"blk":0.5}},"feint":{"spd":70,"top":{"dmg":2},"bot":{"rec":1,"blk":0.5}},"bulwark":{"spd":30,"top":{"blk":2},"bot":{"blk":1.75}},"pierce":{"spd":55,"top":{"dmg":2,"pierce":1,"reach":1},"bot":{"rec":2}},"momentum":{"spd":55,"top":{"dmg":2.5},"bot":{"dmg":1.25}},"ironskin":{"spd":35,"top":{"blk":2},"bot":{"blk":3,"burn":1}}})) HALVES[k]=v;
-const api = { TOKENS, TOKEN_CARDS, TOWN, townLv, upCost, makeBounties, bestKills, MONSTERS, townOf, canBuild, buildTown, doorChoices, DSTATS, DIST_N, atDist, halfModes, moveOf, monType, swapOut, dropCard, HALVES, halfPreview, pairOptions, playPair, restFight, restCamp, canCamp, exhausted, T, MONSTERS, BOSS, TWISTS, TREASURES, SETS, setsOn, gx, tierMax, CURSES, CALLINGS, ORIGIN, FORGE, KEEPER, LORE, STARTER, INTENTS, PATRONS, FAVORS,
+const api = { GEAR_TOK, tokCapOf, TOKENS, TOKEN_CARDS, TOWN, townLv, upCost, makeBounties, bestKills, MONSTERS, townOf, canBuild, buildTown, doorChoices, DSTATS, DIST_N, atDist, halfModes, moveOf, monType, swapOut, dropCard, HALVES, halfPreview, pairOptions, playPair, restFight, restCamp, canCamp, exhausted, T, MONSTERS, BOSS, TWISTS, TREASURES, SETS, setsOn, gx, tierMax, CURSES, CALLINGS, ORIGIN, FORGE, KEEPER, LORE, STARTER, INTENTS, PATRONS, FAVORS,
   forgeCost, forgeRanks, newMeta, fixMeta, buyForge, unlockCalling, EMBERS, DEEP_BOSSES, emberCost, emberRank, buyEmber, rerollFavor, lastDoor, isDeepBossDoor, deepOf,
   startRun, openDoor, playShot, fight, flee, takeTreasure, takeFavor, rest, manage, canManage, canKeep, bagRoom, replacedBy,
   bank, settle, peek, might, armor, incoming, incomingRaw, enrage, canUnleash, monStats, monsterTotal, fightMight, cardPreview, canPlay, playCard, endTurn, runAway, chooseSpoils, cardPool,
