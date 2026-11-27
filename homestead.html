@@ -558,7 +558,7 @@ const FORGE = [
   { id: 'cobbler', n: 'Cobbler', d: 'Escape is 1 easier.', base: 120, max: 2 },
   { id: 'satchel', n: 'Satchel', d: 'Start with 1 more one-shot.', base: 60, max: 2, grow: true },
   { id: 'strongbox', n: 'Strongbox', d: 'Keep a quarter of your coins when you die.', base: 150, max: 2 },
-  { id: 'lantern', n: 'Lantern', d: 'Peek at the next door before deciding to bank.', base: 300, max: 1 },
+  { id: 'barrow', n: 'Wheelbarrow', d: 'Salvage 1 more building material from every fight you win.', base: 300, max: 1 },
 ];
 // Ember Hearth: permanent upgrades bought with Embers (gold stays for the Forge)
 const EMBERS = [
@@ -700,10 +700,10 @@ function doorChoices(s) {
   return s.nextOpts;
 }
 function newMeta() {
-  return { gold: 0, folk: {}, town: {}, embers: 0, emberTotal: 0, forge: { drill: 0, armory: 0, hearth: 0, cobbler: 0, satchel: 0, strongbox: 0, lantern: 0 }, cards: [], retired: [], lease: 0, leaseBest: -1, provisions: {},
+  return { gold: 0, folk: {}, town: {}, embers: 0, emberTotal: 0, forge: { drill: 0, armory: 0, hearth: 0, cobbler: 0, satchel: 0, strongbox: 0, barrow: 0 }, cards: [], retired: [], lease: 0, leaseBest: -1, provisions: {},
     unlocked: { brawler: true, sneak: false, warden: false }, hearth: { spark: 0, reroll: 0, mark: 0, keepsake: 0, wind: 0 }, keepsake: null, deepest: 0, deepBossKills: 0, bossKills: 0, oathUnlocked: false, runs: 0, bestDoor: 0, history: [], bestiary: {}, bestMile: 0, mats: {}, pantry: [], home: { lv: {}, at: { hearth: [1, 2], garden: [3, 2] }, style: {}, beds: [{ crop: null, age: 0 }], orchard: 0, seed: Math.floor(Math.random() * 9973), name: '' } };
 }
-function fixMeta(m) { const n = newMeta(); m.mats = m.mats || {}; m.pantry = m.pantry || []; m.home = Object.assign(n.home, m.home || {}); for (const k in HOME_START) if (!m.home.at[k]) { const [sx, sy] = HOME_START[k]; let x = sx, y = sy; for (let i = 0; i < HOME_W * HOME_H && !tileFree(m, x, y, k); i++) { x = (x + 1) % HOME_W; if (!x) y = (y + 1) % HOME_H; } m.home.at[k] = [x, y]; } fixBeds(m); m.bestiary = m.bestiary || {}; m.bestMile = m.bestMile || 0; m.folk = m.folk || {}; m.town = m.town || {}; m.forge = Object.assign(n.forge, m.forge || {}); m.unlocked = Object.assign(n.unlocked, m.unlocked || {}); m.hearth = Object.assign(n.hearth, m.hearth || {}); for (const k of ['keepsake', 'deepest', 'deepBossKills', 'cards', 'retired', 'lease', 'leaseBest', 'provisions']) if (m[k] === undefined) m[k] = n[k];
+function fixMeta(m) { const n = newMeta(); if (m.forge && m.forge.lantern) { m.forge.barrow = 1; delete m.forge.lantern; } m.mats = m.mats || {}; m.pantry = m.pantry || []; m.home = Object.assign(n.home, m.home || {}); for (const k in HOME_START) if (!m.home.at[k]) { const [sx, sy] = HOME_START[k]; let x = sx, y = sy; for (let i = 0; i < HOME_W * HOME_H && !tileFree(m, x, y, k); i++) { x = (x + 1) % HOME_W; if (!x) y = (y + 1) % HOME_H; } m.home.at[k] = [x, y]; } fixBeds(m); m.bestiary = m.bestiary || {}; m.bestMile = m.bestMile || 0; m.folk = m.folk || {}; m.town = m.town || {}; m.forge = Object.assign(n.forge, m.forge || {}); m.unlocked = Object.assign(n.unlocked, m.unlocked || {}); m.hearth = Object.assign(n.hearth, m.hearth || {}); for (const k of ['keepsake', 'deepest', 'deepBossKills', 'cards', 'retired', 'lease', 'leaseBest', 'provisions']) if (m[k] === undefined) m[k] = n[k];
   if (m.leaseBest < 0 && m.bossKills) m.leaseBest = 0; m.lease = Math.max(0, Math.min(m.lease, m.leaseBest + 1)); return m; }
 const forgeRanks = m => Object.values(m.forge).reduce((a, b) => a + (b || 0), 0);
 function buyForge(meta, id) {
@@ -783,6 +783,7 @@ function drawTreasure(r, calling, d) {
   if (r.next() < T.shotShare) return drawShot(r);
   const tm = tierMax(d || 1), pool = [], w = [];
   for (const t of TREASURES) { if (t.k !== 'gear' || (t.only && t.only !== calling)) continue; const ti = t.tier || 1; if (ti > tm) continue; pool.push(t); w.push((ti === tm ? 1.6 : ti === 1 && tm === 3 ? 0.5 : 1) * (t.tokg ? T.tokGearW : 1)); }
+  { const cnt = {}; pool.forEach(t => cnt[t.slot] = (cnt[t.slot] || 0) + 1); const SW = { hand: 1.4, head: 1, body: 1, feet: 1 }; pool.forEach((t, i) => { w[i] *= (SW[t.slot] || 1) * 10 / cnt[t.slot]; }); }
   let x = r.next() * w.reduce((a, b) => a + b, 0); for (let i = 0; i < pool.length; i++) if ((x -= w[i]) < 0) return Object.assign({}, pool[i]);
   return Object.assign({}, pool[0]);
 }
@@ -1016,11 +1017,13 @@ function shuffleInto(r, arr) { for (let i = arr.length - 1; i > 0; i--) { const 
 function rollSpeed(s, r) { const f = s.fight; f.mspd = (T.ispd[f.intent] || 0) + (f.intent === 'dazed' ? 0 : r.int(-T.spdJitter, T.spdJitter)); }
 function startExchange(s, r) { const f = s.fight; f.block = f.warm || 0; f.warm = 0; f.charged = false; f.countering = false; f.attacks = 0; rollSpeed(s, r); }
 function exhausted(s) { return s.cards.length + (s.draw || []).length < 2 && !s.spent.length; }
+function recoverN(s, n) { if (s.uiPick) { s.recPick = Math.min(s.spent.length, (s.recPick || 0) + n); return; } for (let k = 0; k < n && s.spent.length; k++) (s.draw = s.draw || []).push(s.spent.pop()); }
+function pickRecover(s, idxs) { const n = Math.min(s.recPick || 0, s.spent.length); const pick = (idxs || []).filter((v, i, a) => a.indexOf(v) === i && s.spent[v] != null).slice(0, n).sort((a, b) => b - a); for (const i of pick) (s.draw = s.draw || []).push(s.spent.splice(i, 1)[0]); for (let k = pick.length; k < n && s.spent.length; k++) (s.draw = s.draw || []).push(s.spent.pop()); s.recPick = 0; if (n) log(s, `${n} spent card${n > 1 ? 's go' : ' goes'} back on top of your deck.`); if (s.phase === 'fight') drawUp(s); }
 function playShot(s, idx) {
   const c = s.hand[idx]; if (!c) return;
   if (s.phase !== 'fight') { // only healing works outside a fight
     if (s.phase === 'door' && c.fx === 'mend' && (s.lost.length || s.burned.length)) { s.hand.splice(idx, 1); for (let j = 0; j < c.v; j++) { const x = s.lost.length ? s.lost.pop() : s.burned.pop(); if (x) (s.draw = s.draw || []).push(x); } log(s, `You use ${c.n}. A lost card comes back.`); ev(s, { t: 'shot', item: c }); return; }
-    if (s.phase === 'door' && c.fx === 'recover' && s.spent.length) { s.hand.splice(idx, 1); for (let j = 0; j < c.v && s.spent.length; j++) (s.draw = s.draw || []).push(s.spent.pop()); log(s, `You use ${c.n}.`); ev(s, { t: 'shot', item: c }); return; }
+    if (s.phase === 'door' && c.fx === 'recover' && s.spent.length) { s.hand.splice(idx, 1); recoverN(s, c.v); log(s, `You use ${c.n}.`); ev(s, { t: 'shot', item: c }); return; }
     if (c.fx !== 'heal' || s.phase !== 'door' || s.grit >= s.maxGrit) return;
     s.hand.splice(idx, 1); const h = Math.min(c.v, s.maxGrit - s.grit); s.grit += h; log(s, `You drink ${c.n}. +${h} Grit.`); ev(s, { t: 'heal', item: c }); return;
   }
@@ -1036,7 +1039,7 @@ function playShot(s, idx) {
   else if (c.fx === 'esc') f.escBonus += c.v;
   else if (c.fx === 'greed') { f.rally += c.v; f.greed = 2; }
   else if (c.fx === 'stun') { f.intent = 'dazed'; }
-  else if (c.fx === 'recover') { for (let j = 0; j < c.v && s.spent.length; j++) (s.draw = s.draw || []).push(s.spent.pop()); }
+  else if (c.fx === 'recover') { recoverN(s, c.v); }
   else if (c.fx === 'mend') { for (let j = 0; j < c.v; j++) { const x = s.lost.length ? s.lost.pop() : s.burned.pop(); if (x) (s.draw = s.draw || []).push(x); } }
   log(s, `You use ${c.n}.`); ev(s, { t: 'shot', item: c });
   if (f.hp <= 0) win(s);
@@ -1066,7 +1069,7 @@ function applyHalf(s, id, half, r) {
   if (h.self) s.grit = Math.max(1, s.grit - h.self);
   if (h.coins) s.coins += h.coins;
   if (h.rally) f.rally += h.rally;
-  if (h.rec) for (let k = 0; k < h.rec && s.spent.length; k++) (s.draw = s.draw || []).push(s.spent.pop());
+  if (h.rec) recoverN(s, h.rec);
   if (h.recAll) { (s.draw = s.draw || []).push(...s.spent); s.spent = []; }
   return p;
 }
@@ -1217,7 +1220,7 @@ function win(s, how) {
   const r = rngOf(s); const f = s.fight; const big = f.mon.p >= T.bigMonster;
   if (s.captive && !s.captive.freed && s.door >= s.captive.door) { s.captive.freed = true; log(s, `Behind it you find the ${townOf(s.captive.id).folk}, tied up. They follow you. Get them home alive.`); }
   s.kills[f.mon.n] = (s.kills[f.mon.n] || 0) + 1; bountyHit(s, 'kill', f.mon.n); if (big && !f.mon.boss) bountyHit(s, 'big'); if (!f.took) bountyHit(s, 'flawless', s.door);
-  { const d = s.door, n = (big ? 2 : 1) + (f.mon.boss ? 1 : 0), rare = Math.min(0.35, Math.max(0, (d - 4) * 0.03)), relic = d >= 12 ? Math.min(0.06, (d - 10) * 0.01) : 0;
+  { const d = s.door, n = (big ? 2 : 1) + (f.mon.boss ? 1 : 0) + (s.metaForge.barrow ? 1 : 0), rare = Math.min(0.35, Math.max(0, (d - 4) * 0.03)), relic = d >= 12 ? Math.min(0.06, (d - 10) * 0.01) : 0;
     const got = matDrop(s, r, n, rare, relic); if (f.mon.boss) { const m = r.pick(MATS.filter(x => x.r === 3)); s.mats[m.id] = (s.mats[m.id] || 0) + 1; got[m.id] = (got[m.id] || 0) + 1; }
     log(s, `You salvage ${matLine(got)}.`); s.lastGot = got; }
   const lv = big ? 2 : 1; s.level += lv; if (T.gritPerLevel) { s.maxGrit += lv * T.gritPerLevel; s.grit += lv * T.gritPerLevel; }
@@ -1413,7 +1416,7 @@ const LORE = [
 ];
 
 Object.assign(T, {"winMend":0,"lootMend":0,"bossHeal":99,"handCap":99,"bossHp":90,"dmgMul":0.8,"lootRecover":2,"hpMul":5.5,"bossRestore":1,"newFavors":0,"baseMight":2,"winRecover":2,"gritPerLevel":1,"easeStart":0.6,"easeDoor":7,"distOn":0}); for (const [k,v] of Object.entries({"heavy":{"spd":20,"top":{"dmg":2.25},"bot":{"blk":1.75}},"lunge":{"spd":60,"top":{"dmg":3.5,"burn":1,"move":1,"dir":"in"},"bot":{"rec":2}},"brace":{"spd":40,"top":{"blk":1.5},"bot":{"blk":1.25}},"jab":{"spd":85,"top":{"dmg":2},"bot":{"dmg":1}},"reckless":{"spd":50,"top":{"dmg":2.5,"self":2},"bot":{"blk":1.25}},"bash":{"spd":45,"top":{"dmg":2},"bot":{"dmg":1,"blk":0.5}},"feint":{"spd":70,"top":{"dmg":2},"bot":{"rec":1,"blk":0.5}},"bulwark":{"spd":30,"top":{"blk":2},"bot":{"blk":1.75}},"pierce":{"spd":55,"top":{"dmg":2,"pierce":1,"reach":1},"bot":{"rec":2}},"momentum":{"spd":55,"top":{"dmg":2.5},"bot":{"dmg":1.25}},"ironskin":{"spd":35,"top":{"blk":2},"bot":{"blk":3,"burn":1}}})) HALVES[k]=v;
-const api = { tradePrice, buyMat, findOffer, findCarry, handSize, drawUp, HOME_START, tileFree, fixBeds, MATS, RAR_N, PARTS, CROPS, HOME_W, HOME_H, homeLv, partOf, partCost, canHome, buildHome, placeHome, styleHome, plant, cropRuns, pantryTake, homeTown, shotById, TOWN, GEAR_TOK, tokCapOf, TOKENS, TOKEN_CARDS, TOWN, townLv, upCost, makeBounties, bestKills, MONSTERS, townOf, canBuild, buildTown, doorChoices, DSTATS, DIST_N, atDist, halfModes, moveOf, monType, swapOut, dropCard, HALVES, halfPreview, pairOptions, playPair, restFight, restCamp, canCamp, exhausted, T, MONSTERS, BOSS, TWISTS, TREASURES, SETS, setsOn, gx, tierMax, CURSES, CALLINGS, ORIGIN, FORGE, KEEPER, LORE, STARTER, INTENTS, PATRONS, FAVORS,
+const api = { pickRecover, tradePrice, buyMat, findOffer, findCarry, handSize, drawUp, HOME_START, tileFree, fixBeds, MATS, RAR_N, PARTS, CROPS, HOME_W, HOME_H, homeLv, partOf, partCost, canHome, buildHome, placeHome, styleHome, plant, cropRuns, pantryTake, homeTown, shotById, TOWN, GEAR_TOK, tokCapOf, TOKENS, TOKEN_CARDS, TOWN, townLv, upCost, makeBounties, bestKills, MONSTERS, townOf, canBuild, buildTown, doorChoices, DSTATS, DIST_N, atDist, halfModes, moveOf, monType, swapOut, dropCard, HALVES, halfPreview, pairOptions, playPair, restFight, restCamp, canCamp, exhausted, T, MONSTERS, BOSS, TWISTS, TREASURES, SETS, setsOn, gx, tierMax, CURSES, CALLINGS, ORIGIN, FORGE, KEEPER, LORE, STARTER, INTENTS, PATRONS, FAVORS,
   forgeCost, forgeRanks, newMeta, fixMeta, buyForge, unlockCalling, EMBERS, DEEP_BOSSES, emberCost, emberRank, buyEmber, rerollFavor, lastDoor, isDeepBossDoor, deepOf,
   startRun, openDoor, playShot, fight, flee, takeTreasure, takeFavor, rest, manage, canManage, canKeep, bagRoom, replacedBy,
   bank, settle, peek, might, armor, incoming, incomingRaw, enrage, canUnleash, monStats, monsterTotal, fightMight, cardPreview, canPlay, playCard, endTurn, runAway, chooseSpoils, cardPool,
@@ -1431,7 +1434,7 @@ const G = window.OMD, KEY = 'omd-home-save-v1', OLDKEY = 'omd-2h-none';
 let meta, run, lastEnd = null;
 let homeSel = null, homeOut = null, homeSpot = null, homePick = null, homeMove = false, homePanel = null;
 let calling = 'brawler', oath = false, tab = 'go', retireSel = null;
-let retGear = false, fx = null, narr = [], manageSel = null, sheet = null, pick = [], capNew = null, pairFx = null, focusI = 0, fanScan = false;
+let recSel = [], retGear = false, fx = null, narr = [], manageSel = null, sheet = null, pick = [], capNew = null, pairFx = null, focusI = 0, fanScan = false;
 function load(){ try{ let j = JSON.parse(localStorage.getItem(KEY) || 'null'); if (!j){ const o = JSON.parse(localStorage.getItem(OLDKEY) || 'null'); if (o && o.meta) j = { meta: o.meta, run: null, lastEnd: null }; } if (j && j.meta){ meta = G.fixMeta(Object.assign(G.newMeta(), j.meta)); run = j.run && j.run.maxGrit && j.run.deck && j.run.cards ? j.run : null; lastEnd = j.lastEnd || null; return; } }catch(e){} meta = G.newMeta(); run = null; }
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify({ meta, run, lastEnd })); }catch(e){} }
 const $ = s => document.querySelector(s);
@@ -1837,7 +1840,8 @@ function render(){
   hideTip();
   if (meta.calling && G.CALLINGS[meta.calling] && meta.unlocked[meta.calling]) calling = meta.calling;
   $('#app').innerHTML = run ? renderRun() : (!meta.runs && !meta.setOut) ? renderIntro() : renderTown();
-  const m = renderModal();
+  if (run) { run.uiPick = true; if (run.recPick && !run.spent.length) run.recPick = 0; }
+  const m = (sheet === 'gear' || sheet === 'deck') && run && (run.phase === 'spoils' || run.phase === 'treasure') ? '' : renderModal();
   $('#modal').innerHTML = m;
   $('#sheet').innerHTML = m ? '' : renderSheet();
   bind(); fx = null;
@@ -2020,7 +2024,7 @@ function renderSheet(){
     const hone = sheet === 'hone' && s.phase === 'hearth', cull = (sheet === 'cull' && s.phase === 'hearth') || hone;
     title = hone ? 'Hone a card' : cull ? 'Burn a card' : `Your deck · ${s.deck.length} cards`;
     const ids = s.deck.map((id, i) => [id, i]).sort((a, b) => a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0);
-    body = `<p class="small muted" style="margin:0 0 8px">${hone ? 'Tap a card. Your forge hones every copy of it: it hits and blocks 50% harder for the rest of this run.' : cull ? 'Tap a card to burn it for the rest of this run. A smaller deck draws your best cards more often.' : `Deck ${(s.draw || []).length} · hand ${s.cards.length} · spent ${s.spent.length} · lost ${s.lost.length + s.burned.length}. Each card has a top half and a bottom half; play one of each per turn.`}</p><div class="cgrid">${ids.map(([id, i]) => tileCard(id, s.honed && s.honed[id] ? '<span class="tiny okc">honed</span>' : '', hone ? `data-hone="${i}"` : cull ? `data-cull="${i}"` : 'tabindex="-1"')).join('')}</div>`;
+    body = `<p class="small muted" style="margin:0 0 8px">${hone ? 'Tap a card. Your forge hones every copy of it: it hits and blocks 50% harder for the rest of this run. Honing the same card again stacks another 50%.' : cull ? 'Tap a card to burn it for the rest of this run. A smaller deck draws your best cards more often.' : `Deck ${(s.draw || []).length} · hand ${s.cards.length} · spent ${s.spent.length} · lost ${s.lost.length + s.burned.length}. Each card has a top half and a bottom half; play one of each per turn.`}</p><div class="cgrid">${ids.map(([id, i]) => tileCard(id, s.honed && s.honed[id] ? `<span class="tiny okc">honed ×${s.honed[id]}</span>` : '', hone ? `data-hone="${i}"` : cull ? `data-cull="${i}"` : 'tabindex="-1"')).join('')}</div>`;
     if (s.favors.length) body += `<div class="sec"><h3>Favors</h3></div><div class="favs">${s.favors.map(id => { const f = G.FAVORS.find(x => x.id === id); return `<span class="fav" data-tip="${esc(f.d)}">${patronIcon(f.p, 16)} ${esc(f.n)}</span>`; }).join('')}</div><p class="tiny muted">${s.favors.map(id => { const f = G.FAVORS.find(x => x.id === id); return `<b>${esc(f.n)}:</b> ${esc(f.d)}`; }).join(' ')}</p>`;
   }
   return `<div class="sheetbg" data-close="1"><div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(title)}"><div class="hd"><h2 style="font-size:18px">${esc(title)}</h2><button class="ib" id="sclose" aria-label="Close">✕</button></div>${body}</div></div>`;
@@ -2071,10 +2075,12 @@ const modal = (label, inner) => `<div class="modal" role="dialog" aria-modal="tr
 function renderModal(){
   if (!run) return '';
   const s = run;
+  if (s.recPick > 0 && s.spent.length){ const n = Math.min(s.recPick, s.spent.length);
+    return modal('Bring cards back', `<div class="kicker">Bring cards back</div><h2>Pick ${n} spent card${n > 1 ? 's' : ''}</h2><p class="small muted" style="text-align:center;margin:0 0 8px">They go on top of your deck, so you draw them next.</p><div class="cgrid">${s.spent.map((id, i) => tileCard(id, recSel.includes(i) ? '<span class="tiny okc">✓ chosen</span>' : '', `data-recp="${i}" style="${recSel.includes(i) ? 'outline:3px solid var(--gold, #e0b04a)' : ''}"`)).join('')}</div><div class="acts"><button class="primary" id="recgo" ${recSel.length === n ? '' : 'disabled'}>Put them back<small>${recSel.length}/${n} chosen</small></button></div>`); }
   if (capNew){ if (s.deck.length <= G.T.handCap){ capNew = null; } else return modal('Too many cards', `<div class="kicker">Your hand is full</div><h2>Leave one behind</h2>` + capBody(s)); }
   if (s.phase === 'spoils' && s.spoils){
     const sp = s.spoils, e = s.ev && s.ev.t === 'win' ? s.ev : null;
-    let h = `<div class="kicker">Spoils</div><h2>${e ? 'You beat ' + esc(/^The /.test(e.mon.n) ? e.mon.n : 'the ' + e.mon.n) : 'Victory'}</h2>`;
+    let h = `<div class="row" style="justify-content:flex-end;gap:6px;margin:-4px 0 2px"><button class="ib" data-sheet="gear" style="font-size:12px">🎒 Gear</button><button class="ib" data-sheet="deck" style="font-size:12px">🂠 Deck</button></div><div class="kicker">Spoils</div><h2>${e ? 'You beat ' + esc(/^The /.test(e.mon.n) ? e.mon.n : 'the ' + e.mon.n) : 'Victory'}</h2>`;
     if (e) h += `<p class="kind">+${e.lv} level${e.lv > 1 ? 's' : ''} · <span class="gold">+${e.coins} coins</span>${e.heal ? ` · <span class="okc">+${e.heal} Grit</span>` : ''}</p>`;
     if (e && e.got && Object.keys(e.got).length) h += `<p class="kind" data-tip="Building materials for your homestead. You keep them all if you walk home, half if you die.">Salvaged: ${Object.keys(e.got).map(k => { const m = G.MATS.find(x => x.id === k); return `${m ? m.i : ''} ${e.got[k]} ${esc(m ? m.n : k)}`; }).join(' · ')}</p>`;
     h += `<p class="small" style="text-align:center;margin:8px 0">${sp.loot ? `Take one thing. Loot is gear or a one-shot, and it also gives you back ${G.T.lootRecover} spent cards. A card joins your deck.` : 'Choose a card for your deck.'}</p>`;
@@ -2089,7 +2095,7 @@ function renderModal(){
   }
   if (s.phase === 'treasure' && s.queue.length){
     const t = s.queue[0], tot = s.queue.length;
-    let h = `<div class="kicker">${esc(srcLine(t))}${tot > 1 ? ` · ${tot} to sort` : ''}</div>` + itemCardBody(t);
+    let h = `<div class="row" style="justify-content:flex-end;gap:6px;margin:-4px 0 2px"><button class="ib" data-sheet="gear" style="font-size:12px">🎒 Gear</button><button class="ib" data-sheet="deck" style="font-size:12px">🂠 Deck</button></div><div class="kicker">${esc(srcLine(t))}${tot > 1 ? ` · ${tot} to sort` : ''}</div>` + itemCardBody(t);
     const acts = [];
     if (t.k === 'gear'){
       const bad = t.only && t.only !== s.calling, gain = G.equipGain(s, t);
@@ -2402,6 +2408,8 @@ function bind(){
   all('[data-tab]', b => { tab = b.dataset.tab; retireSel = null; render(); });
   all('[data-call]', b => { calling = b.dataset.call; meta.calling = calling; save(); render(); });
   all('[data-lease]', b => { G.setLease(meta, +b.dataset.lease); save(); render(); });
+  all('[data-recp]', b => { const i = +b.dataset.recp, n = Math.min(run.recPick || 0, run.spent.length); if (recSel.includes(i)) recSel = recSel.filter(x => x !== i); else { recSel.push(i); while (recSel.length > n) recSel.shift(); } render(); });
+  all('#recgo', () => { G.pickRecover(run, recSel); recSel = []; save(); render(); });
   all('[data-buymat]', b => { if (G.buyMat(meta, b.dataset.buymat)) { save(); render(); } });
   all('[data-find]', b => { const i = +b.dataset.find, k = G.findCarry(meta); let sel = (meta.findSel || []).slice(); if (sel.includes(i)) sel = sel.filter(x => x !== i); else { sel.push(i); while (sel.length > k) sel.shift(); } meta.findSel = sel; save(); render(); });
   all('[data-store]', b => { const id = b.dataset.store; meta.provisions = meta.provisions || {}; if (meta.provisions[id]) delete meta.provisions[id]; else if ((meta.stores || {})[id] > 0) meta.provisions[id] = true; save(); render(); });
