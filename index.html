@@ -476,7 +476,7 @@ const FORGE = [
 ];
 // Ember Hearth: permanent upgrades bought with Embers (gold stays for the Forge)
 const EMBERS = [
-  { id: 'spark', n: 'Warm Hands', d: 'Start each fight with 3 Block for each rank.', cost: [10, 22] },
+  { id: 'spark', n: 'Warm Hands', d: 'Start each fight with 2 Block for each rank.', cost: [10, 22] },
   { id: 'reroll', n: 'Second Thoughts', d: 'Reroll a favor offer, once per run for each rank.', cost: [8, 16] },
   { id: 'mark', n: 'Patron’s Mark', d: 'Your first favor offer each run shows 4 choices.', cost: [12] },
   { id: 'keepsake', n: 'Keepsake', d: 'When you get home alive, your best gear waits in next run’s kit.', cost: [18] },
@@ -757,7 +757,7 @@ function openDoor(s, k) {
       escBonus: 0, autoEscape: false, greed: 1, played: [], round: 1, burning: false, intent: 'strike',
       energy: 0, mspd: 50, block: 0, attacks: 0, rally: 0, dealt: 0 };
     if (has(s, 'wick')) s.fury = Math.min(T.furyMax, s.fury + 1);
-    s.fight.warm = 3 * (s.hearth.spark || 0);
+    s.fight.warm = 2 * (s.hearth.spark || 0);
     { const f = s.fight; f.mtype = monType(door.mon); f.dist = T.distOn ? T.startDist[f.mtype] : 1; f.grit0 = s.grit;
       if (T.distOn && f.mtype === 'warden') { f.dmg = Math.round(f.dmg * T.wardenDmg); f.hp = f.maxHp = Math.round(f.hp * T.wardenHp); }
       if (T.distOn && f.mtype === 'skirmisher') f.dmg = Math.round(f.dmg * T.skirmDmg);
