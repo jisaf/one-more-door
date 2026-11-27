@@ -1205,11 +1205,11 @@ function win(s, how) {
   s.kills[f.mon.n] = (s.kills[f.mon.n] || 0) + 1; bountyHit(s, 'kill', f.mon.n); if (big && !f.mon.boss) bountyHit(s, 'big'); if (!f.took) bountyHit(s, 'flawless', s.door);
   { const d = s.door, n = (big ? 2 : 1) + (f.mon.boss ? 1 : 0), rare = Math.min(0.35, Math.max(0, (d - 4) * 0.03)), relic = d >= 12 ? Math.min(0.06, (d - 10) * 0.01) : 0;
     const got = matDrop(s, r, n, rare, relic); if (f.mon.boss) { const m = r.pick(MATS.filter(x => x.r === 3)); s.mats[m.id] = (s.mats[m.id] || 0) + 1; got[m.id] = (got[m.id] || 0) + 1; }
-    log(s, `You salvage ${matLine(got)}.`); }
+    log(s, `You salvage ${matLine(got)}.`); s.lastGot = got; }
   const lv = big ? 2 : 1; s.level += lv; if (T.gritPerLevel) { s.maxGrit += lv * T.gritPerLevel; s.grit += lv * T.gritPerLevel; }
   const coins = (T.coinPerWin * (big ? 2 : 1) + (has(s, 'pockets') ? 4 : 0) + gx(s, 'winCoins')) * f.greed; s.coins += coins;
   const heal = Math.min(s.maxGrit - s.grit, T.winHeal + (has(s, 'emberheart') ? 3 : 0) + gx(s, 'winHeal')); s.grit += heal; for (let j = 0; j < T.winMend && s.lost.length; j++) (s.draw = s.draw || []).push(s.lost.pop());
-  ev(s, { t: 'win', mon: f.mon, lv, coins, heal, how });
+  ev(s, { t: 'win', mon: f.mon, lv, coins, heal, how, got: s.lastGot || {} }); s.lastGot = null;
   log(s, `You beat ${the(f.mon.n)}. +${lv} level${lv > 1 ? 's' : ''}, +${coins} coins${heal ? ', +' + heal + ' Grit' : ''}.`);
   s.fight = null;
   // spoils: the boss gives loot and a card; a big monster gives 1 loot plus your choice; others, your choice
@@ -1963,12 +1963,12 @@ function doorPanel0(s){
   say += nd === G.T.doors ? `A guardian blocks the stair: ${st.hp} health, swings for ${st.dmg}, doubled on a Wind-up.` : dboss ? `A guardian: about ${st.hp} health, swings for ${st.dmg}.` : `Next monsters swing for about ${st.dmg}, doubled on a Wind-up.`;
   if (pk) say += ` 🏮 Next: <b>${pk.type === 'monster' ? esc(pk.mon.n) : pk.type}</b>.`;
   { const dk = s.cards.length + (s.draw || []).length; say += ` Your deck holds <b>${dk}</b> card${dk === 1 ? '' : 's'}${s.spent.length ? `, ${s.spent.length} spent` : ''}.`; }
-  const camp = G.canCamp(s) ? `<button class="campb" data-act="camp" data-tip="Rest here: your ${s.spent.length} spent cards are shuffled back into your deck and one card of your choice is Lost.">Camp<small>+${s.spent.length} cards back, lose 1</small></button>` : '';
+  const camp = G.canCamp(s) ? `<button class="campb" data-act="camp" data-tip="Rest here: your ${s.spent.length} spent cards are shuffled back into your deck and one card of your choice is Lost.">Camp<small>+${s.spent.length} cards back, lose 1</small></button>` : `<button class="campb" disabled data-tip="Camping shuffles spent cards back into your deck. You have none spent yet.">Camp<small>nothing spent yet</small></button>`;
   return `<p class="say">${say}</p><div class="two"><button class="safe" id="bank" data-tip="End the run safely and bank your coins as gold.">Walk home<small>Bank ${bv} gold</small></button><button class="primary" id="open" data-tip="Open the next door. Monster, treasure, shrine, hearth or curse. Your Grit does not refill." >${nd > G.T.doors ? 'Go deeper' : 'One more door'}<small>Door ${nd} · ×${G.multAt(nd)}</small></button></div>${camp}`;
 }
 function hearthPanel(s){
   const can = s.deck.length > G.T.minDeck, lost = s.lost.length + s.burned.length, mend = Math.min(G.T.mendN, lost);
-  return `<p class="say"><b>A hearth, burning low.</b> Pick one.</p><div class="two"><button class="safe" data-rest="rest" data-tip="Heal Grit.">Rest<small>+${Math.min(G.T.restHeal, s.maxGrit - s.grit)} Grit</small></button><button class="primary" data-rest="mend" ${mend ? '' : 'disabled'} data-tip="Bring back up to ${G.T.mendN} lost cards.">Mend<small>${mend ? '+' + mend + ' lost card' + (mend > 1 ? 's' : '') : 'nothing lost'}</small></button><button data-rest="temper" data-tip="+1 Might for the rest of this run.">Sharpen<small>+1 Might</small></button>${s.town && s.town.smithy ? `<button data-sheet="hone" data-tip="Your forge hones one card for the rest of this run.">Hone<small>one card +${50 + 25 * (G.townLv(s.town, 'smithy') - 1)}%</small></button>` : ''}${s.town && s.town.market ? `<button data-rest="market" ${s.coins < G.T.marketPrice ? 'disabled' : ''} data-tip="The Peddler trades a treasure for coins.">Market<small>${G.townLv(s.town, 'market') >= 3 ? 'two finds' : 'a find'} for ${G.T.marketPrice} coins</small></button>` : ''}<button data-sheet="cull" data-tip="Remove one card from your deck for this run." ${can ? '' : 'disabled'}>Burn a card<small>${can ? 'thin your deck' : 'deck too small'}</small></button></div>`;
+  return `<p class="say"><b>A hearth, burning low.</b> Pick one.</p><div class="two"><button class="safe" data-rest="rest" data-tip="Heal Grit.">Rest<small>+${Math.min(G.T.restHeal, s.maxGrit - s.grit)} Grit</small></button><button class="primary" data-rest="mend" ${mend ? '' : 'disabled'} data-tip="Bring back up to ${G.T.mendN} lost cards.">Mend<small>${mend ? '+' + mend + ' lost card' + (mend > 1 ? 's' : '') : 'nothing lost'}</small></button><button data-rest="temper" data-tip="Sharpen up by the fire: +1 Might for the rest of this run, whatever you wield. It stays if you swap gear.">Sharpen<small>+1 Might, this run</small></button>${s.town && s.town.smithy ? `<button data-sheet="hone" data-tip="Your forge hones one card for the rest of this run.">Hone<small>one card +${50 + 25 * (G.townLv(s.town, 'smithy') - 1)}%</small></button>` : ''}${s.town && s.town.market ? `<button data-rest="market" ${s.coins < G.T.marketPrice ? 'disabled' : ''} data-tip="The Peddler trades a treasure for coins.">Market<small>${G.townLv(s.town, 'market') >= 3 ? 'two finds' : 'a find'} for ${G.T.marketPrice} coins</small></button>` : ''}<button data-sheet="cull" data-tip="Remove one card from your deck for this run." ${can ? '' : 'disabled'}>Burn a card<small>${can ? 'thin your deck' : 'deck too small'}</small></button></div>`;
 }
 function waitPanel(s){
   const t = { treasure: 'Sort what you found.', favor: 'Choose a favor.', spoils: 'Choose your spoils.' }[s.phase] || '';
@@ -2055,6 +2055,7 @@ function renderModal(){
     const sp = s.spoils, e = s.ev && s.ev.t === 'win' ? s.ev : null;
     let h = `<div class="kicker">Spoils</div><h2>${e ? 'You beat ' + esc(/^The /.test(e.mon.n) ? e.mon.n : 'the ' + e.mon.n) : 'Victory'}</h2>`;
     if (e) h += `<p class="kind">+${e.lv} level${e.lv > 1 ? 's' : ''} · <span class="gold">+${e.coins} coins</span>${e.heal ? ` · <span class="okc">+${e.heal} Grit</span>` : ''}</p>`;
+    if (e && e.got && Object.keys(e.got).length) h += `<p class="kind" data-tip="Building materials for your homestead. You keep them all if you walk home, half if you die.">Salvaged: ${Object.keys(e.got).map(k => { const m = G.MATS.find(x => x.id === k); return `${m ? m.i : ''} ${e.got[k]} ${esc(m ? m.n : k)}`; }).join(' · ')}</p>`;
     h += `<p class="small" style="text-align:center;margin:8px 0">${sp.loot ? `Take one thing. Loot is gear or a one-shot, and it also gives you back ${G.T.lootRecover} spent cards. A card joins your deck.` : 'Choose a card for your deck.'}</p>`;
     if (sp.loot && sp.lootOpts){
       h += `<div class="sec"><h3>Loot</h3><span class="tiny muted">pick one find</span></div><div class="loot2">`;
