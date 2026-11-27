@@ -819,7 +819,9 @@ function playShot(s, idx) {
 }
 
 function halfPreview(s, id, half) {
-  const f = s.fight, h = HALVES[id] && HALVES[id][half]; if (!h) return null;
+  const h0 = HALVES[id] && HALVES[id][half]; if (!h0) return null;
+  if (!s) { const m0 = T.baseMight + 1; return { dmg: Math.floor((h0.dmg || 0) * m0), blk: Math.floor((h0.blk || 0) * 2), heal: h0.heal || 0, h: h0 }; }
+  const f = s.fight, h = h0;
   const m = f && f.dist != null ? atDist(fightMight(s), reachD(s, effDist(h, f.dist))) : fightMight(s), a = armor(s), B = 2 + a;
   const hm = 1 + T.honeMul * ((s.honed && s.honed[id]) || 0);
   let dmg = Math.floor((h.dmg || 0) * hm * m) + (h.dmgA || 0) * a;
@@ -1431,7 +1433,7 @@ const DMUL = ['×1⅓', '×1', '×⅔', '×⅓'];
 function halfParts(s, id, half){
   const p = G.halfPreview(s, id, half); if (!p) return [];
   const h = p.h, a = [];
-  if (h.move) a.push(['m', (h.dir === 'in' ? '→ ' : '↔ ') + h.move]);
+  if (h.move && G.T.distOn) a.push(['m', (h.dir === 'in' ? '→ ' : '↔ ') + h.move]);
   if (p.dmg) a.push(['d', p.dmg + ' dmg' + (h.pierce ? ', pierces' : '') + (h.ranged ? ', ranged' : '')]);
   if (p.blk) a.push(['b', '⛨ ' + p.blk]);
   if (h.heal) a.push(['g', '+' + h.heal + ' Grit']);
