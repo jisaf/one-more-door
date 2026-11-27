@@ -227,7 +227,7 @@ span[data-tip],div[data-tip],b[data-tip]{cursor:help}
 .dtrack .dc.to{border-color:var(--accent);border-style:dashed;color:var(--ink)}
 .actors.dist0{justify-content:center;gap:0}.actors.dist1{padding-left:14%;padding-right:14%}.actors.dist2{padding-left:8%;padding-right:8%}.actors.dist3{padding-left:1%;padding-right:1%}
 .intent.i-charge,.intent.i-pounce{border-color:#d8443a}.next.i-charge,.next.i-pounce{border-left-color:var(--bad)}.next.i-shoot{border-left-color:var(--accent)}
-.tinybtn{padding:2px 8px;font-size:12px;min-height:0;display:inline-block;width:auto}</style>
+.tinybtn{padding:2px 8px;font-size:12px;min-height:0;display:inline-block;width:auto}.tabs{grid-template-columns:repeat(5,1fr)}.hmats{display:flex;justify-content:space-between;gap:2px;font-size:13px;flex:none}.hmats span{white-space:nowrap}.hmats span b{margin-left:1px}.hmats .z{opacity:.35}.hscene{flex:none}.hscene svg{width:100%;height:auto;display:block;border-radius:12px;box-shadow:var(--shadow)}.hinsp{flex:none;padding:8px 10px}.hrow{display:flex;gap:6px;align-items:center;justify-content:space-between}.hgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:4px}.hgrid button{padding:4px 2px;font-size:12px;min-height:38px;line-height:1.15}.hgrid button small{display:block;font-size:11px}.hgrid button.on{box-shadow:0 0 0 2px var(--accent)}.hgrid button.dim{opacity:.55}.hbuild{width:auto;min-width:96px;padding:4px 10px;font-size:13px}.hbuild small{display:block;font-size:11px}.hbeds{display:grid;grid-template-columns:1fr 1fr;gap:4px 8px;margin-top:4px}.hbeds label{display:flex;flex-direction:column;gap:2px}.hbeds select{font-size:12px;padding:2px}</style>
 <div class="app" id="app"><p class="muted">Loading…</p></div>
 <div id="sheet"></div>
 <div id="modal"></div>
@@ -622,7 +622,7 @@ const MATS = [
 const RAR_N = { 1: 'common', 2: 'rare', 3: 'relic' };
 // c: cost per level, as {mat: n}. town: which run mechanic the part drives.
 const PARTS = [
-  { id: 'hearth', n: 'Hearth Room', zone: 'house', d: 'A warm room to come home to. You start every run with more Grit.', L: ['+3 max Grit.', '+6 max Grit.', '+9 max Grit.'],
+  { id: 'hearth', n: 'Cottage', zone: 'house', d: 'Grow your shack into a home. You start every run with more Grit.', L: ['+3 max Grit.', '+6 max Grit.', '+9 max Grit.'],
     c: [{ wood: 4, brick: 4 }, { wood: 6, brick: 8, stone: 2 }, { brick: 12, stone: 4, glass: 1 }] },
   { id: 'tower', n: 'Lookout Tower', zone: 'house', town: 'watchtower', d: 'Rebuild the old tower. From the top you can see what waits behind each door.', L: ['Two doors to pick from.', 'Three doors to pick from.', 'Three doors, and 25% more gold.'],
     c: [{ wood: 6, brick: 6 }, { brick: 10, iron: 4, stone: 3 }, { stone: 6, silver: 2, glass: 1 }] },
@@ -638,7 +638,7 @@ const PARTS = [
     c: [{ wood: 6 }, { wood: 8, oak: 3 }, { oak: 6, silver: 2, star: 1 }] },
   { id: 'study', n: 'Study', zone: 'house', town: 'archive', d: 'Maps and notices. More bounties are posted each run.', L: ['Two bounties each run.', 'Three bounties.', 'Bounties pay 50% more.'],
     c: [{ wood: 6, brick: 4 }, { oak: 3, stone: 3, silver: 1 }, { oak: 5, glass: 2, star: 1 }] },
-  { id: 'garden', n: 'Garden Beds', zone: 'farm', d: 'Plant crops that ripen into one-shots over a few runs. Ripe crops go to your pantry.', L: ['2 beds.', '4 beds.', '6 beds.'],
+  { id: 'garden', n: 'Garden Beds', zone: 'farm', d: 'Plant crops that ripen into one-shots over a few runs. You start with one bed. Ripe crops go to your pantry.', L: ['2 beds.', '4 beds.', '6 beds.'],
     c: [{ wood: 3 }, { wood: 8, brick: 4 }, { wood: 10, stone: 3, oak: 2 }] },
   { id: 'orchard', n: 'Orchard', zone: 'farm', d: 'Young trees take 3 runs to bear. After that, fruit for the pantry every run.', L: ['A Fizzing Tonic every run.', 'Two Tonics every run.', 'Two Tonics and a Liquid Courage.'],
     c: [{ wood: 4, brick: 2 }, { wood: 6, oak: 3 }, { oak: 6, silver: 1, glass: 1 }] },
@@ -661,13 +661,16 @@ function homeLv(meta, id) { return +((meta.home && meta.home.lv[id]) || 0); }
 function partOf(id) { return PARTS.find(p => p.id === id); }
 function partCost(id, lv) { const p = partOf(id); if (!p || !p.c[lv]) return null; const o = {}, mul = [1, 1.5, 2][lv]; for (const k in p.c[lv]) o[k] = Math.ceil(p.c[lv][k] * mul); return o; }
 function canHome(meta, id) { const lv = homeLv(meta, id), c = partCost(id, lv); if (!c) return false; for (const k in c) if ((meta.mats[k] || 0) < c[k]) return false; return true; }
-function buildHome(meta, id) { if (!canHome(meta, id)) return false; const lv = homeLv(meta, id), c = partCost(id, lv); for (const k in c) meta.mats[k] -= c[k]; meta.home.lv[id] = lv + 1;
+const HOME_START = { hearth: [1, 2], garden: [3, 2] };
+function tileFree(meta, x, y, id) { return !Object.keys(meta.home.at).some(k => k !== id && meta.home.at[k][0] === x && meta.home.at[k][1] === y); }
+function buildHome(meta, id, x, y) { if (!canHome(meta, id)) return false; const lv = homeLv(meta, id), c = partCost(id, lv); for (const k in c) meta.mats[k] -= c[k]; meta.home.lv[id] = lv + 1;
+  if (!meta.home.at[id] && x != null && x >= 0 && y >= 0 && x < HOME_W && y < HOME_H && tileFree(meta, x, y, id)) meta.home.at[id] = [x, y];
   if (!meta.home.at[id]) { const used = new Set(Object.values(meta.home.at).map(a => a.join(','))); outer: for (let y = 0; y < HOME_H; y++) for (let x = 0; x < HOME_W; x++) { const k = ((x * 3 + y * 5 + meta.home.seed) % HOME_W) + ',' + y; const xx = +k.split(',')[0]; if (!used.has(xx + ',' + y)) { meta.home.at[id] = [xx, y]; break outer; } } }
   if (id === 'garden') fixBeds(meta); if (id === 'orchard' && lv === 0) meta.home.orchard = 0; return true; }
 const HOME_W = 8, HOME_H = 4;
-function placeHome(meta, id, x, y) { if (!homeLv(meta, id) || x < 0 || y < 0 || x >= HOME_W || y >= HOME_H) return false; for (const k in meta.home.at) if (k !== id && meta.home.at[k][0] === x && meta.home.at[k][1] === y) meta.home.at[k] = meta.home.at[id].slice(); meta.home.at[id] = [x, y]; return true; }
+function placeHome(meta, id, x, y) { if (!meta.home.at[id] || x < 0 || y < 0 || x >= HOME_W || y >= HOME_H) return false; for (const k in meta.home.at) if (k !== id && meta.home.at[k][0] === x && meta.home.at[k][1] === y) meta.home.at[k] = meta.home.at[id].slice(); meta.home.at[id] = [x, y]; return true; }
 function styleHome(meta, id) { meta.home.style[id] = ((meta.home.style[id] || 0) + 1) % 4; return true; }
-function fixBeds(meta) { const n = 2 * homeLv(meta, 'garden'); while (meta.home.beds.length < n) meta.home.beds.push({ crop: null, age: 0 }); }
+function fixBeds(meta) { const n = Math.max(1, 2 * homeLv(meta, 'garden')); while (meta.home.beds.length < n) meta.home.beds.push({ crop: null, age: 0 }); }
 function plant(meta, i, cropId) { const b = meta.home.beds[i]; if (!b || (cropId && !CROPS.find(c => c.id === cropId))) return false; b.crop = cropId || null; b.age = 0; return true; }
 function cropRuns(meta, c) { return Math.max(1, c.runs - (homeLv(meta, 'well') ? 1 : 0)); }
 function pantryTake() { return 2; }
@@ -690,9 +693,9 @@ function doorChoices(s) {
 }
 function newMeta() {
   return { gold: 0, folk: {}, town: {}, embers: 0, emberTotal: 0, forge: { drill: 0, armory: 0, hearth: 0, cobbler: 0, satchel: 0, strongbox: 0, lantern: 0 }, cards: [], retired: [], lease: 0, leaseBest: -1, provisions: {},
-    unlocked: { brawler: true, sneak: false, warden: false }, hearth: { spark: 0, reroll: 0, mark: 0, keepsake: 0, wind: 0 }, keepsake: null, deepest: 0, deepBossKills: 0, bossKills: 0, oathUnlocked: false, runs: 0, bestDoor: 0, history: [], bestiary: {}, bestMile: 0, mats: {}, pantry: [], home: { lv: {}, at: {}, style: {}, beds: [], orchard: 0, seed: Math.floor(Math.random() * 9973), name: '' } };
+    unlocked: { brawler: true, sneak: false, warden: false }, hearth: { spark: 0, reroll: 0, mark: 0, keepsake: 0, wind: 0 }, keepsake: null, deepest: 0, deepBossKills: 0, bossKills: 0, oathUnlocked: false, runs: 0, bestDoor: 0, history: [], bestiary: {}, bestMile: 0, mats: {}, pantry: [], home: { lv: {}, at: { hearth: [1, 2], garden: [3, 2] }, style: {}, beds: [{ crop: null, age: 0 }], orchard: 0, seed: Math.floor(Math.random() * 9973), name: '' } };
 }
-function fixMeta(m) { const n = newMeta(); m.mats = m.mats || {}; m.pantry = m.pantry || []; m.home = Object.assign(n.home, m.home || {}); m.bestiary = m.bestiary || {}; m.bestMile = m.bestMile || 0; m.folk = m.folk || {}; m.town = m.town || {}; m.forge = Object.assign(n.forge, m.forge || {}); m.unlocked = Object.assign(n.unlocked, m.unlocked || {}); m.hearth = Object.assign(n.hearth, m.hearth || {}); for (const k of ['keepsake', 'deepest', 'deepBossKills', 'cards', 'retired', 'lease', 'leaseBest', 'provisions']) if (m[k] === undefined) m[k] = n[k];
+function fixMeta(m) { const n = newMeta(); m.mats = m.mats || {}; m.pantry = m.pantry || []; m.home = Object.assign(n.home, m.home || {}); for (const k in HOME_START) if (!m.home.at[k]) { const [sx, sy] = HOME_START[k]; let x = sx, y = sy; for (let i = 0; i < HOME_W * HOME_H && !tileFree(m, x, y, k); i++) { x = (x + 1) % HOME_W; if (!x) y = (y + 1) % HOME_H; } m.home.at[k] = [x, y]; } fixBeds(m); m.bestiary = m.bestiary || {}; m.bestMile = m.bestMile || 0; m.folk = m.folk || {}; m.town = m.town || {}; m.forge = Object.assign(n.forge, m.forge || {}); m.unlocked = Object.assign(n.unlocked, m.unlocked || {}); m.hearth = Object.assign(n.hearth, m.hearth || {}); for (const k of ['keepsake', 'deepest', 'deepBossKills', 'cards', 'retired', 'lease', 'leaseBest', 'provisions']) if (m[k] === undefined) m[k] = n[k];
   if (m.leaseBest < 0 && m.bossKills) m.leaseBest = 0; m.lease = Math.max(0, Math.min(m.lease, m.leaseBest + 1)); return m; }
 const forgeRanks = m => Object.values(m.forge).reduce((a, b) => a + (b || 0), 0);
 function buyForge(meta, id) {
@@ -1383,7 +1386,7 @@ const LORE = [
 ];
 
 Object.assign(T, {"winMend":0,"lootMend":0,"bossHeal":99,"handCap":99,"bossHp":90,"dmgMul":0.8,"lootRecover":2,"hpMul":5.5,"bossRestore":1,"newFavors":0,"baseMight":2,"winRecover":2,"gritPerLevel":1,"easeStart":0.6,"easeDoor":7,"distOn":0}); for (const [k,v] of Object.entries({"heavy":{"spd":20,"top":{"dmg":2.25},"bot":{"blk":1.75}},"lunge":{"spd":60,"top":{"dmg":3.5,"burn":1,"move":1,"dir":"in"},"bot":{"rec":2}},"brace":{"spd":40,"top":{"blk":1.5},"bot":{"blk":1.25}},"jab":{"spd":85,"top":{"dmg":2},"bot":{"dmg":1}},"reckless":{"spd":50,"top":{"dmg":2.5,"self":2},"bot":{"blk":1.25}},"bash":{"spd":45,"top":{"dmg":2},"bot":{"dmg":1,"blk":0.5}},"feint":{"spd":70,"top":{"dmg":2},"bot":{"rec":1,"blk":0.5}},"bulwark":{"spd":30,"top":{"blk":2},"bot":{"blk":1.75}},"pierce":{"spd":55,"top":{"dmg":2,"pierce":1,"reach":1},"bot":{"rec":2}},"momentum":{"spd":55,"top":{"dmg":2.5},"bot":{"dmg":1.25}},"ironskin":{"spd":35,"top":{"blk":2},"bot":{"blk":3,"burn":1}}})) HALVES[k]=v;
-const api = { MATS, RAR_N, PARTS, CROPS, HOME_W, HOME_H, homeLv, partOf, partCost, canHome, buildHome, placeHome, styleHome, plant, cropRuns, pantryTake, homeTown, shotById, TOWN, GEAR_TOK, tokCapOf, TOKENS, TOKEN_CARDS, TOWN, townLv, upCost, makeBounties, bestKills, MONSTERS, townOf, canBuild, buildTown, doorChoices, DSTATS, DIST_N, atDist, halfModes, moveOf, monType, swapOut, dropCard, HALVES, halfPreview, pairOptions, playPair, restFight, restCamp, canCamp, exhausted, T, MONSTERS, BOSS, TWISTS, TREASURES, SETS, setsOn, gx, tierMax, CURSES, CALLINGS, ORIGIN, FORGE, KEEPER, LORE, STARTER, INTENTS, PATRONS, FAVORS,
+const api = { HOME_START, tileFree, fixBeds, MATS, RAR_N, PARTS, CROPS, HOME_W, HOME_H, homeLv, partOf, partCost, canHome, buildHome, placeHome, styleHome, plant, cropRuns, pantryTake, homeTown, shotById, TOWN, GEAR_TOK, tokCapOf, TOKENS, TOKEN_CARDS, TOWN, townLv, upCost, makeBounties, bestKills, MONSTERS, townOf, canBuild, buildTown, doorChoices, DSTATS, DIST_N, atDist, halfModes, moveOf, monType, swapOut, dropCard, HALVES, halfPreview, pairOptions, playPair, restFight, restCamp, canCamp, exhausted, T, MONSTERS, BOSS, TWISTS, TREASURES, SETS, setsOn, gx, tierMax, CURSES, CALLINGS, ORIGIN, FORGE, KEEPER, LORE, STARTER, INTENTS, PATRONS, FAVORS,
   forgeCost, forgeRanks, newMeta, fixMeta, buyForge, unlockCalling, EMBERS, DEEP_BOSSES, emberCost, emberRank, buyEmber, rerollFavor, lastDoor, isDeepBossDoor, deepOf,
   startRun, openDoor, playShot, fight, flee, takeTreasure, takeFavor, rest, manage, canManage, canKeep, bagRoom, replacedBy,
   bank, settle, peek, might, armor, incoming, incomingRaw, enrage, canUnleash, monStats, monsterTotal, fightMight, cardPreview, canPlay, playCard, endTurn, runAway, chooseSpoils, cardPool,
@@ -1399,7 +1402,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = api; else 
 'use strict';
 const G = window.OMD, KEY = 'omd-home-save-v1', OLDKEY = 'omd-2h-none';
 let meta, run, lastEnd = null;
-let homeSel = null, homeOut = null, homeTab2 = 'build';
+let homeSel = null, homeOut = null, homeSpot = null, homePick = null, homeMove = false, homePanel = null;
 let calling = 'brawler', oath = false, tab = 'go', retireSel = null;
 let fx = null, narr = [], manageSel = null, sheet = null, pick = [], capNew = null, pairFx = null, focusI = 0, fanScan = false;
 function load(){ try{ let j = JSON.parse(localStorage.getItem(KEY) || 'null'); if (!j){ const o = JSON.parse(localStorage.getItem(OLDKEY) || 'null'); if (o && o.meta) j = { meta: o.meta, run: null, lastEnd: null }; } if (j && j.meta){ meta = G.fixMeta(Object.assign(G.newMeta(), j.meta)); run = j.run && j.run.maxGrit && j.run.deck && j.run.cards ? j.run : null; lastEnd = j.lastEnd || null; return; } }catch(e){} meta = G.newMeta(); run = null; }
@@ -2094,20 +2097,51 @@ const PAL = [ { n: 'Timber', wall: '#b9875a', trim: '#7a5233', roof: '#8a3b2a' }
   { n: 'Stone', wall: '#a9a59a', trim: '#6c6a63', roof: '#3f6b5a' }, { n: 'Whitewash', wall: '#eee6d6', trim: '#9b8b72', roof: '#3d5a8a' } ];
 const CROPC = { dustcorn: '#d9b44a', mint: '#5fbf7a', pepper: '#d8442f', brave: '#c76bd1', flax: '#6c8fd9', puff: '#e9e3cf', clover: '#3e9b4a', wake: '#b0703a' };
 function rngH(seed){ let x = (seed >>> 0) || 1; return () => (x = (x * 16807) % 2147483647) / 2147483647; }
+const HCX = 46, HS = 48, HT0 = 60, HW = HCX + 8 * 48 + 6, HH = HT0 + 4 * 48 + 4;
+function castleHint(R, hue){ // a broken tower and a stub of wall at the left edge
+  let o = `<path d="M0 ${HT0 + 8} V${HT0 - 70} h8 v-7 h7 v7 h8 v-4 h7 v10 l6 8 V${HT0 - 38} l10 -6 v-8 h7 v9 l9 4 v${36 + 10} Z" fill="#8f8a80" stroke="#6b665d"/>`;
+  o += `<path d="M14 ${HT0 - 30} v-10 a6 6 0 0 1 12 0 v10z" fill="#4d4943"/><path d="M5 ${HT0 - 66} q5 26 -2 52 M38 ${HT0 - 40} q4 16 -1 34" stroke="#4f8a43" stroke-width="3" fill="none"/>`;
+  o += `<path d="M${HCX + 4} ${HT0 + 2} v-12 h10 v4 h9 v-7 h12 v15z" fill="#9b968b" stroke="#6b665d" opacity=".9"/>`;
+  for (let i = 0; i < 5; i++) o += `<ellipse cx="${30 + R() * 50}" cy="${HT0 + 10 + R() * 30}" rx="${3 + R() * 3}" ry="${2 + R() * 2}" fill="#9b968b" stroke="#6b665d"/>`;
+  return o;
+}
+function shackArt(x, y, p){ const cx = x + HS / 2, gy = y + HS - 6;
+  let o = `<rect x="${cx - 14}" y="${gy - 17}" width="28" height="17" fill="#a07a52" stroke="#6b4a2b"/>`;
+  for (let i = 1; i < 4; i++) o += `<path d="M${cx - 14 + i * 7} ${gy - 17} v17" stroke="#6b4a2b" stroke-width=".8"/>`;
+  o += `<path d="M${cx - 17} ${gy - 15} L${cx + 16} ${gy - 25} L${cx + 17} ${gy - 20} L${cx - 16} ${gy - 11}Z" fill="#7a6a55" stroke="#4d4033"/>`;
+  o += `<rect x="${cx - 4}" y="${gy - 10}" width="7" height="10" fill="#4d4033"/><rect x="${cx + 8}" y="${gy - 33}" width="3" height="11" fill="#555"/><path d="M${cx + 9.5} ${gy - 35} q-4 -5 0 -9 q4 -5 0 -9" stroke="#ccc" fill="none" opacity=".8"/>`;
+  return o + `<rect x="${cx - 22}" y="${gy - 7}" width="7" height="7" fill="#b9875a" stroke="#6b4a2b"/>`;
+}
+function starterBed(x, y, h){ const b = (h.beds || [])[0] || {};
+  let o = `<rect x="${x + 9}" y="${y + 16}" width="30" height="22" rx="3" fill="#6b4a2b"/>`;
+  for (let i = 0; i < 3; i++) o += `<path d="M${x + 12} ${y + 22 + i * 6} h24" stroke="#563a21" stroke-width="1.5"/>`;
+  if (b.crop) for (let i = 0; i < 6; i++) o += `<circle cx="${x + 15 + (i % 3) * 9}" cy="${y + 21 + Math.floor(i / 3) * 10}" r="${1.8 + Math.min(2, b.age || 0)}" fill="${CROPC[b.crop] || '#5fbf7a'}"/>`;
+  o += `<path d="M${x + 5} ${y + 40} v-12 M${x + 43} ${y + 40} v-12 M${x + 5} ${y + 33} h38 M${x + 5} ${y + 37} h38" stroke="#8a6a44" stroke-width="1.8"/>`;
+  return o + `<path d="M${x + 36} ${y + 13} h7 l-1 6 h-5z M${x + 43} ${y + 14} l4 -3" fill="#7d8b99" stroke="#55606b" stroke-width="1"/>`;
+}
 function homeSVG(h, hero){
-  const T0 = 72, S = 48, W = G.HOME_W * S, Hh = T0 + G.HOME_H * S, R = rngH(h.seed + 7);
-  const hue = Math.floor(R() * 40) - 20;
-  let o = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${Hh}" class="homesvg" role="img" aria-label="Your homestead" style="width:100%;height:auto;display:block;border-radius:10px">`;
+  const S = HS, T0 = HT0, W = HW, Hh = HH, R = rngH(h.seed + 7), hue = Math.floor(R() * 40) - 20;
+  let o = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${Hh}" ${hero ? 'preserveAspectRatio="xMidYMid slice"' : ''} class="homesvg" role="img" aria-label="Your homestead">`;
   o += `<defs><linearGradient id="hsky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(${205 + hue},55%,78%)"/><stop offset="1" stop-color="hsl(${40 + hue},70%,88%)"/></linearGradient></defs>`;
-  o += `<rect width="${W}" height="${Hh}" fill="url(#hsky)"/>`;
-  // hills and the ruined castle wall, unique to this homestead's seed
-  o += `<path d="M0 ${T0 - 10} Q${W * 0.25} ${T0 - 40 - R() * 15} ${W * 0.5} ${T0 - 18} T${W} ${T0 - 22} V${T0} H0Z" fill="hsl(${110 + hue},28%,62%)"/>`;
-  let x = 0; while (x < W) { const w = 26 + Math.floor(R() * 30), ht = 18 + Math.floor(R() * 40), gap = R() < 0.25; if (!gap) { o += `<rect x="${x}" y="${T0 - ht}" width="${w}" height="${ht}" fill="#8f8a80" stroke="#6b665d"/>`; for (let c = x + 2; c < x + w - 6; c += 10) if (R() < 0.7) o += `<rect x="${c}" y="${T0 - ht - 6}" width="6" height="6" fill="#8f8a80" stroke="#6b665d"/>`; if (R() < 0.4) o += `<path d="M${x + w / 2 - 6} ${T0} v-12 a6 6 0 0 1 12 0 v12z" fill="#4d4943"/>`; if (R() < 0.5) o += `<path d="M${x + 3} ${T0 - ht + 4} q4 ${ht / 2} -1 ${ht - 6}" stroke="#4f8a43" stroke-width="3" fill="none"/>`; } x += w + (gap ? 10 : 0); }
-  o += `<rect y="${T0}" width="${W}" height="${Hh - T0}" fill="hsl(${100 + hue},38%,52%)"/>`;
-  for (let i = 0; i < 40; i++){ const fx = R() * W, fy = T0 + 4 + R() * (Hh - T0 - 8); o += R() < 0.3 ? `<circle cx="${fx}" cy="${fy}" r="1.8" fill="${['#f4e04d', '#f29bd0', '#ffffff'][Math.floor(R() * 3)]}"/>` : `<path d="M${fx} ${fy} l2 -5 l2 5" stroke="hsl(${100 + hue},40%,38%)" fill="none"/>`; }
-  for (const id in (h.at || {})){ const lv = +(h.lv[id] || 0); if (!lv) continue; const [cx, cy] = h.at[id]; o += partArt(id, lv, PAL[(h.style || {})[id] || 0], cx * S, T0 + cy * S, S, h, !hero); }
-  if (!hero && homeSel && h.at[homeSel]) { const [sx, sy] = h.at[homeSel]; o += `<rect x="${sx * S + 1}" y="${T0 + sy * S + 1}" width="${S - 2}" height="${S - 2}" fill="none" stroke="#fff" stroke-width="2" stroke-dasharray="4 3"/>`; }
-  if (!hero) for (let ty = 0; ty < G.HOME_H; ty++) for (let tx = 0; tx < G.HOME_W; tx++) o += `<rect data-tile="${tx},${ty}" x="${tx * S}" y="${T0 + ty * S}" width="${S}" height="${S}" fill="transparent" ${homeSel ? 'stroke="rgba(255,255,255,.35)"' : ''} style="cursor:pointer"/>`;
+  o += `<rect width="${W}" height="${Hh}" fill="url(#hsky)"/><circle cx="${W - 50 - R() * 60}" cy="${18 + R() * 10}" r="11" fill="#fff4c2" opacity=".9"/>`;
+  for (let i = 0; i < 2; i++){ const cx = 90 + R() * (W - 160), cy = 14 + R() * 18; o += `<g fill="#fff" opacity=".75"><ellipse cx="${cx}" cy="${cy}" rx="16" ry="6"/><ellipse cx="${cx + 10}" cy="${cy - 4}" rx="10" ry="6"/></g>`; }
+  o += `<path d="M0 ${T0 - 6} Q${W * 0.3} ${T0 - 34 - R() * 12} ${W * 0.55} ${T0 - 14} T${W} ${T0 - 20} V${T0} H0Z" fill="hsl(${110 + hue},28%,64%)"/>`;
+  o += `<rect y="${T0}" width="${W}" height="${Hh - T0}" fill="hsl(${100 + hue},38%,54%)"/>`;
+  for (let ty = 0; ty < G.HOME_H; ty++) o += `<rect y="${T0 + ty * S}" width="${W}" height="${S}" fill="hsl(${100 + hue},38%,${50 + ty * 2}%)" opacity=".5"/>`;
+  o += castleHint(R, hue);
+  for (let i = 0; i < 34; i++){ const fx = HCX + R() * (W - HCX), fy = T0 + 4 + R() * (Hh - T0 - 8); o += R() < 0.3 ? `<circle cx="${fx}" cy="${fy}" r="1.6" fill="${['#f4e04d', '#f29bd0', '#ffffff'][Math.floor(R() * 3)]}"/>` : `<path d="M${fx} ${fy} l2 -5 l2 5" stroke="hsl(${100 + hue},40%,38%)" fill="none"/>`; }
+  const tx0 = tx => HCX + tx * S, ty0 = ty => T0 + ty * S, taken = new Set();
+  const ids = Object.keys(h.at || {}).filter(id => (+(h.lv[id] || 0)) || G.HOME_START[id]).sort((a, b) => h.at[a][1] - h.at[b][1]);
+  for (const id of ids) taken.add(h.at[id].join(','));
+  if (!hero) for (let ty = 0; ty < G.HOME_H; ty++) for (let tx = 0; tx < G.HOME_W; tx++) if (!taken.has(tx + ',' + ty)) { const cx = tx0(tx) + S / 2, cy = ty0(ty) + S / 2, on = homeSpot && homeSpot[0] === tx && homeSpot[1] === ty;
+    o += on ? `<rect x="${tx0(tx) + 3}" y="${ty0(ty) + 3}" width="${S - 6}" height="${S - 6}" rx="8" fill="rgba(255,255,255,.35)" stroke="#fff" stroke-width="2"/><path d="M${cx - 8} ${cy} h16 M${cx} ${cy - 8} v16" stroke="#fff" stroke-width="3" stroke-linecap="round"/>`
+      : `<path d="M${cx - 4} ${cy} h8 M${cx} ${cy - 4} v8" stroke="#fff" stroke-width="${homeMove ? 2.5 : 1.5}" stroke-linecap="round" opacity="${homeMove ? .9 : .32}"/>`; }
+  for (const id of ids){ const lv = +(h.lv[id] || 0), [cx, cy] = h.at[id], pal = PAL[(h.style || {})[id] || 0];
+    if (id === 'hearth' && !lv) o += shackArt(tx0(cx), ty0(cy), pal);
+    else if (id === 'garden' && !lv) o += starterBed(tx0(cx), ty0(cy), h);
+    else o += partArt(id, lv, pal, tx0(cx), ty0(cy), S, h, false); }
+  if (!hero && homeSel && h.at[homeSel]) { const [sx, sy] = h.at[homeSel]; o += `<rect x="${tx0(sx) + 1}" y="${ty0(sy) + 1}" width="${S - 2}" height="${S - 2}" rx="8" fill="none" stroke="#fff" stroke-width="2.5" stroke-dasharray="5 3"/>`; }
+  if (!hero) for (let ty = 0; ty < G.HOME_H; ty++) for (let tx = 0; tx < G.HOME_W; tx++) o += `<rect data-tile="${tx},${ty}" x="${tx0(tx)}" y="${ty0(ty)}" width="${S}" height="${S}" fill="transparent" style="cursor:pointer"/>`;
   return o + `</svg>`;
 }
 function house(x, y, S, p, lv, f){ // a little building that grows with level
@@ -2128,7 +2162,7 @@ function partArt(id, lv, p, x, y, S, h, live){
   else if (id === 'chapel') o += house(x, y, S, p, lv, `<path d="M${cx} ${gy - S * 0.62 - lv * 5} v-9 M${cx - 3} ${gy - S * 0.62 - lv * 5 - 6} h6" stroke="${p.trim}" stroke-width="2"/>`);
   else if (id === 'cart') { o += `<rect x="${x + 8}" y="${gy - 18}" width="${S - 16}" height="12" fill="${p.wall}" stroke="${p.trim}"/><path d="M${x + 6} ${gy - 18} q${S / 2 - 6} -${10 + lv * 3} ${S - 12} 0" fill="${p.roof}" stroke="${p.trim}"/><circle cx="${x + 14}" cy="${gy - 4}" r="5" fill="#5a3b22"/><circle cx="${x + S - 14}" cy="${gy - 4}" r="5" fill="#5a3b22"/>`; for (let i = 0; i < lv; i++) o += `<circle cx="${x + 15 + i * 8}" cy="${gy - 12}" r="2.5" fill="${['#d8442f', '#f4e04d', '#5fbf7a'][i]}"/>`; }
   else if (id === 'doghouse') { o += `<rect x="${cx - 12}" y="${gy - 16}" width="24" height="16" fill="${p.wall}" stroke="${p.trim}"/><path d="M${cx - 15} ${gy - 16} L${cx} ${gy - 28} L${cx + 15} ${gy - 16}Z" fill="${p.roof}"/><path d="M${cx - 5} ${gy} v-8 a5 5 0 0 1 10 0 v8" fill="#2b2b2b"/>`; o += `<ellipse cx="${cx + 18}" cy="${gy - 3}" rx="6" ry="4" fill="#8a5a33"/><circle cx="${cx + 23}" cy="${gy - 7}" r="3" fill="#8a5a33"/>`; }
-  else if (id === 'garden') { const beds = (h.beds || []).length ? h.beds : [{}, {}]; const n = Math.min(6, Math.max(2, 2 * lv)); for (let i = 0; i < n; i++){ const b = beds[i] || {}, rx = x + 4 + (i % 3) * 14, ry = y + 10 + Math.floor(i / 3) * 18; o += `<rect x="${rx}" y="${ry}" width="12" height="14" fill="#6b4a2b"/>`; if (b.crop) for (let k = 0; k < 3; k++) o += `<circle cx="${rx + 3 + k * 3}" cy="${ry + 4 + (k % 2) * 5}" r="${1.5 + Math.min(2, (b.age || 0))}" fill="${CROPC[b.crop] || '#5fbf7a'}"/>`; } }
+  else if (id === 'garden') { const beds = h.beds || []; const n = Math.min(6, Math.max(1, 2 * lv)); for (let i = 0; i < n; i++){ const b = beds[i] || {}, rx = x + 4 + (i % 3) * 14, ry = y + 10 + Math.floor(i / 3) * 18; o += `<rect x="${rx}" y="${ry}" width="12" height="14" fill="#6b4a2b"/>`; if (b.crop) for (let k = 0; k < 3; k++) o += `<circle cx="${rx + 3 + k * 3}" cy="${ry + 4 + (k % 2) * 5}" r="${1.5 + Math.min(2, (b.age || 0))}" fill="${CROPC[b.crop] || '#5fbf7a'}"/>`; } }
   else if (id === 'orchard') { for (let i = 0; i < lv + 1; i++){ const tx = x + 10 + i * 13, ty = gy - 4 - (i % 2) * 8; o += `<rect x="${tx - 1.5}" y="${ty - 10}" width="3" height="10" fill="#6b4a2b"/><circle cx="${tx}" cy="${ty - 14}" r="${6 + Math.min(3, (h.orchard || 0))}" fill="#3e8f45"/>${(h.orchard || 0) > 3 ? `<circle cx="${tx + 2}" cy="${ty - 13}" r="1.8" fill="#d8442f"/><circle cx="${tx - 3}" cy="${ty - 16}" r="1.8" fill="#d8442f"/>` : ''}`; } }
   else if (id === 'well') { o += `<ellipse cx="${cx}" cy="${gy - 8}" rx="12" ry="5" fill="#2f4f6a" stroke="${p.trim}"/><rect x="${cx - 12}" y="${gy - 8}" width="24" height="9" fill="${p.wall}" stroke="${p.trim}"/><path d="M${cx - 10} ${gy - 8} v-${12 + lv * 2} M${cx + 10} ${gy - 8} v-${12 + lv * 2}" stroke="${p.trim}" stroke-width="2"/><path d="M${cx - 14} ${gy - 18 - lv * 2} L${cx} ${gy - 28 - lv * 2} L${cx + 14} ${gy - 18 - lv * 2}Z" fill="${p.roof}"/>`; }
   else if (id === 'kiln') { o += `<path d="M${cx - 14} ${gy} v-10 a14 ${12 + lv * 2} 0 0 1 28 0 v10z" fill="${p.wall}" stroke="${p.trim}"/><path d="M${cx - 5} ${gy} v-6 a5 5 0 0 1 10 0 v6z" fill="#ff7a2a"/><rect x="${cx + 6}" y="${gy - 30 - lv * 2}" width="5" height="10" fill="${p.trim}"/>`; }
@@ -2136,41 +2170,57 @@ function partArt(id, lv, p, x, y, S, h, live){
 }
 function homeCode(){ const h = meta.home; return 'OMDH1.' + btoa(JSON.stringify({ s: h.seed, n: h.name || '', lv: h.lv, at: h.at, st: h.style, b: h.beds.map(b => b.crop || ''), o: h.orchard || 0 })); }
 function readCode(c){ try{ const j = JSON.parse(atob(String(c).trim().replace(/^OMDH1\./, ''))); if (!j || typeof j.s !== 'number' || typeof j.lv !== 'object') return null;
-  const lv = {}, at = {}, style = {}; for (const p of G.PARTS){ const l = +j.lv[p.id] || 0; if (l > 0 && l <= 3) { lv[p.id] = l; const a = (j.at || {})[p.id]; at[p.id] = Array.isArray(a) ? [Math.max(0, Math.min(G.HOME_W - 1, +a[0] || 0)), Math.max(0, Math.min(G.HOME_H - 1, +a[1] || 0))] : [0, 0]; style[p.id] = Math.max(0, Math.min(3, +((j.st || {})[p.id]) || 0)); } }
+  const lv = {}, at = {}, style = {}; for (const p of G.PARTS){ const l = +j.lv[p.id] || 0; if ((l > 0 && l <= 3) || (G.HOME_START[p.id] && (j.at || {})[p.id])) { if (l)  lv[p.id] = l; const a = (j.at || {})[p.id]; at[p.id] = Array.isArray(a) ? [Math.max(0, Math.min(G.HOME_W - 1, +a[0] || 0)), Math.max(0, Math.min(G.HOME_H - 1, +a[1] || 0))] : [0, 0]; style[p.id] = Math.max(0, Math.min(3, +((j.st || {})[p.id]) || 0)); } }
   return { seed: j.s | 0, name: String(j.n || '').slice(0, 30), lv, at, style, beds: (Array.isArray(j.b) ? j.b : []).slice(0, 6).map(c => ({ crop: CROPC[c] ? c : null, age: 2 })), orchard: Math.min(9, +j.o || 0) }; }catch(e){ return null; } }
 function gallery(){ try{ return JSON.parse(localStorage.getItem('omd-home-gallery') || '[]'); }catch(e){ return []; } }
 function matChips(c, have){ return Object.keys(c).map(k => { const m = G.MATS.find(x => x.id === k), ok = !have || (meta.mats[k] || 0) >= c[k]; return `<span class="tiny ${ok ? '' : 'badc'}" title="${m.n}">${m.i}${c[k]}</span>`; }).join(' '); }
+function partAt(x, y){ const h = meta.home; return Object.keys(h.at).find(k => h.at[k][0] === x && h.at[k][1] === y && (G.homeLv(meta, k) || G.HOME_START[k])); }
+function lvName(id, lv){ return !lv ? (id === 'hearth' ? 'Shack' : id === 'garden' ? 'One bed' : '') : 'Level ' + lv; }
+function pantryLine(){ const cnt = {}; meta.pantry.forEach(id => cnt[id] = (cnt[id] || 0) + 1); const ks = Object.keys(cnt);
+  return `<p class="tiny" style="margin:4px 0 0"><b>Pantry</b> <span class="muted">(next run takes ${G.pantryTake() + (G.homeLv(meta, 'well') >= 3 ? 1 : 0)})</span>: ${ks.length ? ks.map(id => `${esc(G.shotById(id).n)} ×${cnt[id]}`).join(', ') : 'empty for now'}</p>`; }
 function homeTab(){
   const h = meta.home;
-  let o = `<p class="tiny muted" style="margin:0">Your homestead in the old castle ruins. Bring materials home from runs, build, and take your time. Nothing here runs on a clock, only on runs.</p>`;
-  o += `<div class="box" style="display:flex;flex-wrap:wrap;gap:8px">${G.MATS.map(m => `<span class="tiny" title="${m.n}, ${G.RAR_N[m.r]}">${m.i} <b>${meta.mats[m.id] || 0}</b> <span class="muted">${m.n}</span></span>`).join('')}</div>`;
-  o += `<div style="margin:8px 0">${homeSVG(h, false)}</div>`;
-  o += `<p class="tiny muted" style="margin:4px 0">${homeSel ? `Moving the ${esc(G.partOf(homeSel).n)}. Tap a square to put it there, or <button class="tinybtn" data-hstyle="${homeSel}">restyle: ${PAL[h.style[homeSel] || 0].n}</button> <button class="tinybtn" data-hpick="">done</button>` : 'Tap a part in the picture to move or restyle it.'}</p>`;
-  o += `<div class="tabs" role="tablist">${[['build', 'Build'], ['farm', 'Farm'], ['share', 'Share']].map(([k, n]) => `<button class="${homeTab2 === k ? 'on' : ''}" data-htab="${k}">${n}</button>`).join('')}</div><div class="box">`;
-  if (homeTab2 === 'build') for (const zone of ['house', 'farm']) { o += `<p class="tiny" style="margin:6px 0 2px"><b>${zone === 'house' ? 'House' : 'Farm and yard'}</b></p>`;
-    for (const p of G.PARTS.filter(q => q.zone === zone)) { const lv = G.homeLv(meta, p.id), c = G.partCost(p.id, lv);
-      const st = c ? `<button data-home="${p.id}" ${G.canHome(meta, p.id) ? '' : 'disabled'}>${lv ? 'Raise to ' + (lv + 1) : 'Build'}<small>${matChips(c, true)}</small></button>` : '<span class="tiny okc">Level 3</span>';
-      o += `<div class="fitem"><div><b class="small">${p.n}</b>${lv ? ` <span class="tiny muted">· level ${lv}</span>` : ''}<div class="d">${p.d}</div>${p.L.map((t, i) => `<div class="tiny ${i < lv ? 'okc' : 'muted'}">${i < lv ? '✓' : '·'} ${t}</div>`).join('')}</div>${st}</div>`; } }
-  else if (homeTab2 === 'farm') {
-    if (!G.homeLv(meta, 'garden')) o += `<p class="tiny muted">Build Garden Beds to plant crops. They ripen over runs into one-shots for your pantry.</p>`;
-    h.beds.forEach((b, i) => { const c = b.crop && G.CROPS.find(x => x.id === b.crop), left = c ? G.cropRuns(meta, c) - b.age : 0;
-      o += `<div class="fitem"><div><b class="small">Bed ${i + 1}</b> <span class="tiny muted">${c ? `· ${c.n}, ripe after ${left} more run${left === 1 ? '' : 's'}` : '· empty'}</span>${c ? `<div class="d">${c.d}</div>` : ''}</div><select data-bed="${i}"><option value="">Empty</option>${G.CROPS.map(x => `<option value="${x.id}" ${b.crop === x.id ? 'selected' : ''}>${x.n} (${G.cropRuns(meta, x)} run${G.cropRuns(meta, x) > 1 ? 's' : ''}, ${x.yield} ${esc(G.shotById(x.shot).n)})</option>`).join('')}</select></div>`; });
-    if (G.homeLv(meta, 'orchard')) o += `<p class="tiny">🌳 Orchard: ${(h.orchard || 0) > 3 ? 'bearing fruit every run.' : `bears fruit after ${4 - (h.orchard || 0)} more run${4 - (h.orchard || 0) === 1 ? '' : 's'}.`}</p>`;
-    const cnt = {}; meta.pantry.forEach(id => cnt[id] = (cnt[id] || 0) + 1);
-    o += `<p class="tiny" style="margin-top:8px"><b>Pantry.</b> Your next run takes ${G.pantryTake() + (G.homeLv(meta, 'well') >= 3 ? 1 : 0)} of these along. ${meta.pantry.length ? Object.keys(cnt).map(id => `${esc(G.shotById(id).n)} ×${cnt[id]}`).join(', ') : 'Empty for now.'}</p>`; }
-  else {
-    o += `<div class="fitem"><div><b class="small">Name</b><div class="d">Shown with your picture and code.</div></div><input data-hname maxlength="30" value="${esc(h.name || '')}" placeholder="My homestead" style="max-width:150px"></div>`;
-    o += `<div class="two"><button data-hpic>Save picture<small>a PNG of your homestead</small></button><button data-hcode>Share code<small>anyone can view it</small></button></div>`;
-    if (homeOut && homeOut.k === 'pic') o += `<p class="tiny muted">Long-press or right-click to save, or use the link.</p><img src="${homeOut.v}" alt="Your homestead" style="width:100%;border-radius:10px"><p class="tiny"><a href="${homeOut.v}" download="homestead.png">Download homestead.png</a></p>`;
-    if (homeOut && homeOut.k === 'code') o += `<p class="tiny muted">Copy this code and send it to a friend.</p><textarea readonly rows="3" style="width:100%" onfocus="this.select()">${homeOut.v}</textarea>`;
-    o += `<p class="tiny" style="margin-top:10px"><b>Visit a homestead.</b> Paste a code to see it and keep it in your collection.</p><textarea data-hvisit rows="2" style="width:100%" placeholder="OMDH1..."></textarea><button data-hvisitgo>Visit</button>${homeOut && homeOut.k === 'bad' ? '<p class="tiny badc">That code did not work.</p>' : ''}`;
-    const gl = gallery(); if (gl.length) o += `<p class="tiny" style="margin-top:8px"><b>Your collection</b></p><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">${gl.map((c, i) => { const v = readCode(c); return v ? `<div><div style="pointer-events:none">${homeSVG(v, true)}</div><span class="tiny">${esc(v.name || 'A homestead')}</span> <button class="tinybtn" data-hdrop="${i}">remove</button></div>` : ''; }).join('')}</div>`; }
-  return o + `</div>` + bestiaryBox();
+  let o = `<div class="hmats">${G.MATS.map(m => `<span class="${meta.mats[m.id] ? '' : 'z'}" title="${m.n}, ${G.RAR_N[m.r]}">${m.i}<b>${meta.mats[m.id] || 0}</b></span>`).join('')}</div>`;
+  o += `<div class="hscene">${homeSVG(h, false)}</div><div class="box hinsp">`;
+  if (homePanel === 'share') {
+    o += `<div class="hrow"><b class="small">Share your homestead</b><button class="tinybtn" data-hclose>Back</button></div>`;
+    o += `<div class="hrow"><input data-hname maxlength="30" value="${esc(h.name || '')}" placeholder="Name your homestead" style="flex:1"><button class="tinybtn" data-hpic>Picture</button><button class="tinybtn" data-hcode>Code</button></div>`;
+    if (homeOut && homeOut.k === 'pic') o += `<p class="tiny muted" style="margin:4px 0">Long-press or right-click to save.</p><img src="${homeOut.v}" alt="Your homestead" style="width:100%;border-radius:10px"><p class="tiny"><a href="${homeOut.v}" download="homestead.png">Download homestead.png</a></p>`;
+    if (homeOut && homeOut.k === 'code') o += `<textarea readonly rows="2" style="width:100%" onfocus="this.select()">${homeOut.v}</textarea>`;
+    o += `<div class="hrow" style="margin-top:6px"><textarea data-hvisit rows="1" style="flex:1" placeholder="Paste a friend’s code to visit"></textarea><button class="tinybtn" data-hvisitgo>Visit</button></div>${homeOut && homeOut.k === 'bad' ? '<p class="tiny badc">That code did not work.</p>' : ''}`;
+    const gl = gallery(); if (gl.length) o += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px">${gl.map((c, i) => { const v = readCode(c); return v ? `<div><div style="pointer-events:none">${homeSVG(v, true)}</div><span class="tiny">${esc(v.name || 'A homestead')}</span> <button class="tinybtn" data-hdrop="${i}">remove</button></div>` : ''; }).join('')}</div>`;
+  } else if (homeSel) {
+    const p = G.partOf(homeSel), lv = G.homeLv(meta, homeSel), c = G.partCost(homeSel, lv);
+    o += `<div class="hrow"><span><b class="small">${lv || homeSel !== 'hearth' ? esc(p.n) : 'Your shack'}</b> <span class="tiny muted">${lvName(homeSel, lv)}</span></span><span><button class="tinybtn" data-hmove>${homeMove ? 'Cancel move' : 'Move'}</button>${lv ? ` <button class="tinybtn" data-hstyle="${homeSel}">${PAL[h.style[homeSel] || 0].n}</button>` : ''} <button class="tinybtn" data-hclose aria-label="Close">✕</button></span></div>`;
+    if (homeMove) o += `<p class="tiny" style="margin:4px 0">Tap any spot in the picture to move it there. Tapping a building swaps the two.</p>`;
+    else {
+      o += `<p class="tiny muted" style="margin:3px 0">${esc(p.d)}</p>`;
+      if (lv) o += `<p class="tiny okc" style="margin:2px 0">✓ ${p.L[lv - 1]}</p>`;
+      if (c) o += `<div class="hrow"><span class="tiny">Next: ${p.L[lv]}</span><button data-home="${homeSel}" ${G.canHome(meta, homeSel) ? '' : 'disabled'} class="hbuild">${lv ? 'Raise' : homeSel === 'hearth' ? 'Build cottage' : 'Build'}<small>${matChips(c, true)}</small></button></div>`;
+      else o += `<p class="tiny okc" style="margin:2px 0">Fully built.</p>`;
+      if (homeSel === 'garden') { o += `<div class="hbeds">${h.beds.map((b, i) => { const cr = b.crop && G.CROPS.find(x => x.id === b.crop), left = cr ? G.cropRuns(meta, cr) - b.age : 0;
+          return `<label class="tiny">Bed ${i + 1}${cr ? ` · ripe in ${left}` : ''}<select data-bed="${i}"><option value="">Empty</option>${G.CROPS.map(x => `<option value="${x.id}" ${b.crop === x.id ? 'selected' : ''}>${x.n}: ${x.yield} ${esc(G.shotById(x.shot).n)}, ${G.cropRuns(meta, x)} run${G.cropRuns(meta, x) > 1 ? 's' : ''}</option>`).join('')}</select></label>`; }).join('')}</div>` + pantryLine(); }
+      if (homeSel === 'orchard' && lv) o += `<p class="tiny" style="margin:4px 0 0">${(h.orchard || 0) > 3 ? 'Bearing fruit every run.' : `Bears fruit after ${4 - (h.orchard || 0)} more run${4 - (h.orchard || 0) === 1 ? '' : 's'}.`}</p>` + pantryLine();
+    }
+  } else if (homeSpot) {
+    const left = G.PARTS.filter(p => !G.homeLv(meta, p.id) && !G.HOME_START[p.id]);
+    o += `<div class="hrow"><b class="small">Build here</b><button class="tinybtn" data-hclose aria-label="Close">✕</button></div>`;
+    if (!left.length) o += `<p class="tiny muted">Everything is built. Tap a building to raise it.</p>`;
+    else { o += `<div class="hgrid">${left.map(p => `<button data-hpickp="${p.id}" class="${homePick === p.id ? 'on' : ''} ${G.canHome(meta, p.id) ? '' : 'dim'}">${esc(p.n)}<small>${matChips(G.partCost(p.id, 0), true)}</small></button>`).join('')}</div>`;
+      if (homePick) { const p = G.partOf(homePick); o += `<div class="hrow" style="margin-top:6px"><span class="tiny"><b>${esc(p.n)}.</b> ${esc(p.d)} <span class="okc">${p.L[0]}</span></span><button data-home="${p.id}" class="hbuild" ${G.canHome(meta, p.id) ? '' : 'disabled'}>Build</button></div>`; }
+      else o += `<p class="tiny muted" style="margin:6px 0 0">Pick something to build on this spot.</p>`; }
+  } else {
+    const built = G.PARTS.filter(p => G.homeLv(meta, p.id)).length, ready = G.PARTS.filter(p => G.canHome(meta, p.id)).length;
+    o += `<p class="small" style="margin:0 0 4px">Tap an empty spot to build, or tap a building to raise, move or restyle it.</p>`;
+    o += `<p class="tiny muted" style="margin:0">${built} of ${G.PARTS.length} built${ready ? ` · <span class="okc">${ready} ready to build or raise</span>` : ''}. Bring materials home from runs. Nothing runs on a clock: crops grow by runs.</p>`;
+    o += pantryLine() + `<div class="hrow" style="margin-top:6px"><span></span><button class="tinybtn" data-hshare>Share or visit</button></div>`;
+  }
+  return o + `</div>`;
 }
 // ---------- town ----------
 function renderTown(){
   let h = `<div class="thead"><h1>One More Door <span class="small muted">Homestead</span></h1><span class="money"><span data-tip="Gold: bank it by walking home from a run. Spend it in the Forge, Library and on provisions."><b class="gold">${meta.gold}</b> <span class="small muted">gold</span></span> · <span data-tip="Embers: earned for every door you clear, even if you die. Spend them in the Embers tab."><b class="ember">${meta.embers}</b> <span class="small muted">embers</span></span></span></div>`;
-  h += `<div class="tscene">${homeSVG(meta.home, true)}<div class="keeper"><b>${G.KEEPER}:</b> “${esc(G.tavernLine(meta, lastEnd))}”</div></div>`;
+  if (tab !== 'town') h += `<div class="tscene">${homeSVG(meta.home, true)}<div class="keeper"><b>${G.KEEPER}:</b> “${esc(G.tavernLine(meta, lastEnd))}”</div></div>`;
   const dot = has => has ? '<span class="dot"></span>' : '';
   const canForge = G.FORGE.some(f => meta.forge[f.id] < G.forgeMax(meta, f) && meta.gold >= G.forgeCost(f, meta.forge[f.id]));
   const canEmb = G.EMBERS.some(e => { const r = G.emberRank(meta, e); return r < e.cost.length && meta.embers >= G.emberCost(e, r); });
@@ -2231,7 +2281,7 @@ function libraryTab(){
   h += `<div class="sec" style="margin:4px 0 0"><h3>New cards</h3><span class="tiny muted">once bought, they can turn up as rewards</span></div><div class="cgrid">`;
   for (const id of G.LIBRARY){ const c = G.CARDS[id], own = meta.cards.includes(id);
     h += tileCard(id, `<span class="tiny ${own ? 'okc' : 'gold'}">${own ? 'Owned' : c.price + ' gold'}</span>`, `data-lib="${id}" ${own || meta.gold < c.price ? 'disabled' : ''}`); }
-  return h + `</div>`;
+  return h + `</div>` + bestiaryBox();
 }
 function embersTab(){
   let h = `<p class="tiny muted" style="margin:0">Embers come home from every door you clear, even when you die.</p><div class="box">`;
@@ -2288,15 +2338,19 @@ function bind(){
   all('[data-prov]', b => { G.buyProvision(meta, b.dataset.prov); save(); render(); });
   all('[data-buy]', b => { G.buyForge(meta, b.dataset.buy); save(); render(); });
   all('[data-build]', b => { G.buildTown(meta, b.dataset.build); save(); render(); });
-  all('[data-home]', b => { G.buildHome(meta, b.dataset.home); save(); render(); });
-  all('[data-htab]', b => { homeTab2 = b.dataset.htab; homeOut = null; render(); });
-  all('[data-hpick]', b => { homeSel = b.dataset.hpick || null; render(); });
-  all('[data-tile]', b => { if (!homeSel) { const [x, y] = b.dataset.tile.split(',').map(Number); const id = Object.keys(meta.home.at).find(k => meta.home.at[k][0] === x && meta.home.at[k][1] === y && G.homeLv(meta, k)); if (id) { homeSel = id; render(); } return; } const [x, y] = b.dataset.tile.split(',').map(Number); G.placeHome(meta, homeSel, x, y); save(); render(); });
+  all('[data-home]', b => { const id = b.dataset.home, sp = homeSpot; if (G.buildHome(meta, id, sp ? sp[0] : null, sp ? sp[1] : null)) { homeSel = id; homeSpot = null; homePick = null; } save(); render(); });
+  all('[data-tile]', b => { const [x, y] = b.dataset.tile.split(',').map(Number); homePanel = null;
+    if (homeMove && homeSel) { G.placeHome(meta, homeSel, x, y); homeMove = false; save(); render(); return; }
+    const id = partAt(x, y); if (id) { homeSel = homeSel === id ? null : id; homeSpot = null; } else { homeSpot = homeSpot && homeSpot[0] === x && homeSpot[1] === y ? null : [x, y]; homeSel = null; homePick = null; } homeMove = false; render(); });
+  all('[data-hpickp]', b => { homePick = b.dataset.hpickp; render(); });
+  all('[data-hmove]', () => { homeMove = !homeMove; render(); });
+  all('[data-hclose]', () => { homeSel = null; homeSpot = null; homePick = null; homeMove = false; homePanel = null; homeOut = null; render(); });
+  all('[data-hshare]', () => { homePanel = 'share'; homeOut = null; render(); });
   all('[data-hstyle]', b => { G.styleHome(meta, b.dataset.hstyle); save(); render(); });
   document.querySelectorAll('[data-bed]').forEach(el => el.onchange = () => { G.plant(meta, +el.dataset.bed, el.value); save(); render(); });
   document.querySelectorAll('[data-hname]').forEach(el => el.onchange = () => { meta.home.name = el.value.slice(0, 30); save(); });
   all('[data-hcode]', () => { homeOut = { k: 'code', v: homeCode() }; render(); });
-  all('[data-hpic]', () => { const svg = homeSVG(meta.home, true).replace('<svg ', '<svg width="768" height="528" '); const img = new Image(); img.onload = () => { try{ const c = document.createElement('canvas'); c.width = 768; c.height = 576; const x = c.getContext('2d'); x.fillStyle = '#efe7d8'; x.fillRect(0, 0, 768, 576); x.drawImage(img, 0, 0, 768, 528); x.fillStyle = '#3b3226'; x.font = 'bold 22px Georgia, serif'; x.fillText((meta.home.name || 'My homestead') + ' · One More Door', 16, 560); homeOut = { k: 'pic', v: c.toDataURL('image/png') }; }catch(e){ homeOut = { k: 'pic', v: 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg) }; } render(); }; img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg); });
+  all('[data-hpic]', () => { const svg = homeSVG(meta.home, true).replace('<svg ', '<svg width="768" height="451" '); const img = new Image(); img.onload = () => { try{ const c = document.createElement('canvas'); c.width = 768; c.height = 492; const x = c.getContext('2d'); x.fillStyle = '#efe7d8'; x.fillRect(0, 0, 768, 492); x.drawImage(img, 0, 0, 768, 451); x.fillStyle = '#3b3226'; x.font = 'bold 22px Georgia, serif'; x.fillText((meta.home.name || 'My homestead') + ' · One More Door', 16, 478); homeOut = { k: 'pic', v: c.toDataURL('image/png') }; }catch(e){ homeOut = { k: 'pic', v: 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg) }; } render(); }; img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg); });
   all('[data-hvisitgo]', () => { const t = ($('[data-hvisit]') || {}).value || ''; const v = readCode(t); if (!v) { homeOut = { k: 'bad' }; } else { const gl = gallery(); gl.unshift(t.trim()); try{ localStorage.setItem('omd-home-gallery', JSON.stringify(gl.slice(0, 12))); }catch(e){} homeOut = null; } render(); });
   all('[data-hdrop]', b => { const gl = gallery(); gl.splice(+b.dataset.hdrop, 1); try{ localStorage.setItem('omd-home-gallery', JSON.stringify(gl)); }catch(e){} render(); });
   all('[data-openk]', b => act(() => G.openDoor(run, +b.dataset.openk)));
