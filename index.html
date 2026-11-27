@@ -437,15 +437,15 @@ const PATRONS = {
 };
 const FAVORS = [
   { id: 'kindle', p: 'lamp', n: 'Kindle', d: 'Your attacks set it alight: it burns for 2 at the end of every exchange after.' },
-  { id: 'blind', p: 'lamp', n: 'Flare', d: 'A monster that charges or pounces is blinded: its hit lands a third weaker.' },
+  { id: 'blind', p: 'lamp', n: 'Flare', d: 'A monster winding up is blinded: its Wind-up lands a third weaker.' },
   { id: 'emberheart', p: 'lamp', n: 'Ember Heart', d: 'Winning a fight heals 3 more Grit.' },
-  { id: 'reach', p: 'lamp', n: 'Long Reach', d: 'Far counts as Near for your attacks. Only Distant weakens them.' },
-  { id: 'quick', p: 'rat', n: 'Quick Feet', d: 'A half played as a move goes 2 steps instead of 1. Escaping is 1 easier, and a failed Run still stabs for 2.' },
+  { id: 'reach', p: 'lamp', n: 'Long Reach', d: 'Your top halves deal 1 more damage.' },
+  { id: 'quick', p: 'rat', n: 'Quick Feet', d: 'Escaping is 1 easier, and a failed Run still stabs for 2.' },
   { id: 'pockets', p: 'rat', n: 'Deep Pockets', d: '+4 coins every time you win.' },
   { id: 'cutpurse', p: 'rat', n: 'Cutpurse’s Charm', d: 'Hexes can never take your coins or gear.' },
   { id: 'scurry', p: 'rat', n: 'Low Scurry', d: 'Every bottom half that blocks also deals 2 damage.' },
   { id: 'mortar', p: 'mason', n: 'Mortar', d: '+4 max Grit, and heal 4 now.' },
-  { id: 'buttress', p: 'mason', n: 'Buttress', d: 'Fully blocking a Wind-up or a Pounce throws the blow back at the monster.' },
+  { id: 'buttress', p: 'mason', n: 'Buttress', d: 'Fully blocking a Wind-up throws the blow back at the monster.' },
   { id: 'keystone', p: 'mason', n: 'Keystone', d: '+1 Armor.' },
   { id: 'plumb', p: 'mason', n: 'Plumb Line', d: 'Your attacks ignore Guard.' },
 ];
@@ -476,7 +476,7 @@ const FORGE = [
 ];
 // Ember Hearth: permanent upgrades bought with Embers (gold stays for the Forge)
 const EMBERS = [
-  { id: 'spark', n: 'Banked Spark', d: 'Start each fight with 1 more Fury.', cost: [10, 22] },
+  { id: 'spark', n: 'Warm Hands', d: 'Start each fight with 3 Block for each rank.', cost: [10, 22] },
   { id: 'reroll', n: 'Second Thoughts', d: 'Reroll a favor offer, once per run for each rank.', cost: [8, 16] },
   { id: 'mark', n: 'Patron’s Mark', d: 'Your first favor offer each run shows 4 choices.', cost: [12] },
   { id: 'keepsake', n: 'Keepsake', d: 'When you get home alive, your best gear waits in next run’s kit.', cost: [18] },
@@ -662,6 +662,7 @@ function incomingRaw(s) {
   if (it === 'pounce') return atDist(base, T.pounceDist + bl) * 2;
   let d = f.dist; if (it === 'charge') d = clampD(d - T.chargeMove) + bl; else if (f.charged) d += bl; if (it === 'pounce') d = 0;
   const m = atDist(base, d);
+  if (it === 'heavy' && !T.distOn && has(s, 'blind')) return Math.ceil(m * 4 / 3);
   return it === 'strike' || it === 'rend' || it === 'charge' ? m : it === 'heavy' || it === 'pounce' ? m * 2 : 0;
 }
 function enrage(f) { return Math.max(0, f.round - T.enrageAfter); }
@@ -756,7 +757,7 @@ function openDoor(s, k) {
       escBonus: 0, autoEscape: false, greed: 1, played: [], round: 1, burning: false, intent: 'strike',
       energy: 0, mspd: 50, block: 0, attacks: 0, rally: 0, dealt: 0 };
     if (has(s, 'wick')) s.fury = Math.min(T.furyMax, s.fury + 1);
-    if (s.hearth.spark) s.fury = Math.min(T.furyMax, s.fury + s.hearth.spark);
+    s.fight.warm = 3 * (s.hearth.spark || 0);
     { const f = s.fight; f.mtype = monType(door.mon); f.dist = T.distOn ? T.startDist[f.mtype] : 1; f.grit0 = s.grit;
       if (T.distOn && f.mtype === 'warden') { f.dmg = Math.round(f.dmg * T.wardenDmg); f.hp = f.maxHp = Math.round(f.hp * T.wardenHp); }
       if (T.distOn && f.mtype === 'skirmisher') f.dmg = Math.round(f.dmg * T.skirmDmg);
@@ -790,7 +791,7 @@ function shuffleInto(r, arr) { for (let i = arr.length - 1; i > 0; i--) { const 
 // Played cards are spent. Resting returns spent cards but loses one for the run. Burn halves lose the card.
 function shuffleInto(r, arr) { for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(r.next() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; } return arr; }
 function rollSpeed(s, r) { const f = s.fight; f.mspd = (T.ispd[f.intent] || 0) + (f.intent === 'dazed' ? 0 : r.int(-T.spdJitter, T.spdJitter)); }
-function startExchange(s, r) { const f = s.fight; f.block = 0; f.charged = false; f.countering = false; f.attacks = 0; rollSpeed(s, r); }
+function startExchange(s, r) { const f = s.fight; f.block = f.warm || 0; f.warm = 0; f.charged = false; f.countering = false; f.attacks = 0; rollSpeed(s, r); }
 function exhausted(s) { return s.cards.length < 2 && !s.spent.length; }
 function playShot(s, idx) {
   const c = s.hand[idx]; if (!c) return;
@@ -825,6 +826,7 @@ function halfPreview(s, id, half) {
   const m = f && f.dist != null ? atDist(fightMight(s), reachD(s, effDist(h, f.dist))) : fightMight(s), a = armor(s), B = 2 + a;
   const hm = 1 + T.honeMul * ((s.honed && s.honed[id]) || 0);
   let dmg = Math.floor((h.dmg || 0) * hm * m) + (h.dmgA || 0) * a;
+  if (dmg && half === 'top' && !T.distOn && has(s, 'reach')) dmg += 1;
   if (dmg && f && !h.pierce) dmg = guardCut(s, dmg, false);
   let blk = Math.floor((h.blk || 0) * hm * B);
   if (blk && s.calling === 'warden' && f && !f.wardenUsed) blk *= 2;
