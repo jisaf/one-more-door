@@ -329,6 +329,7 @@ const TREASURES = [
   { id: 'helm', n: 'Rusty Helm', k: 'gear', slot: 'head', b: 1 },
   { id: 'hat', n: 'Hat of Unearned Confidence', k: 'gear', slot: 'head', b: 1, might: 1 },
   { id: 'coat', n: 'Quilted Coat', k: 'gear', slot: 'body', b: 1 },
+  { id: 'haversack', n: 'Peddler’s Haversack', k: 'gear', slot: 'body', b: 1, fx: { bag: 2 }, d: 'Your pack holds 2 more while you wear it.' },
   { id: 'cuirass', n: 'Cuirass of Mild Dread', k: 'gear', slot: 'body', b: 2 },
   { id: 'plate', n: 'Plate of Many Owners', k: 'gear', slot: 'body', b: 3, esc: -1 },
   { id: 'clogs', n: 'Clogs of Haste', k: 'gear', slot: 'feet', b: 0, esc: 2 },
@@ -458,7 +459,7 @@ Object.assign(HALVES, {
   kindling: { spd: 55, top: { dmg: 1, mk: { ember: 1 } }, bot: { blk: 0.75, mk: { ember: 1 } } },
   stoke:    { spd: 50, top: { dmg: 1, sp: 'ember', spX: 1 }, bot: { blk: 1, mk: { ember: 1 } } },
   steady:   { spd: 50, top: { dmg: 1, mk: { edge: 1, guard: 1 } }, bot: { blk: 1, mk: { guard: 1, ember: 1 } } },
-  flourish: { spd: 65, top: { dmg: 1.5, sp: 'edge', spX: 0.5, keep: 1 }, bot: { rec: 1 } },
+  flourish: { spd: 55, top: { dmg: 1, sp: 'edge', spX: 0.34, keep: 1 }, bot: { blk: 0.75 } },
 });
 Object.assign(CARDS, {
   whetcut: { n: 'Whet Cut', c: 0, t: 'atk', d: 'Sharpen as you go.' },
@@ -470,7 +471,7 @@ Object.assign(CARDS, {
   kindling: { n: 'Kindling', c: 0, t: 'atk', d: 'Feed the fire.' },
   stoke: { n: 'Stoke the Fire', c: 0, t: 'atk', d: 'Spend all your Heat.' },
   steady: { n: 'Steady Hands', c: 0, t: 'skill', d: 'A bit of everything.' },
-  flourish: { n: 'Flourish', c: 0, t: 'atk', d: 'Show off your Edge.' },
+  flourish: { n: 'Flourish', c: 0, t: 'atk', d: 'Show off your Edge without spending it.' },
 });
 const GEAR_TOK = [
   // tier 1: a token to start every fight
@@ -559,6 +560,7 @@ const FORGE = [
   { id: 'hearth', n: 'Hearthstone', d: '+3 max Grit.', base: 80, max: 3, grow: true },
   { id: 'cobbler', n: 'Cobbler', d: 'Escape is 1 easier.', base: 120, max: 2 },
   { id: 'satchel', n: 'Satchel', d: 'Start with 1 more one-shot.', base: 60, max: 2, grow: true },
+  { id: 'packs', n: 'Bigger Pack', d: 'Your pack holds 1 more.', base: 80, max: 3, grow: true },
   { id: 'strongbox', n: 'Strongbox', d: 'Keep a quarter of your coins when you die.', base: 150, max: 2 },
   { id: 'barrow', n: 'Wheelbarrow', d: 'Salvage 1 more building material from every fight you win.', base: 300, max: 1 },
 ];
@@ -707,7 +709,7 @@ function doorChoices(s) {
   return s.nextOpts;
 }
 function newMeta() {
-  return { gold: 0, folk: {}, town: {}, embers: 0, emberTotal: 0, forge: { drill: 0, armory: 0, hearth: 0, cobbler: 0, satchel: 0, strongbox: 0, barrow: 0 }, cards: [], retired: [], lease: 0, leaseBest: -1, provisions: {},
+  return { gold: 0, folk: {}, town: {}, embers: 0, emberTotal: 0, forge: { drill: 0, armory: 0, hearth: 0, cobbler: 0, satchel: 0, strongbox: 0, barrow: 0, packs: 0 }, cards: [], retired: [], lease: 0, leaseBest: -1, provisions: {},
     unlocked: { brawler: true, sneak: false, warden: false }, hearth: { spark: 0, reroll: 0, mark: 0, keepsake: 0, wind: 0 }, keepsake: null, deepest: 0, deepBossKills: 0, bossKills: 0, oathUnlocked: false, runs: 0, bestDoor: 0, history: [], bestiary: {}, bestMile: 0, mats: {}, pantry: [], home: { lv: {}, at: { hearth: [1, 2], garden: [3, 2] }, style: {}, beds: [{ crop: null, age: 0 }], orchard: 0, seed: Math.floor(Math.random() * 9973), name: '' } };
 }
 function fixMeta(m) { const n = newMeta(); if (m.forge && m.forge.lantern) { m.forge.barrow = 1; delete m.forge.lantern; } m.mats = m.mats || {}; m.pantry = m.pantry || []; m.home = Object.assign(n.home, m.home || {}); for (const k in HOME_START) if (!m.home.at[k]) { const [sx, sy] = HOME_START[k]; let x = sx, y = sy; for (let i = 0; i < HOME_W * HOME_H && !tileFree(m, x, y, k); i++) { x = (x + 1) % HOME_W; if (!x) y = (y + 1) % HOME_H; } m.home.at[k] = [x, y]; } fixBeds(m); m.bestiary = m.bestiary || {}; m.bestMile = m.bestMile || 0; m.folk = m.folk || {}; m.town = m.town || {}; m.forge = Object.assign(n.forge, m.forge || {}); m.unlocked = Object.assign(n.unlocked, m.unlocked || {}); m.hearth = Object.assign(n.hearth, m.hearth || {}); for (const k of ['keepsake', 'deepest', 'deepBossKills', 'cards', 'retired', 'lease', 'leaseBest', 'provisions']) if (m[k] === undefined) m[k] = n[k];
@@ -1330,7 +1332,8 @@ function gv(s, g) { return (g.v || 0) * (g.tokg ? tokFeed(s) : 1); }
 function equipGain(s, t) { const d = equipDelta(s, t); return d.might + d.armor + d.esc * 0.5 + gv(s, t) - replacedBy(s, t).reduce((a, g) => a + gv(s, g), 0) + setGain(s, t) * (t.tokg ? tokFeed(s) : 1); }
 function setGain(s, t) { if (!t.set) return 0; let has1 = false; eachGear(s, g => { if (g.set === t.set && g.id !== t.id && !replacedBy(s, t).includes(g)) has1 = true; }); return has1 ? 3 : 0; }
 function canKeep(s, t) { return t.k === 'shot' && s.hand.length < T.handMax; }
-function bagRoom(s) { return s.bag.length < T.bagMax; }
+function bagCap(s) { return T.bagMax + ((s && s.metaForge && s.metaForge.packs) || 0) + gx(s, 'bag'); }
+function bagRoom(s) { return s.bag.length < bagCap(s); }
 function equipItem(s, t, force) {
   const old = replacedBy(s, t, force);
   if (t.two) { s.gear.hand1 = t; s.gear.hand2 = t; }
@@ -1354,7 +1357,7 @@ function takeTreasure(s, how) { // how: equip | keep | bag | sell (alias stash) 
   if (s.phase !== 'treasure') return;
   const t0 = s.queue[0]; if (!t0) return; const t = stripSrc(t0);
   plogX(s, { t: 'find', it: tid(t), k: t.k, slot: t.slot, src: t0.src, how, worn: t.k === 'gear' ? Object.keys(s.gear).filter(k => s.gear[k]).map(k => k + '=' + tid(s.gear[k])) : undefined });
-  if (how === 'equip' && t.k === 'gear') { if (t.only && t.only !== s.calling) return; equipItem(s, t); }
+  if ((how === 'equip' || how === 'equip1' || how === 'equip2') && t.k === 'gear') { if (t.only && t.only !== s.calling) return; equipItem(s, t, how === 'equip' || t.slot !== 'hand' || t.two ? null : how === 'equip1' ? 'hand1' : 'hand2'); }
   else if (how === 'keep' && canKeep(s, t)) { s.hand.push(t); log(s, `Kept ${t.n} on your belt.`); }
   else if (how === 'bag' && bagRoom(s)) { s.bag.push(t); log(s, `Put ${t.n} in your pack.`); }
   else if (how === 'discard') { log(s, `Left ${t.n} behind.`); }
@@ -1479,7 +1482,7 @@ const LORE = [
 
 function honeMult(s, id) { return 1 + T.honeMul * (1 + 0.5 * Math.max(0, townLv(s.town, 'smithy') - 1)) * ((s.honed && s.honed[id]) || 0); }
 Object.assign(T, {"winMend":0,"lootMend":0,"bossHeal":99,"handCap":99,"bossHp":90,"dmgMul":0.8,"lootRecover":2,"hpMul":5.5,"bossRestore":1,"newFavors":0,"baseMight":2,"winRecover":2,"gritPerLevel":1,"easeStart":0.6,"easeDoor":7,"distOn":0}); for (const [k,v] of Object.entries({"heavy":{"spd":20,"top":{"dmg":2.25},"bot":{"blk":1.75}},"lunge":{"spd":60,"top":{"dmg":3.5,"burn":1,"move":1,"dir":"in"},"bot":{"rec":2}},"brace":{"spd":40,"top":{"blk":1.5},"bot":{"blk":1.25}},"jab":{"spd":85,"top":{"dmg":2},"bot":{"dmg":1}},"reckless":{"spd":50,"top":{"dmg":2.5,"self":2},"bot":{"blk":1.25}},"bash":{"spd":45,"top":{"dmg":2},"bot":{"dmg":1,"blk":0.5}},"feint":{"spd":70,"top":{"dmg":2},"bot":{"rec":1,"blk":0.5}},"bulwark":{"spd":30,"top":{"blk":2},"bot":{"blk":1.75}},"pierce":{"spd":55,"top":{"dmg":2,"pierce":1,"reach":1},"bot":{"rec":2}},"momentum":{"spd":55,"top":{"dmg":2.5},"bot":{"dmg":1.25}},"ironskin":{"spd":35,"top":{"blk":2},"bot":{"blk":3,"burn":1}}})) HALVES[k]=v;
-const api = { HEVENTS, honeMult, pickRecover, tradePrice, buyMat, findOffer, findCarry, handSize, drawUp, HOME_START, tileFree, fixBeds, MATS, RAR_N, PARTS, CROPS, HOME_W, HOME_H, homeLv, partOf, partCost, canHome, buildHome, placeHome, styleHome, plant, cropRuns, pantryTake, homeTown, shotById, TOWN, GEAR_TOK, tokCapOf, TOKENS, TOKEN_CARDS, TOWN, townLv, upCost, makeBounties, bestKills, MONSTERS, townOf, canBuild, buildTown, doorChoices, DSTATS, DIST_N, atDist, halfModes, moveOf, monType, swapOut, dropCard, HALVES, halfPreview, pairOptions, playPair, restFight, restCamp, canCamp, exhausted, T, MONSTERS, BOSS, TWISTS, TREASURES, SETS, setsOn, gx, tierMax, CURSES, CALLINGS, ORIGIN, FORGE, KEEPER, LORE, STARTER, INTENTS, PATRONS, FAVORS,
+const api = { bagCap, HEVENTS, honeMult, pickRecover, tradePrice, buyMat, findOffer, findCarry, handSize, drawUp, HOME_START, tileFree, fixBeds, MATS, RAR_N, PARTS, CROPS, HOME_W, HOME_H, homeLv, partOf, partCost, canHome, buildHome, placeHome, styleHome, plant, cropRuns, pantryTake, homeTown, shotById, TOWN, GEAR_TOK, tokCapOf, TOKENS, TOKEN_CARDS, TOWN, townLv, upCost, makeBounties, bestKills, MONSTERS, townOf, canBuild, buildTown, doorChoices, DSTATS, DIST_N, atDist, halfModes, moveOf, monType, swapOut, dropCard, HALVES, halfPreview, pairOptions, playPair, restFight, restCamp, canCamp, exhausted, T, MONSTERS, BOSS, TWISTS, TREASURES, SETS, setsOn, gx, tierMax, CURSES, CALLINGS, ORIGIN, FORGE, KEEPER, LORE, STARTER, INTENTS, PATRONS, FAVORS,
   forgeCost, forgeRanks, newMeta, fixMeta, buyForge, unlockCalling, EMBERS, DEEP_BOSSES, emberCost, emberRank, buyEmber, rerollFavor, lastDoor, isDeepBossDoor, deepOf,
   startRun, openDoor, playShot, fight, flee, takeTreasure, takeFavor, rest, manage, canManage, canKeep, bagRoom, replacedBy,
   bank, settle, peek, might, armor, incoming, incomingRaw, enrage, canUnleash, monStats, monsterTotal, fightMight, cardPreview, canPlay, playCard, endTurn, runAway, chooseSpoils, cardPool,
@@ -1566,7 +1569,7 @@ function shortFx(t){
   return p.join(', ');
 }
 // ---------- art: item icons ----------
-const ART = { tinder:'irons', potlid:'buckler', slipper:'clogs', thornvest:'cuirass', messkit:'helm', sleeve:'coat', rathood:'hat', ratslip:'clogs', embergaunt:'irons', ashmask:'helm', dagger:'sword', spikebuck:'buckler', windcoat:'coat', leech:'sword', apron:'coat', flail:'fork', cleaver:'sword', crook:'plank', shell:'plate', crown:'hat', leagueboots:'boots', bell:'helm', gravecoat:'cuirass', doorbreaker:'club', whetbelt:'coat', bandolier:'cuirass', forgeheart:'plate', drillboots:'boots', bellows:'irons', rapier:'sword', pavise:'buckler', tinderbox:'helm', plumehat:'hat', locket:'helm' };
+const ART = { haversack:'cloak', tinder:'irons', potlid:'buckler', slipper:'clogs', thornvest:'cuirass', messkit:'helm', sleeve:'coat', rathood:'hat', ratslip:'clogs', embergaunt:'irons', ashmask:'helm', dagger:'sword', spikebuck:'buckler', windcoat:'coat', leech:'sword', apron:'coat', flail:'fork', cleaver:'sword', crook:'plank', shell:'plate', crown:'hat', leagueboots:'boots', bell:'helm', gravecoat:'cuirass', doorbreaker:'club', whetbelt:'coat', bandolier:'cuirass', forgeheart:'plate', drillboots:'boots', bellows:'irons', rapier:'sword', pavise:'buckler', tinderbox:'helm', plumehat:'hat', locket:'helm' };
 function icon(t){
   if (ART[t.id]) { const tint = { 2: '#5aa0e0', 3: '#e0a83a' }[t.tier]; const base = icon(Object.assign({}, t, { id: ART[t.id] })); return tint ? base.replace('<svg viewBox="0 0 48 48" aria-hidden="true">', `<svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="22" fill="none" stroke="${tint}" stroke-width="2.5" opacity=".9"/>`) : base; }
   const id = t.id, w = (b) => `<svg viewBox="0 0 48 48" aria-hidden="true">${b}</svg>`;
@@ -2134,8 +2137,8 @@ function gearBody(s){
   h += card(g.head, 'gear', 'head', 'Head') + card(g.body, 'gear', 'body', 'Body') + card(g.feet, 'gear', 'feet', 'Feet') + card(g.hand1, 'gear', 'hand1', 'Hand') + (two ? `<div class="icard empty"><span class="slotlab">Hand</span><span class="nm">both hands</span></div>` : card(g.hand2, 'gear', 'hand2', 'Hand'));
   h += `</div><div class="sec"><h3>Belt</h3><span class="tiny muted">${s.hand.length}/${G.T.handMax} · usable in fights</span></div><div class="tray">`;
   h += s.hand.length ? s.hand.map((c, i) => card(c, 'hand', i)).join('') : `<div class="icard empty"><span class="nm">no one-shots</span></div>`;
-  h += `</div><div class="sec"><h3>Pack</h3><span class="tiny muted">${s.bag.length}/${G.T.bagMax} · storage only</span></div><div class="tray">`;
-  for (let i = 0; i < G.T.bagMax; i++) h += s.bag[i] ? card(s.bag[i], 'bag', i) : `<div class="icard empty"><span class="nm">empty</span></div>`;
+  h += `</div><div class="sec"><h3>Pack</h3><span class="tiny muted">${s.bag.length}/${G.bagCap(s)} · storage only</span></div><div class="tray">`;
+  for (let i = 0; i < G.bagCap(s); i++) h += s.bag[i] ? card(s.bag[i], 'bag', i) : `<div class="icard empty"><span class="nm">empty</span></div>`;
   return h + `</div>`;
 }
 function helpBody(){
@@ -2164,7 +2167,7 @@ function equipCompare(s, t){
   const rep = G.replacedBy(s, t), d = G.equipDelta(s, t), m = G.might(s), a = G.armor(s);
   const sg = x => `<span class="${x > 0 ? 'okc' : x < 0 ? 'badc' : 'muted'}">(${x >= 0 ? '+' : ''}${x})</span>`;
   let h = `<div class="cmp">Might ${m} → <b>${m + d.might}</b> ${sg(d.might)} · Armor ${a} → <b>${a + d.armor}</b> ${sg(d.armor)}${d.esc ? ` · Escape ${sg(d.esc)}` : ''}`;
-  if (rep.length){ let room = G.T.bagMax - s.bag.length; h += `<br><span class="muted">Replaces ${rep.map(r => esc(r.n) + ' (' + (room-- > 0 ? 'to your pack' : 'sold for ' + G.treasureValue(r)) + ')').join(' and ')}.</span>`; }
+  if (rep.length){ let room = G.bagCap(s) - s.bag.length; h += `<br><span class="muted">Replaces ${rep.map(r => esc(r.n) + ' (' + (room-- > 0 ? 'to your pack' : 'sold for ' + G.treasureValue(r)) + ')').join(' and ')}.</span>`; }
   return h + `</div>`;
 }
 function gainTxt(s, t){ const d = G.equipDelta(s, t), p = []; if (d.might) p.push((d.might > 0 ? '+' : '') + d.might + ' Might'); if (d.armor) p.push((d.armor > 0 ? '+' : '') + d.armor + ' Armor'); if (d.esc) p.push('escape ' + (d.esc > 0 ? '+' : '') + d.esc); return p.join(', ') || 'no change'; }
@@ -2197,12 +2200,13 @@ function renderModal(){
     if (t.k === 'gear'){
       const bad = t.only && t.only !== s.calling, gain = G.equipGain(s, t);
       if (!bad) h += equipCompare(s, t);
-      acts.push(`<button class="${!bad && gain > 0 ? 'primary' : ''}" data-take="equip" ${bad ? 'disabled' : ''}>Equip<small>${bad ? G.CALLINGS[t.only].n + 's only' : gainTxt(s, t)}</small></button>`);
+      if (!bad && t.slot === 'hand' && !t.two){ const g = s.gear, room = G.bagRoom(s), nm = k => { const o = g[k]; if (!o) return 'empty'; return `${esc(o.n)}${o.two ? ', both hands' : ''} → ${room ? 'pack' : 'sold ' + G.treasureValue(o)}`; }; acts.push(`<button class="primary" data-take="equip1">Main hand<small>${nm('hand1')}</small></button>`, `<button class="primary" data-take="equip2">Off hand<small>${nm('hand2')}</small></button>`); }
+      else acts.push(`<button class="${!bad && gain > 0 ? 'primary' : ''}" data-take="equip" ${bad ? 'disabled' : ''}>Equip<small>${bad ? G.CALLINGS[t.only].n + 's only' : gainTxt(s, t)}</small></button>`);
     } else {
       const full = s.hand.length >= G.T.handMax;
       acts.push(`<button class="${full ? '' : 'primary'}" data-take="keep" ${full ? 'disabled' : ''}>Put on belt<small>${full ? 'belt full' : esc(shotShort(t)) + ' · ' + s.hand.length + '/' + G.T.handMax}</small></button>`);
     }
-    acts.push(`<button data-take="bag" ${G.bagRoom(s) ? '' : 'disabled'}>Store in pack<small>${G.bagRoom(s) ? s.bag.length + '/' + G.T.bagMax : 'pack full'}</small></button>`);
+    acts.push(`<button data-take="bag" ${G.bagRoom(s) ? '' : 'disabled'}>Store in pack<small>${G.bagRoom(s) ? s.bag.length + '/' + G.bagCap(s) : 'pack full'}</small></button>`);
     acts.push(`<button data-take="sell">Sell<small class="gold">+${G.treasureValue(t)} coins</small></button>`);
     return modal('New item', h + `<div class="acts">${acts.join('')}</div>`);
   }
@@ -2229,7 +2233,7 @@ function renderModal(){
     if (w === 'gear') h += `<div class="cmp">Taking it off costs ${esc(shortFx(t))}.</div>`;
     if (t.k === 'shot' && w === 'hand' && ((t.fx === 'recover' && s.spent.length) || (t.fx === 'mend' && s.lost.length + s.burned.length))) acts.unshift(`<button class="primary" data-m="use">Use now<small>${esc(shotShort(t))}</small></button>`);
     if (t.k === 'shot' && t.fx === 'heal'){ const room = s.maxGrit - s.grit; acts.unshift(`<button class="primary" data-m="drink" ${room ? '' : 'disabled'}>Drink now<small>${room ? '+' + Math.min(t.v, room) + ' Grit' : 'Grit is full'}</small></button>`); }
-    if (w !== 'bag') acts.push(`<button data-m="bag" ${G.bagRoom(s) ? '' : 'disabled'}>Store in pack<small>${G.bagRoom(s) ? s.bag.length + '/' + G.T.bagMax : 'pack full'}</small></button>`);
+    if (w !== 'bag') acts.push(`<button data-m="bag" ${G.bagRoom(s) ? '' : 'disabled'}>Store in pack<small>${G.bagRoom(s) ? s.bag.length + '/' + G.bagCap(s) : 'pack full'}</small></button>`);
     acts.push(`<button data-m="sell">Sell<small class="gold">+${G.treasureValue(t)} coins</small></button>`);
     acts.push(`<button class="ghost" id="mclose">Close<small></small></button>`);
     return modal(t.n, h + `<div class="acts">${acts.join('')}</div>`);
