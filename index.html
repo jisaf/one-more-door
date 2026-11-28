@@ -783,6 +783,8 @@ function drawUp(s) { s.draw = s.draw || []; while (s.cards.length < handSize(s) 
 function rngOf(s) { const r = rngFrom(0); r.state = s.rngState; return r; }
 function saveRng(s, r) { s.rngState = r.state; }
 function ev(s, e) { s.evN = (s.evN || 0) + 1; s.ev = Object.assign({ n: s.evN }, e); plogAdd(s, e); }
+function plogX(s, x) { if (!s.plog) return; s.plog.push(Object.assign({ d: s.door, g: s.grit }, x)); if (s.plog.length > 2500) s.plog.splice(0, s.plog.length - 2500); }
+const tid = t => t ? t.id + (t.tier ? ':' + t.tier : '') : null;
 function plogAdd(s, e) {
   if (!s.plog) return; const f = s.fight, x = { d: s.door, t: e.t, g: s.grit };
   if (e.t === 'monster' && f) { x.m = f.mon.n; x.hp = f.hp; x.dmg = f.dmg; if (f.mon.boss) x.boss = 1; x.lv = s.level; x.might = typeof fightMight === 'function' ? fightMight(s) : undefined; }
@@ -944,6 +946,7 @@ function makeOffer(s, r, n) {
 function takeFavor(s, i) {
   if (s.phase !== 'favor') return;
   const id = s.offer[i]; if (!id) return; const fv = FAVORS.find(f => f.id === id);
+  plogX(s, { t: 'favorpick', offer: s.offer.slice(), got: id });
   s.favors.push(id); s.offer = null;
   if (id === 'mortar') { s.maxGrit += 4; s.grit = Math.min(s.maxGrit, s.grit + 4); }
   if (id === 'flare') { s.deck.push('lunge'); (s.draw = s.draw || []).push('lunge'); }
@@ -957,6 +960,7 @@ function rerollFavor(s) {
 }
 function rest(s, how, i) { // hearth: 'rest' heals, 'temper' adds 1 Might for the run, 'cull' burns card i out of your deck
   if (s.phase !== 'hearth') return;
+  plogX(s, { t: 'hearthpick', how, card: (how === 'hone' || how === 'cull') ? s.deck[i] : undefined, honedNow: how === 'hone' && s.deck[i] ? ((s.honed || {})[s.deck[i]] || 0) + 1 : undefined });
   if (how === 'cull') { if (s.deck.length <= T.minDeck || !s.deck[i]) return; const id = s.deck.splice(i, 1)[0]; for (const k of ['draw', 'cards', 'spent', 'lost', 'burned']) { const j = (s[k] || []).indexOf(id); if (j >= 0) { s[k].splice(j, 1); break; } } log(s, `You feed ${CARDS[id].n} to the fire. Your deck is leaner.`); }
   else if (how === 'hone') { if (!s.town || !s.town.smithy || !s.deck[i]) return; const id = s.deck[i]; s.honed[id] = (s.honed[id] || 0) + 1; log(s, `You hone your ${CARDS[id].n} at the forge. Every copy hits and blocks harder for this run.`); }
   else if (how === 'market') { const lv = townLv(s.town, 'market'); if (!lv || s.coins < T.marketPrice) return; const r = rngOf(s); s.coins -= T.marketPrice;
@@ -971,7 +975,7 @@ function rest(s, how, i) { // hearth: 'rest' heals, 'temper' adds 1 Might for th
 function openDoor(s, k) {
   if (s.phase !== 'door' || s.door >= lastDoor(s)) return;
   const r = rngOf(s);
-  if (s.nextOpts) { s.next = s.nextOpts[k || 0] || s.nextOpts[0]; s.nextOpts = null; }
+  if (s.nextOpts) { plogX(s, { t: 'doorpick', opts: s.nextOpts.map(o => o.type + (o.mon ? ':' + o.mon.n : '')), got: k || 0 }); s.next = s.nextOpts[k || 0] || s.nextOpts[0]; s.nextOpts = null; }
   const d = ++s.door; bountyHit(s, 'door', d);
   const door = s.next || genDoor(s, r, d); s.next = null;
   if (door.type === 'monster') {
@@ -1201,6 +1205,7 @@ function bossRage(s) {
 
 // drop one copy of a card from the run entirely (used when the hand is over its cap)
 function dropCard(s, id) {
+  plogX(s, { t: 'dropcard', card: id });
   const i = s.deck.indexOf(id); if (i < 0) return false; s.deck.splice(i, 1);
   for (const k of ['lost', 'burned', 'spent', 'draw', 'cards']) { if (!s[k]) continue; const j = s[k].indexOf(id); if (j >= 0) { s[k].splice(j, 1); return k; } }
   return 'cards';
@@ -1268,6 +1273,7 @@ function cardOffer(s, r, n) { const pool = cardPool(s).slice(); const out = []; 
 function chooseSpoils(s, how, i) {
   if (s.phase !== 'spoils' || !s.spoils) return false;
   const sp = s.spoils; const r = rngOf(s);
+  { const x = { t: 'spoils', from: sp.from, cards: sp.cards.slice(), loot: (sp.lootOpts || []).map(tid), pick: how }; if (how === 'card') x.got = sp.cards[i]; if (how === 'loot' && sp.lootOpts) { let t = sp.lootOpts[i]; if (i == null || !t) { t = sp.lootOpts[0]; for (const u of sp.lootOpts) if (treasureValue(u) > treasureValue(t)) t = u; } x.got = tid(t); } plogX(s, x); }
   if (how === 'loot' && sp.loot) {
     const opts = sp.lootOpts || [drawTreasure(r, s.calling, s.door)];
     let t = opts[i]; if (i == null || !t) { t = opts[0]; for (const u of opts) if (treasureValue(u) > treasureValue(t)) t = u; } // no pick (bots): the more valuable
@@ -1347,6 +1353,7 @@ function afterLoot(s) {
 function takeTreasure(s, how) { // how: equip | keep | bag | sell (alias stash) | discard
   if (s.phase !== 'treasure') return;
   const t0 = s.queue[0]; if (!t0) return; const t = stripSrc(t0);
+  plogX(s, { t: 'find', it: tid(t), k: t.k, slot: t.slot, src: t0.src, how, worn: t.k === 'gear' ? Object.keys(s.gear).filter(k => s.gear[k]).map(k => k + '=' + tid(s.gear[k])) : undefined });
   if (how === 'equip' && t.k === 'gear') { if (t.only && t.only !== s.calling) return; equipItem(s, t); }
   else if (how === 'keep' && canKeep(s, t)) { s.hand.push(t); log(s, `Kept ${t.n} on your belt.`); }
   else if (how === 'bag' && bagRoom(s)) { s.bag.push(t); log(s, `Put ${t.n} in your pack.`); }
@@ -1361,6 +1368,7 @@ function removeAt(s, where, i) { if (where === 'bag') s.bag.splice(i, 1); else i
 function manage(s, where, i, how) { // how: equip | ready | bag | sell | discard | drink
   if (!canManage(s)) return false;
   const t = itemAt(s, where, i); if (!t) return false;
+  plogX(s, { t: 'manage', where, it: tid(t), how });
   if (how === 'drink') { if (t.fx !== 'heal' || s.grit >= s.maxGrit) return false; removeAt(s, where, i); const h = Math.min(t.v, s.maxGrit - s.grit); s.grit += h; log(s, `You drink ${t.n}. +${h} Grit.`); ev(s, { t: 'heal', item: t }); return true; }
   if (how === 'equip' || how === 'equip1' || how === 'equip2') { if (t.k !== 'gear' || where === 'gear' || (t.only && t.only !== s.calling)) return false; const f = how === 'equip' || t.slot !== 'hand' || t.two ? null : how === 'equip1' ? 'hand1' : 'hand2'; removeAt(s, where, i); equipItem(s, t, f); return true; }
   if (how === 'ready') { if (t.k !== 'shot' || where === 'hand' || s.hand.length >= T.handMax) return false; removeAt(s, where, i); s.hand.push(t); log(s, `Put ${t.n} on your belt.`); return true; }
@@ -1502,7 +1510,9 @@ function logRun(s){ try{
     event: e.event ? { id: e.event.id, stopped: !!e.event.stopped, lost: e.event.lost, gain: e.event.gain } : null,
     home: Object.assign({}, meta.home.lv), forge: Object.assign({}, meta.forge || {}), metaGold: meta.gold, metaMats: Object.assign({}, meta.mats), log: s.plog || [] });
   if (L.runs.length > 30) L.runs.splice(0, L.runs.length - 30); writeLog(L); }catch(err){} }
-function logExport(){ const L = readLog(); return JSON.stringify({ game: 'One More Door Homestead', exportedAt: new Date().toISOString(), runsTotal: meta.runs || 0, bestDoor: meta.bestDoor, deepest: meta.deepest, gold: meta.gold, mats: meta.mats, home: meta.home.lv, forge: meta.forge, bestiary: meta.bestiary, keys: { log: 'd door, t event, g grit after; monster: m name, hp, dmg, lv, might; pair: top/bot card ids, fast; exchange: took damage, i monster intent, mhp monster hp left; shot: it item id; win: how, c coins' }, runs: L.runs, homeActions: L.home }); }
+// in the export: keys for the choice records
+const LOGKEYS2 = 'spoils: from, cards offered, loot offered (id:tier), pick card|loot|skip, got; find: it, slot, src fight|stash|market, how equip|keep|bag|sell|discard, worn before; manage: where, it, how; favorpick: offer, got; doorpick: opts, got index; hearthpick: how, card, honedNow; dropcard: card';
+function logExport(){ const L = readLog(); return JSON.stringify({ game: 'One More Door Homestead', exportedAt: new Date().toISOString(), runsTotal: meta.runs || 0, bestDoor: meta.bestDoor, deepest: meta.deepest, gold: meta.gold, mats: meta.mats, home: meta.home.lv, forge: meta.forge, bestiary: meta.bestiary, keys: { choices: LOGKEYS2, log: 'd door, t event, g grit after; monster: m name, hp, dmg, lv, might; pair: top/bot card ids, fast; exchange: took damage, i monster intent, mhp monster hp left; shot: it item id; win: how, c coins' }, runs: L.runs, homeActions: L.home }); }
 let logOut = null;
 async function saveLog(){ const txt = logExport(), name = 'one-more-door-log-' + new Date().toISOString().slice(0, 10) + '.json';
   try{ const dl = window.claude && window.claude.use ? await window.claude.use('downloads') : null;
@@ -2528,7 +2538,7 @@ function bind(){
   all('[data-hone]', b => { sheet = null; act(() => G.rest(run, 'hone', +b.dataset.hone)); });
   all('[data-retire]', b => { const i = +b.dataset.retire; if (retireSel === i){ hlog('retire', { id: G.startDeck(meta)[i] }); G.retireCard(meta, G.startDeck(meta)[i]); retireSel = null; save(); } else retireSel = i; render(); });
   all('[data-restore]', b => { G.restoreCard(meta, +b.dataset.restore); save(); render(); });
-  all('[data-lib]', b => { const g0 = meta.gold; G.buyCard(meta, b.dataset.lib); if (meta.gold !== g0) hlog('card', { id: b.dataset.lib, cost: g0 - meta.gold }); save(); render(); });
+  all('[data-lib]', b => { const g0 = meta.gold; G.buyCard(meta, b.dataset.lib); if (meta.gold !== g0) hlog('card', { id: b.dataset.lib, cost: g0 - meta.gold, owned: (meta.cards || []).slice(), shown: Object.keys(G.CARDS).filter(k => G.CARDS[k].price && !(meta.cards || []).includes(k)) }); save(); render(); });
   all('[data-ember]', b => { if (G.buyEmber(meta, b.dataset.ember)){ const e = G.EMBERS.find(x => x.id === b.dataset.ember); if (e.calling) calling = e.calling; } save(); render(); });
   const ob = $('#oath'); if (ob) ob.onchange = () => { oath = ob.checked; };
   const rb = $('#reset'); if (rb) rb.onclick = () => { if (rb.dataset.arm){ meta = G.newMeta(); run = null; lastEnd = null; calling = 'brawler'; save(); render(); } else { rb.dataset.arm = '1'; rb.textContent = 'Tap again to erase everything'; } };
