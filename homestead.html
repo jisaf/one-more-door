@@ -348,6 +348,8 @@ const TREASURES = [
   { id: 'sand', n: 'Pocket Sand', k: 'shot', fx: 'stun' },
   { id: 'salts', n: 'Smelling Salts', k: 'shot', fx: 'recover', v: 3 },
   { id: 'thread', n: 'Mending Thread', k: 'shot', fx: 'mend', v: 1 },
+  { id: 'rowan', n: 'Rowan Charm', k: 'shot', fx: 'ward', v: 1 },
+  { id: 'salt', n: 'Salt Line', k: 'shot', fx: 'salt' },
 ];
 const GEAR2 = [
   // tier 1: from the first door
@@ -664,6 +666,7 @@ const CROPS = [
   { id: 'puff', n: 'Puffball', runs: 2, shot: 'smoke', yield: 1, d: 'Dries into a Smoke Bomb.' },
   { id: 'clover', n: 'Clover', runs: 3, shot: 'penny', yield: 2, d: 'Now and then, a Lucky Penny.' },
   { id: 'wake', n: 'Wakeroot', runs: 3, shot: 'salts', yield: 2, d: 'Grates into Smelling Salts.' },
+  { id: 'rowtree', n: 'Rowan Sapling', runs: 3, shot: 'rowan', yield: 1, d: 'Whittles into a Rowan Charm.' },
 ];
 function homeLv(meta, id) { return +((meta.home && meta.home.lv[id]) || 0); }
 function partOf(id) { return PARTS.find(p => p.id === id); }
@@ -997,11 +1000,12 @@ function openDoor(s, k) {
     ev(s, { t: 'curse', curse: door.curse });
     log(s, `Door ${d}: ${door.curse.n}. ${door.curse.f}`);
     { const b0 = { lv: s.level, c: s.coins, g: s.grit, gear: Object.values(s.gear).filter(Boolean).filter((x, i, a) => a.indexOf(x) === i).map(x => x.n), sh: s.hand.map(x => x.n) };
-      applyBad(s, door.curse.bad, r);
+      s.warded = null; applyBad(s, door.curse.bad, r);
       const lost = [], gn = Object.values(s.gear).filter(Boolean).map(x => x.n), hn = s.hand.map(x => x.n);
       b0.gear.forEach(n => { if (!gn.includes(n)) lost.push(n); }); b0.sh.forEach(n => { const k = hn.indexOf(n); if (k < 0) lost.push(n); else hn.splice(k, 1); });
       if (s.level < b0.lv) lost.push(`${b0.lv - s.level} level (now level ${s.level})`); if (s.coins < b0.c) lost.push(`${b0.c - s.coins} coins`); if (s.grit < b0.g) lost.push(`${b0.g - s.grit} Grit`);
-      if (s.ev && s.ev.t === 'curse') s.ev.lost = lost; }
+      if (s.warded) { const k = lost.indexOf(s.warded); if (k >= 0) lost.splice(k, 1); }
+      if (s.ev && s.ev.t === 'curse') { s.ev.lost = lost; s.ev.warded = s.warded || null; } s.warded = null; }
     if (s.phase !== 'over') s.phase = 'door';
   }
   saveRng(s, r);
@@ -1020,7 +1024,7 @@ function exhausted(s) { return s.cards.length + (s.draw || []).length < 2 && !s.
 function recoverN(s, n) { if (s.uiPick) { s.recPick = Math.min(s.spent.length, (s.recPick || 0) + n); return; } for (let k = 0; k < n && s.spent.length; k++) (s.draw = s.draw || []).push(s.spent.pop()); }
 function pickRecover(s, idxs) { const n = Math.min(s.recPick || 0, s.spent.length); const pick = (idxs || []).filter((v, i, a) => a.indexOf(v) === i && s.spent[v] != null).slice(0, n).sort((a, b) => b - a); for (const i of pick) (s.draw = s.draw || []).push(s.spent.splice(i, 1)[0]); for (let k = pick.length; k < n && s.spent.length; k++) (s.draw = s.draw || []).push(s.spent.pop()); s.recPick = 0; if (n) log(s, `${n} spent card${n > 1 ? 's go' : ' goes'} back on top of your deck.`); if (s.phase === 'fight') drawUp(s); }
 function playShot(s, idx) {
-  const c = s.hand[idx]; if (!c) return;
+  const c = s.hand[idx]; if (!c || c.fx === 'ward') return;
   if (s.phase !== 'fight') { // only healing works outside a fight
     if (s.phase === 'door' && c.fx === 'mend' && (s.lost.length || s.burned.length)) { s.hand.splice(idx, 1); for (let j = 0; j < c.v; j++) { const x = s.lost.length ? s.lost.pop() : s.burned.pop(); if (x) (s.draw = s.draw || []).push(x); } log(s, `You use ${c.n}. A lost card comes back.`); ev(s, { t: 'shot', item: c }); return; }
     if (s.phase === 'door' && c.fx === 'recover' && s.spent.length) { s.hand.splice(idx, 1); recoverN(s, c.v); log(s, `You use ${c.n}.`); ev(s, { t: 'shot', item: c }); return; }
@@ -1040,6 +1044,7 @@ function playShot(s, idx) {
   else if (c.fx === 'greed') { f.rally += c.v; f.greed = 2; }
   else if (c.fx === 'stun') { f.intent = 'dazed'; }
   else if (c.fx === 'recover') { recoverN(s, c.v); }
+  else if (c.fx === 'salt') { f.salted = true; }
   else if (c.fx === 'mend') { for (let j = 0; j < c.v; j++) { const x = s.lost.length ? s.lost.pop() : s.burned.pop(); if (x) (s.draw = s.draw || []).push(x); } }
   log(s, `You use ${c.n}.`); ev(s, { t: 'shot', item: c });
   if (f.hp <= 0) win(s);
@@ -1144,6 +1149,7 @@ function monsterAct(s) {
       if (intent === 'rend' && s.cards.length) { const c = s.cards.splice(r.int(0, s.cards.length - 1), 1)[0]; (T.rendLost ? s.lost : s.spent).push(c); log(s, `It rends ${CARDS[c].n} out of your hand${T.rendLost ? ' for good' : ''}.`); } }
     else { log(s, `You block all ${raw}.`); if (intent === 'heavy' && has(s, 'buttress')) { f.hp -= raw; log(s, `Buttress throws ${raw} back.`); } }
     if (f.countering) { const m = atDist(fightMight(s), reachD(s, f.dist)); f.hp -= m; log(s, `You counter for ${m}.`); }
+  } else if (intent === 'hex' && f.salted) { log(s, `${cap(the(f.mon.n))} tries to hex you, but it cannot cross the salt.`);
   } else if (intent === 'hex') {
     log(s, `${cap(the(f.mon.n))} hexes you. ${badText(f.mon.bad === 'coins' ? 'quarter' : f.mon.bad)}`);
     applyBad(s, f.mon.bad === 'coins' ? 'quarter' : f.mon.bad, r, true);
@@ -1266,6 +1272,7 @@ function cap(t) { return t[0].toUpperCase() + t.slice(1); }
 function badText(b) { return { gear: 'It takes your best gear.', level: 'You lose a level.', shot: 'It eats a one-shot.', coins: 'It takes half your coins.', quarter: 'It takes a quarter of your coins.', hurt: 'You take 3 damage.' }[b]; }
 function applyBad(s, b, r, hex) {
   if (hex && has(s, 'cutpurse') && (b === 'gear' || b === 'quarter' || b === 'coins')) { log(s, 'Your Cutpurse’s Charm turns the hex aside.'); return; }
+  { const wi = s.hand.findIndex(x => x.fx === 'ward'); if (wi >= 0) { const c = s.hand.splice(wi, 1)[0]; s.warded = c.n; log(s, `Your ${c.n} snaps. The ${hex ? 'hex' : 'curse'} does nothing.`); return; } }
   if (b === 'gear') {
     let bk = null; for (const k in s.gear) if (s.gear[k] && (!bk || s.gear[k].b > s.gear[bk].b)) bk = k;
     if (bk) { const g = s.gear[bk]; unequip(s, bk); log(s, `Lost: ${g.n}.`); } else applyBad(s, 'level', r);
@@ -1461,8 +1468,8 @@ const FLAVOR = {
   crown:'Every thought under it is a terrible one. Every one works.', leagueboots:'Each stride is a kick. Each kick is a stride.', bell:'Ring it once and the room goes quiet.',
   gravecoat:'Dirt on the hem, coins in the lining.', doorbreaker:'Doors fear it. So do the things behind them.'
 };
-function shotShort(c){ return { might: '+' + c.v + ' Might', heal: '+' + c.v + ' Grit', burst: c.v + ' damage', shrink: 'Hits −' + c.v, escape: 'Sure escape', esc: 'Escape +' + c.v, greed: '+2, coins ×2', stun: 'Skip its move', recover: c.v + ' spent back', mend: c.v + ' lost back' }[c.fx] || ''; }
-function shotText(c){ return { might: `+${c.v} Might for the rest of this fight`, heal: `Heal ${c.v} Grit (works between doors too)`, burst: `Deals ${c.v} damage at once`, shrink: `The monster hits ${c.v} softer this fight and loses 3 health`, escape: 'Your next Run always works', esc: `Escaping is ${c.v} easier this fight`, greed: '+2 Might, and double coins if you win', stun: 'The monster loses its next move', recover: `Puts ${c.v} spent cards on top of your deck (works between doors too)`, mend: `Brings ${c.v} lost card back (works between doors too)` }[c.fx]; }
+function shotShort(c){ return { might: '+' + c.v + ' Might', heal: '+' + c.v + ' Grit', burst: c.v + ' damage', shrink: 'Hits −' + c.v, escape: 'Sure escape', esc: 'Escape +' + c.v, greed: '+2, coins ×2', stun: 'Skip its move', recover: c.v + ' spent back', ward: 'Stops a hex', salt: 'No hexes', mend: c.v + ' lost back' }[c.fx] || ''; }
+function shotText(c){ return { might: `+${c.v} Might for the rest of this fight`, heal: `Heal ${c.v} Grit (works between doors too)`, burst: `Deals ${c.v} damage at once`, shrink: `The monster hits ${c.v} softer this fight and loses 3 health`, escape: 'Your next Run always works', esc: `Escaping is ${c.v} easier this fight`, greed: '+2 Might, and double coins if you win', stun: 'The monster loses its next move', recover: `Puts ${c.v} spent cards on top of your deck (works between doors too)`, ward: 'Works by itself from your belt: snaps to stop the next hex or curse', salt: 'This monster cannot hex you for the rest of the fight', mend: `Brings ${c.v} lost card back (works between doors too)` }[c.fx]; }
 const slotName = { head: 'Head', body: 'Body', feet: 'Feet', hand: 'One-hand' };
 function slotTxt(t){ return t.k === 'shot' ? 'Belt' : t.slot === 'hand' ? (t.two ? 'Two hands' : 'One hand') : slotName[t.slot]; }
 const TIER_N = { 2: 'Rare', 3: 'Relic' };
@@ -1504,6 +1511,8 @@ function icon(t){
     case 'irons': return w(`<rect x="8" y="18" width="32" height="12" rx="6" fill="#6b7079"/>${[14,21,28,35].map(x => `<circle cx="${x}" cy="24" r="4" fill="#1f1a14" opacity=".55"/>`).join('')}<path d="M12 30v8h24v-8" stroke="#6b7079" stroke-width="3" fill="none"/>`);
     case 'stick': return w(`<path d="M30 6c-6 2-6 8-4 10L14 44" stroke="#8a6238" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M22 26l-5-4" stroke="#8a6238" stroke-width="2.5" stroke-linecap="round"/>`);
     case 'tonic': return potion('#4fbf6a', '#8a6238');
+    case 'rowan': return w(`<path d="M24 40V14" stroke="#7a5426" stroke-width="3" stroke-linecap="round"/><path d="M14 22h20M17 30h14" stroke="#d8442f" stroke-width="3" stroke-linecap="round"/>${[[14,22],[34,22],[17,30],[31,30],[24,12]].map(([x,y]) => `<circle cx="${x}" cy="${y}" r="3.2" fill="#e0442f"/>`).join('')}<circle cx="24" cy="8" r="2.5" fill="none" stroke="#c9a86a" stroke-width="1.5"/>`);
+    case 'salt': return pouch('#e9e3cf', '<path d="M8 42q16-6 32 0" stroke="#f4f0e6" stroke-width="3" fill="none" stroke-dasharray="2 3"/><circle cx="35" cy="12" r="1.3" fill="#fff"/><circle cx="39" cy="9" r="1" fill="#fff"/>');
     case 'courage': return potion('#e0a32e', '#5a3d1d');
     case 'firejar': return w(`<path d="M14 20h20v18a6 6 0 0 1-6 6h-8a6 6 0 0 1-6-6z" fill="#a0583a"/><rect x="16" y="16" width="16" height="5" rx="2" fill="#6b3b24"/><path class="flame" d="M24 2c5 5 6 9 2 14-2-3-5-3-6 0-3-5 0-9 4-14z" fill="#ffb03b"/><path d="M18 30h12" stroke="#ffcf7a" stroke-width="2"/>`);
     case 'shrink': return pouch('#7b5fb3', '<circle cx="36" cy="10" r="2" fill="#e4d6ff"/><circle cx="41" cy="18" r="1.5" fill="#e4d6ff"/><circle cx="30" cy="6" r="1.2" fill="#e4d6ff"/>');
@@ -2120,7 +2129,7 @@ function renderModal(){
   }
   if (s.phase === 'door' && s.ev && s.ev.t === 'curse' && s._ack !== s.ev.n){
     const c = s.ev.curse;
-    return modal('Curse', `<div class="kicker">Door ${s.door} · a curse</div><div class="art"><svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="18" fill="#3b2550"/><path d="M16 20l4 4m0-4l-4 4M28 20l4 4m0-4l-4 4M16 33q8-6 16 0" stroke="#ffd23f" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg></div><h2>${esc(c.n)}</h2><p class="flav">${esc(c.f)}</p>${s.ev.lost ? `<div class="cmp">${s.ev.lost.length ? 'You lost: <b class="badc">' + s.ev.lost.map(esc).join(', ') + '</b>' : 'Nothing was lost.'}</div>` : ''}<div class="acts"><button class="primary" id="ack">Shake it off<small>continue</small></button></div>`);
+    return modal('Curse', `<div class="kicker">Door ${s.door} · a curse</div><div class="art"><svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="18" fill="#3b2550"/><path d="M16 20l4 4m0-4l-4 4M28 20l4 4m0-4l-4 4M16 33q8-6 16 0" stroke="#ffd23f" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg></div><h2>${esc(c.n)}</h2><p class="flav">${esc(c.f)}</p>${s.ev.lost ? `<div class="cmp">${s.ev.warded ? 'Your <b class="okc">' + esc(s.ev.warded) + '</b> snapped and took the curse. ' : ''}${s.ev.lost.length ? 'You lost: <b class="badc">' + s.ev.lost.map(esc).join(', ') + '</b>' : 'Nothing was lost.'}</div>` : ''}<div class="acts"><button class="primary" id="ack">Shake it off<small>continue</small></button></div>`);
   }
   if (manageSel && s.phase === 'door'){
     const [w, key] = manageSel; const i = w === 'gear' ? key : +key;
@@ -2145,7 +2154,7 @@ function renderModal(){
 // ---------- homestead ----------
 const PAL = [ { n: 'Timber', wall: '#b9875a', trim: '#7a5233', roof: '#8a3b2a' }, { n: 'Brick', wall: '#b4583e', trim: '#6e3022', roof: '#4b4f5c' },
   { n: 'Stone', wall: '#a9a59a', trim: '#6c6a63', roof: '#3f6b5a' }, { n: 'Whitewash', wall: '#eee6d6', trim: '#9b8b72', roof: '#3d5a8a' } ];
-const CROPC = { dustcorn: '#d9b44a', mint: '#5fbf7a', pepper: '#d8442f', brave: '#c76bd1', flax: '#6c8fd9', puff: '#e9e3cf', clover: '#3e9b4a', wake: '#b0703a' };
+const CROPC = { rowtree: '#e0442f', dustcorn: '#d9b44a', mint: '#5fbf7a', pepper: '#d8442f', brave: '#c76bd1', flax: '#6c8fd9', puff: '#e9e3cf', clover: '#3e9b4a', wake: '#b0703a' };
 function rngH(seed){ let x = (seed >>> 0) || 1; return () => (x = (x * 16807) % 2147483647) / 2147483647; }
 const HCX = 46, HS = 48, HSY = 58, HT0 = 60, HW = HCX + 8 * 48 + 6, HH = HT0 + 4 * 58 + 4, HZ = 1.4;
 function castleHint(R, hue){ // a broken tower and a stub of wall at the left edge
