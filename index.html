@@ -254,7 +254,7 @@ const T = {
   furyMax: 3,
   // two-half prototype
   ispd: { strike: 50, heavy: 25, guard: 70, hex: 40, rend: 60, dazed: 0, shoot: 55, charge: 55, pounce: 30, retreat: 75 },
-  distOn: 1, distStep: 1 / 3, defMove: 1, chargeMove: 2, startDist: { brute: 2, skirmisher: 2, lurker: 3, warden: 1 }, wardenDmg: 1.3, wardenHp: 1.15, bruteHp: 1.15, newFavors: 0, winRecover: 0, restPer: 0, baseMight: 0, gritPerLevel: 0, shotShare: 0.45, tier2At: 5, tier3At: 9, hireMul: 0.5, marketPrice: 16, tokCap: 4, tokFeed: 4, tokGearW: 0.6, tokOn: 1, tokCarry: 1, tokMul: 1.5, honeMul: 0.5, captiveFrom: 3, captiveTo: 7, easeStart: 0, easeDoor: 8, bruteDmg: 1.1, retreatShot: 0.75, skirmDmg: 1.25, pounceDist: 1, bruteCharge: 0.85, skirmRetreat: 0.8, spdJitter: 15,
+  distOn: 1, distStep: 1 / 3, defMove: 1, chargeMove: 2, startDist: { brute: 2, skirmisher: 2, lurker: 3, warden: 1 }, wardenDmg: 1.3, wardenHp: 1.15, bruteHp: 1.15, newFavors: 0, winRecover: 0, restPer: 0, baseMight: 0, gritPerLevel: 0, shotShare: 0.45, tier2At: 5, tier3At: 9, hireMul: 0.5, marketPrice: 16, tokCap: 4, tokFeed: 4, tokGearW: 0.6, tokOn: 1, tokCarry: 1, tokMul: 1.5, honeMul: 0.5, homeEventChance: 0.4, captiveFrom: 3, captiveTo: 7, easeStart: 0, easeDoor: 8, bruteDmg: 1.1, retreatShot: 0.75, skirmDmg: 1.25, pounceDist: 1, bruteCharge: 0.85, skirmRetreat: 0.8, spdJitter: 15,
   campLose: 1, fightLose: 1, mendN: 2, exhaustGold: 0.5, winMend: 0, rendLost: 1, lootMend: 1, normHpMul: 1, bossRestore: 0, bossHeal: 0, handCap: 99, dmgMul: 1, antechamber: 0, swapKeepsPlace: 1, lootRecover: 0,
   intents: { strike: 38, heavy: 20, guard: 15, hex: 17, rend: 10 }, bossIntents: { strike: 42, heavy: 20, guard: 13, hex: 13, rend: 12 }, bossRage: { strike: 38, heavy: 30, guard: 8, hex: 12, rend: 12 }, rageAt: 0.5, rageDmg: 1,
   emberPerDoor: 1, emberBoss: 5, emberDeepDoor: 1, emberDeepBoss: 3,
@@ -652,7 +652,11 @@ const PARTS = [
     c: [{ wood: 3 }, { wood: 8, brick: 4 }, { wood: 10, stone: 3, oak: 2 }] },
   { id: 'orchard', n: 'Orchard', zone: 'farm', d: 'Young trees take 3 runs to bear. After that, fruit for the pantry every run.', L: ['A Fizzing Tonic every run.', 'Two Tonics every run.', 'Two Tonics and a Liquid Courage.'],
     c: [{ wood: 4, brick: 2 }, { wood: 6, oak: 3 }, { oak: 6, silver: 1, glass: 1 }] },
-  { id: 'well', n: 'Well', zone: 'farm', d: 'Clean water. Crops grow faster and heavier.', L: ['Crops ripen a run sooner.', 'Each bed yields one more.', 'And your pantry sends 1 more one-shot down with you.'],
+  { id: 'watch', n: 'Guard Tower', zone: 'farm', d: 'A lookout over the road. Keeps raiders off the homestead while you are below.', L: ['Raiders get away with half as much.', 'Raiders are driven off.', 'Raiders are driven off and drop what they carried.'],
+    c: [{ wood: 6, iron: 3 }, { wood: 8, iron: 6, stone: 2 }, { stone: 6, iron: 8, silver: 2 }] },
+  { id: 'silo', n: 'Grain Silo', zone: 'farm', d: 'Dry, sealed stores. Rats and blight cannot reach what is inside.', L: ['Rats cannot touch your pantry.', 'Blight cannot touch your garden beds either.', 'And it puts up a Fizzing Tonic after every run.'],
+    c: [{ wood: 5, brick: 4 }, { wood: 6, brick: 8, oak: 2 }, { brick: 10, stone: 4, oak: 3 }] },
+  { id: 'well', n: 'Well', zone: 'farm', d: 'Clean water. Crops grow faster and heavier, and a fire never gets far.', L: ['Crops ripen a run sooner. Fires burn half as much.', 'Each bed yields one more. Fires are put out.', 'And your pantry sends 1 more one-shot down with you.'],
     c: [{ brick: 6, iron: 2 }, { brick: 8, stone: 3, iron: 3 }, { stone: 6, silver: 2, glass: 1 }] },
   { id: 'kiln', n: 'Kiln', zone: 'farm', d: 'Fires common materials into rare ones while you are away.', L: ['After each run, 3 commons become 1 rare.', 'Twice after each run.', 'And 4 rares become a relic.'],
     c: [{ brick: 10, iron: 2 }, { brick: 12, iron: 6, stone: 2 }, { stone: 8, silver: 3, oak: 3 }] },
@@ -1376,6 +1380,37 @@ function endRun(s, how) {
 const TRADE = { 1: [30, 1.2], 2: [120, 1.3] };
 function tradePrice(meta, id) { const m = MATS.find(x => x.id === id), t = m && TRADE[m.r]; if (!t) return null; return Math.round(t[0] * Math.pow(t[1], ((meta.trade || {})[id] || 0))); }
 function buyMat(meta, id) { const p = tradePrice(meta, id); if (p == null || meta.gold < p) return false; meta.gold -= p; meta.mats[id] = (meta.mats[id] || 0) + 1; meta.trade = meta.trade || {}; meta.trade[id] = (meta.trade[id] || 0) + 1; return true; }
+const HEVENTS = [
+  { id: 'raid', n: 'Raiders', guard: 'watch', bad: true, w: 3, ok: m => m.gold >= 60 || MATS.some(x => x.r === 1 && (m.mats[x.id] || 0) >= 6) },
+  { id: 'fire', n: 'A fire', guard: 'well', bad: true, w: 3, ok: m => (m.mats.wood || 0) + (m.mats.oak || 0) >= 4 },
+  { id: 'rats', n: 'Rats and blight', guard: 'silo', bad: true, w: 3, ok: m => m.pantry.length >= 2 || m.home.beds.some(b => b.crop && b.age > 0) },
+  { id: 'tinker', n: 'A passing tinker', w: 2, ok: () => true },
+  { id: 'rain', n: 'Good weather', w: 2, ok: m => m.home.beds.some(b => b.crop) },
+];
+function homeEvent(meta, grown) {
+  if ((meta.runs || 0) < 3) return null;
+  const r = rngFrom(((meta.home.seed || 1) * 7919 + (meta.runs || 0) * 104729) >>> 0); if (r.next() >= T.homeEventChance) return null;
+  const pool = HEVENTS.filter(e => e.ok(meta)); if (!pool.length) return null;
+  let x = r.next() * pool.reduce((a, e) => a + e.w, 0), ev = pool[0]; for (const e of pool) if ((x -= e.w) < 0) { ev = e; break; }
+  const out = { id: ev.id, n: ev.n, bad: !!ev.bad, guard: ev.guard || null, glv: ev.guard ? homeLv(meta, ev.guard) : 0, lost: [], gain: [] };
+  const take = (id, n) => { n = Math.min(n, meta.mats[id] || 0); if (n > 0) { meta.mats[id] -= n; const m = MATS.find(q => q.id === id); out.lost.push(`${m.i} ${n} ${m.n}`); } };
+  const give = (id, n) => { meta.mats[id] = (meta.mats[id] || 0) + n; const m = MATS.find(q => q.id === id); out.gain.push(`${m.i} ${n} ${m.n}`); };
+  if (ev.id === 'raid') {
+    if (out.glv >= 2) { out.stopped = true; if (out.glv >= 3) give(MATS.filter(m => m.r === 2)[r.int(0, 2)].id, 1); }
+    else { const f = out.glv ? 0.5 : 1, g = Math.floor(meta.gold * 0.25 * f); if (g > 0) { meta.gold -= g; out.lost.push(`${g} gold`); }
+      const com = MATS.filter(m => m.r === 1).sort((a, b) => (meta.mats[b.id] || 0) - (meta.mats[a.id] || 0))[0]; take(com.id, Math.ceil(Math.floor((meta.mats[com.id] || 0) / 3) * f)); }
+  } else if (ev.id === 'fire') {
+    if (out.glv >= 2) out.stopped = true;
+    else { const f = out.glv ? 0.5 : 1; take('wood', Math.ceil((meta.mats.wood || 0) * 0.4 * f)); take('oak', Math.floor((meta.mats.oak || 0) * 0.25 * f)); }
+  } else if (ev.id === 'rats') {
+    if (out.glv >= 2) out.stopped = true;
+    else { if (out.glv >= 1) out.part = true; else { const n = Math.floor(meta.pantry.length / 2); if (n) { meta.pantry.splice(0, n); out.lost.push(`${n} one-shot${n > 1 ? 's' : ''} from the pantry`); } }
+      let set = 0; for (const b of meta.home.beds) if (b.crop && b.age > 0) { b.age = 0; set++; } if (set) out.lost.push(`${set} garden bed${set > 1 ? 's' : ''} set back to seed`); }
+  } else if (ev.id === 'tinker') { for (let i = 0; i < 3; i++) give(MATS[r.int(0, 2)].id, 1); }
+  else if (ev.id === 'rain') { let n = 0; for (const b of meta.home.beds) if (b.crop) { b.age++; n++; } out.gain.push(`${n} bed${n > 1 ? 's' : ''} a run closer to ripe`); }
+  if (ev.bad && !out.stopped && !out.lost.length) return null;
+  meta.lastEvent = out; return out;
+}
 function settle(meta, s) {
   if (!s.ended || s.settled) return null;
   s.settled = true; const e = s.ended;
@@ -1389,12 +1424,13 @@ function settle(meta, s) {
     const h = meta.home, grown = [];
     meta.stores = meta.stores || {}; if (homeLv(meta, 'forge') && (meta.stores.whet || 0) < 3) { meta.stores.whet = (meta.stores.whet || 0) + 1; grown.push('a Whetstone from the forge'); } if (homeLv(meta, 'study') && (meta.stores.trick || 0) < 3) { meta.stores.trick = (meta.stores.trick || 0) + 1; grown.push('Field Notes from the study'); }
     for (const b of h.beds) { if (!b.crop) continue; const c = CROPS.find(x => x.id === b.crop); b.age++; if (b.age >= cropRuns(meta, c)) { const n = c.yield + (homeLv(meta, 'well') >= 2 ? 1 : 0); for (let i = 0; i < n; i++) meta.pantry.push(c.shot); grown.push(n + ' ' + c.n); b.age = 0; } }
+    if (homeLv(meta, 'silo') >= 3) { meta.pantry.push('tonic'); grown.push('a Fizzing Tonic from the silo'); }
     if (homeLv(meta, 'orchard')) { h.orchard = (h.orchard || 0) + 1; if (h.orchard > 3) { const ol = homeLv(meta, 'orchard'); meta.pantry.push('tonic'); if (ol >= 2) meta.pantry.push('tonic'); if (ol >= 3) meta.pantry.push('courage'); grown.push('fruit from the orchard'); } }
     const kl = homeLv(meta, 'kiln'), fired = [];
     for (let i = 0; i < (kl >= 2 ? 2 : kl); i++) { const com = MATS.filter(m => m.r === 1).sort((a, b) => (meta.mats[b.id] || 0) - (meta.mats[a.id] || 0))[0]; if ((meta.mats[com.id] || 0) < 3) break; meta.mats[com.id] -= 3; const rr = MATS.filter(m => m.r === 2)[(h.kilns = (h.kilns || 0) + 1) % 3]; meta.mats[rr.id] = (meta.mats[rr.id] || 0) + 1; fired.push(rr.n); }
     if (kl >= 3) { const ra = MATS.filter(m => m.r === 2).sort((a, b) => (meta.mats[b.id] || 0) - (meta.mats[a.id] || 0))[0]; if ((meta.mats[ra.id] || 0) >= 4) { meta.mats[ra.id] -= 4; const rl = MATS.filter(m => m.r === 3)[(h.kilns || 0) % 2]; meta.mats[rl.id] = (meta.mats[rl.id] || 0) + 1; fired.push(rl.n); } }
     if (meta.pantry.length > 30) meta.pantry.splice(0, meta.pantry.length - 30);
-    e.grown = grown; e.fired = fired; }
+    e.grown = grown; e.fired = fired; e.event = homeEvent(meta, grown); }
   if (e.bounty) { meta.gold += e.bounty.gold; embers += e.bounty.embers; for (const k in (e.bounty.mats || {})) { meta.mats = meta.mats || {}; meta.mats[k] = (meta.mats[k] || 0) + e.bounty.mats[k]; } }
   meta.bestiary = meta.bestiary || {}; const before = {}; for (const k in (e.kills || {})) { before[k] = meta.bestiary[k] || 0; meta.bestiary[k] = before[k] + e.kills[k]; }
   e.newRanks = Object.keys(e.kills || {}).filter(k => (before[k] < 3 && meta.bestiary[k] >= 3) || (before[k] < 8 && meta.bestiary[k] >= 8));
@@ -1424,7 +1460,7 @@ const LORE = [
 
 function honeMult(s, id) { return 1 + T.honeMul * (1 + 0.5 * Math.max(0, townLv(s.town, 'smithy') - 1)) * ((s.honed && s.honed[id]) || 0); }
 Object.assign(T, {"winMend":0,"lootMend":0,"bossHeal":99,"handCap":99,"bossHp":90,"dmgMul":0.8,"lootRecover":2,"hpMul":5.5,"bossRestore":1,"newFavors":0,"baseMight":2,"winRecover":2,"gritPerLevel":1,"easeStart":0.6,"easeDoor":7,"distOn":0}); for (const [k,v] of Object.entries({"heavy":{"spd":20,"top":{"dmg":2.25},"bot":{"blk":1.75}},"lunge":{"spd":60,"top":{"dmg":3.5,"burn":1,"move":1,"dir":"in"},"bot":{"rec":2}},"brace":{"spd":40,"top":{"blk":1.5},"bot":{"blk":1.25}},"jab":{"spd":85,"top":{"dmg":2},"bot":{"dmg":1}},"reckless":{"spd":50,"top":{"dmg":2.5,"self":2},"bot":{"blk":1.25}},"bash":{"spd":45,"top":{"dmg":2},"bot":{"dmg":1,"blk":0.5}},"feint":{"spd":70,"top":{"dmg":2},"bot":{"rec":1,"blk":0.5}},"bulwark":{"spd":30,"top":{"blk":2},"bot":{"blk":1.75}},"pierce":{"spd":55,"top":{"dmg":2,"pierce":1,"reach":1},"bot":{"rec":2}},"momentum":{"spd":55,"top":{"dmg":2.5},"bot":{"dmg":1.25}},"ironskin":{"spd":35,"top":{"blk":2},"bot":{"blk":3,"burn":1}}})) HALVES[k]=v;
-const api = { honeMult, pickRecover, tradePrice, buyMat, findOffer, findCarry, handSize, drawUp, HOME_START, tileFree, fixBeds, MATS, RAR_N, PARTS, CROPS, HOME_W, HOME_H, homeLv, partOf, partCost, canHome, buildHome, placeHome, styleHome, plant, cropRuns, pantryTake, homeTown, shotById, TOWN, GEAR_TOK, tokCapOf, TOKENS, TOKEN_CARDS, TOWN, townLv, upCost, makeBounties, bestKills, MONSTERS, townOf, canBuild, buildTown, doorChoices, DSTATS, DIST_N, atDist, halfModes, moveOf, monType, swapOut, dropCard, HALVES, halfPreview, pairOptions, playPair, restFight, restCamp, canCamp, exhausted, T, MONSTERS, BOSS, TWISTS, TREASURES, SETS, setsOn, gx, tierMax, CURSES, CALLINGS, ORIGIN, FORGE, KEEPER, LORE, STARTER, INTENTS, PATRONS, FAVORS,
+const api = { HEVENTS, honeMult, pickRecover, tradePrice, buyMat, findOffer, findCarry, handSize, drawUp, HOME_START, tileFree, fixBeds, MATS, RAR_N, PARTS, CROPS, HOME_W, HOME_H, homeLv, partOf, partCost, canHome, buildHome, placeHome, styleHome, plant, cropRuns, pantryTake, homeTown, shotById, TOWN, GEAR_TOK, tokCapOf, TOKENS, TOKEN_CARDS, TOWN, townLv, upCost, makeBounties, bestKills, MONSTERS, townOf, canBuild, buildTown, doorChoices, DSTATS, DIST_N, atDist, halfModes, moveOf, monType, swapOut, dropCard, HALVES, halfPreview, pairOptions, playPair, restFight, restCamp, canCamp, exhausted, T, MONSTERS, BOSS, TWISTS, TREASURES, SETS, setsOn, gx, tierMax, CURSES, CALLINGS, ORIGIN, FORGE, KEEPER, LORE, STARTER, INTENTS, PATRONS, FAVORS,
   forgeCost, forgeRanks, newMeta, fixMeta, buyForge, unlockCalling, EMBERS, DEEP_BOSSES, emberCost, emberRank, buyEmber, rerollFavor, lastDoor, isDeepBossDoor, deepOf,
   startRun, openDoor, playShot, fight, flee, takeTreasure, takeFavor, rest, manage, canManage, canKeep, bagRoom, replacedBy,
   bank, settle, peek, might, armor, incoming, incomingRaw, enrage, canUnleash, monStats, monsterTotal, fightMight, cardPreview, canPlay, playCard, endTurn, runAway, chooseSpoils, cardPool,
@@ -2014,11 +2050,21 @@ function overScene(s){
   const e = s.ended, dead = e.how === 'dead';
   return `<div class="scene">${corridorSVG({ num: e.door, boss: e.door === G.T.doors || G.isDeepBossDoor(e.door), open: true })}<div class="actors">${dead ? '<div></div>' : heroSVG(s)}${s.ev && s.ev.mon && (dead || e.how === 'victory') ? monsterSVG(s.ev.mon, e.how === 'victory' ? 'fallen' : '') : '<div></div>'}</div>${dead ? '<div class="redflash" style="animation:none;opacity:.35"></div>' : ''}${narrBox()}</div>`;
 }
+function eventLine(v){
+  if (!v) return '';
+  const gp = v.guard && G.PARTS.find(p => p.id === v.guard), gn = gp ? gp.n : '';
+  const what = { raid: 'Raiders came up the road while you were below.', fire: 'A spark caught in the woodpile.', rats: 'Rats got into the stores, and blight into the beds.', tinker: 'A tinker passed by and left a few things for a hot meal.', rain: 'Soft rain all week.' }[v.id] || '';
+  let t;
+  if (v.stopped) t = `Your ${gn} saw to it. Nothing lost.${v.gain.length ? ' They dropped ' + v.gain.join(', ') + '.' : ''}`;
+  else if (v.bad) t = `Lost ${v.lost.join(', ')}.${v.glv ? ` Your ${gn} saved the rest.` : ` A ${gn} would guard against this.`}`;
+  else t = v.gain.length ? `+${v.gain.join(', ')}.` : '';
+  return `<p class="small" style="margin:0 0 6px;padding:6px 8px;border-radius:8px;background:${v.bad && !v.stopped ? 'rgba(200,60,40,.12)' : 'rgba(90,170,90,.12)'}"><b>${v.bad ? '⚠️' : '🌤️'} ${esc(v.n)}.</b> ${what} ${t}</p>`;
+}
 function overPanel(s){
   const e = s.ended;
   const title = { dead: 'You died', banked: 'You made it home', victory: 'You made it home', 'fled-boss': 'You turned back', exhausted: 'Out of cards' }[e.how];
   const nl = e.newLease ? ` <b>You found more of the ruins:</b> ${esc(G.leaseName(e.lease + 1))}, and Workshop limits rose.` : '';
-  return `<p class="say"><b>${title}.</b> ${e.how === 'dead' ? `Door ${e.door} was one too many.` : `Home from door ${e.door}.`}${e.folk ? ` <b>The ${G.townOf(e.folk).folk} is safe in town.</b> Build the ${G.townOf(e.folk).n} in the Town tab.` : ''}${e.mats && Object.keys(e.mats).length ? ` 🧺 Home with ${Object.keys(e.mats).map(k => { const x = G.MATS.find(q => q.id === k); return x.i + ' ' + e.mats[k] + ' ' + x.n; }).join(', ')}${e.how === 'dead' ? ' (half of what you carried)' : ''}.` : ''}${e.grown && e.grown.length ? ` 🌱 Ripe while you were away: ${e.grown.join(', ')}.` : ''}${e.fired && e.fired.length ? ` 🔥 The kiln made ${e.fired.join(', ')}.` : ''}${e.bounty && e.bounty.n ? ` 🔎 Found ${e.bounty.n} of ${e.bounty.of} bounties done: +${e.bounty.gold} gold, +${e.bounty.embers} embers${Object.keys(e.bounty.mats || {}).map(k => { const m = G.MATS.find(x => x.id === k); return `, +${e.bounty.mats[k]} ${m.i} ${m.n}`; }).join('')} (counted below).` : ''}${e.newRanks && e.newRanks.length ? ` Bestiary: you know the ${e.newRanks.map(n => esc(n.replace(/^The /, ''))).join(', the ')} better now.` : ''}${e.bestEmbers ? ` +${e.bestEmbers} embers for your Bestiary.` : ''} <b class="gold">${e.gold + (e.bounty ? e.bounty.gold : 0)} gold</b>, <b class="ember">+${s._emb != null ? s._emb : e.embers} embers</b>.${nl}</p>${(() => { const n = G.PARTS.filter(p => G.canHome(meta, p.id)).length; return n ? `<p class="tiny okc" style="margin:0 0 6px;text-align:center">🏡 ${n} thing${n === 1 ? '' : 's'} ready to build or raise at home.</p>` : ''; })()}<button class="primary go" id="town">Back home</button>`;
+  return `<p class="say"><b>${title}.</b> ${e.how === 'dead' ? `Door ${e.door} was one too many.` : `Home from door ${e.door}.`}${e.folk ? ` <b>The ${G.townOf(e.folk).folk} is safe in town.</b> Build the ${G.townOf(e.folk).n} in the Town tab.` : ''}${e.mats && Object.keys(e.mats).length ? ` 🧺 Home with ${Object.keys(e.mats).map(k => { const x = G.MATS.find(q => q.id === k); return x.i + ' ' + e.mats[k] + ' ' + x.n; }).join(', ')}${e.how === 'dead' ? ' (half of what you carried)' : ''}.` : ''}${e.grown && e.grown.length ? ` 🌱 Ripe while you were away: ${e.grown.join(', ')}.` : ''}${e.fired && e.fired.length ? ` 🔥 The kiln made ${e.fired.join(', ')}.` : ''}${e.bounty && e.bounty.n ? ` 🔎 Found ${e.bounty.n} of ${e.bounty.of} bounties done: +${e.bounty.gold} gold, +${e.bounty.embers} embers${Object.keys(e.bounty.mats || {}).map(k => { const m = G.MATS.find(x => x.id === k); return `, +${e.bounty.mats[k]} ${m.i} ${m.n}`; }).join('')} (counted below).` : ''}${e.newRanks && e.newRanks.length ? ` Bestiary: you know the ${e.newRanks.map(n => esc(n.replace(/^The /, ''))).join(', the ')} better now.` : ''}${e.bestEmbers ? ` +${e.bestEmbers} embers for your Bestiary.` : ''} <b class="gold">${e.gold + (e.bounty ? e.bounty.gold : 0)} gold</b>, <b class="ember">+${s._emb != null ? s._emb : e.embers} embers</b>.${nl}</p>${eventLine(e.event)}${(() => { const n = G.PARTS.filter(p => G.canHome(meta, p.id)).length; return n ? `<p class="tiny okc" style="margin:0 0 6px;text-align:center">🏡 ${n} thing${n === 1 ? '' : 's'} ready to build or raise at home.</p>` : ''; })()}<button class="primary go" id="town">Back home</button>`;
 }
 
 // ---------- sheets ----------
@@ -2224,6 +2270,8 @@ function partArt(id, lv, p, x, y, S, h, live){
   else if (id === 'garden') { const beds = h.beds || []; const n = Math.min(6, Math.max(1, 2 * lv)); for (let i = 0; i < n; i++){ const b = beds[i] || {}, rx = x + 4 + (i % 3) * 14, ry = y + 10 + Math.floor(i / 3) * 18; o += `<rect x="${rx}" y="${ry}" width="12" height="14" fill="#6b4a2b"/>`; if (b.crop) for (let k = 0; k < 3; k++) o += `<circle cx="${rx + 3 + k * 3}" cy="${ry + 4 + (k % 2) * 5}" r="${1.5 + Math.min(2, (b.age || 0))}" fill="${CROPC[b.crop] || '#5fbf7a'}"/>`; } }
   else if (id === 'orchard') { for (let i = 0; i < lv + 1; i++){ const tx = x + 10 + i * 13, ty = gy - 4 - (i % 2) * 8; o += `<rect x="${tx - 1.5}" y="${ty - 10}" width="3" height="10" fill="#6b4a2b"/><circle cx="${tx}" cy="${ty - 14}" r="${6 + Math.min(3, (h.orchard || 0))}" fill="#3e8f45"/>${(h.orchard || 0) > 3 ? `<circle cx="${tx + 2}" cy="${ty - 13}" r="1.8" fill="#d8442f"/><circle cx="${tx - 3}" cy="${ty - 16}" r="1.8" fill="#d8442f"/>` : ''}`; } }
   else if (id === 'well') { o += `<ellipse cx="${cx}" cy="${gy - 8}" rx="12" ry="5" fill="#2f4f6a" stroke="${p.trim}"/><rect x="${cx - 12}" y="${gy - 8}" width="24" height="9" fill="${p.wall}" stroke="${p.trim}"/><path d="M${cx - 10} ${gy - 8} v-${12 + lv * 2} M${cx + 10} ${gy - 8} v-${12 + lv * 2}" stroke="${p.trim}" stroke-width="2"/><path d="M${cx - 14} ${gy - 18 - lv * 2} L${cx} ${gy - 28 - lv * 2} L${cx + 14} ${gy - 18 - lv * 2}Z" fill="${p.roof}"/>`; }
+  else if (id === 'watch') { const ht = S * (0.45 + 0.12 * lv); o += `<path d="M${cx - 10} ${gy} L${cx - 7} ${gy - ht} M${cx + 10} ${gy} L${cx + 7} ${gy - ht} M${cx - 9} ${gy - ht * 0.5} L${cx + 9} ${gy - ht * 0.2}" stroke="#7a5426" stroke-width="3"/><rect x="${cx - 12}" y="${gy - ht - 8}" width="24" height="8" fill="${p.wall}" stroke="${p.trim}"/><path d="M${cx - 13} ${gy - ht - 8} L${cx} ${gy - ht - 18} L${cx + 13} ${gy - ht - 8}Z" fill="${p.roof}" stroke="${p.trim}"/>${lv >= 2 ? `<path d="M${cx + 12} ${gy - ht - 18} v-10 l8 3 -8 3" fill="#d8442f" stroke="#5e4526"/>` : ''}`; }
+  else if (id === 'silo') { const ht = S * (0.4 + 0.12 * lv); o += `<rect x="${cx - 10}" y="${gy - ht}" width="20" height="${ht}" fill="${p.wall}" stroke="${p.trim}"/><path d="M${cx - 10} ${gy - ht} a10 8 0 0 1 20 0z" fill="${p.roof}" stroke="${p.trim}"/>${[1, 2, 3].slice(0, lv).map(i => `<path d="M${cx - 10} ${gy - ht + i * ht / 4} h20" stroke="${p.trim}" opacity=".6"/>`).join('')}`; }
   else if (id === 'kiln') { o += `<path d="M${cx - 14} ${gy} v-10 a14 ${12 + lv * 2} 0 0 1 28 0 v10z" fill="${p.wall}" stroke="${p.trim}"/><path d="M${cx - 5} ${gy} v-6 a5 5 0 0 1 10 0 v6z" fill="#ff7a2a"/><rect x="${cx + 6}" y="${gy - 30 - lv * 2}" width="5" height="10" fill="${p.trim}"/>`; }
   return o + `</g>`;
 }
