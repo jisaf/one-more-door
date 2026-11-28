@@ -772,7 +772,7 @@ function startRun(meta, opts) {
   meta.stores = meta.stores || {}; for (const k of ['whet', 'trick']) if (pv[k]) meta.stores[k] = Math.max(0, (meta.stores[k] || 0) - 1);
   meta.provisions = {};
   s.pendingOffer = townLv(s.town, 'chapel') ? 2 : 1; // favors wait after the kit
-  s.phase = 'treasure'; s.evN = 0; ev(s, { t: 'start' });
+  s.phase = 'treasure'; s.evN = 0; s.plog = []; ev(s, { t: 'start' });
   saveRng(s, r);
   log(s, `You set out as a ${ORIGIN.n} ${CALLINGS[s.calling].n}. Level ${s.level}, ${s.grit} Grit.`);
   return s;
@@ -782,7 +782,18 @@ function shuffleDraw(s, r) { const d = s.draw; for (let i = d.length - 1; i > 0;
 function drawUp(s) { s.draw = s.draw || []; while (s.cards.length < handSize(s) && s.draw.length) s.cards.splice(s.cards.length, 0, s.draw.pop()); }
 function rngOf(s) { const r = rngFrom(0); r.state = s.rngState; return r; }
 function saveRng(s, r) { s.rngState = r.state; }
-function ev(s, e) { s.evN = (s.evN || 0) + 1; s.ev = Object.assign({ n: s.evN }, e); }
+function ev(s, e) { s.evN = (s.evN || 0) + 1; s.ev = Object.assign({ n: s.evN }, e); plogAdd(s, e); }
+function plogAdd(s, e) {
+  if (!s.plog) return; const f = s.fight, x = { d: s.door, t: e.t, g: s.grit };
+  if (e.t === 'monster' && f) { x.m = f.mon.n; x.hp = f.hp; x.dmg = f.dmg; if (f.mon.boss) x.boss = 1; x.lv = s.level; x.might = typeof fightMight === 'function' ? fightMight(s) : undefined; }
+  else if (e.t === 'pair') { x.top = e.top; x.bot = e.bot; x.fast = e.fast ? 1 : 0; }
+  else if (e.t === 'exchange') { x.took = e.took; x.i = e.intent; if (f) x.mhp = Math.max(0, f.hp); }
+  else if (e.t === 'shot' || e.t === 'heal' || e.t === 'fizzle') { if (e.item) x.it = e.item.id; }
+  else if (e.t === 'win') { x.m = e.mon && e.mon.n; x.how = e.how; x.c = e.coins; if (f) x.ex = f.played ? f.played.length : undefined; }
+  else if (e.t === 'curse') { x.cu = e.curse && e.curse.n; }
+  else if (e.t === 'dead') { x.m = e.mon && e.mon.n; }
+  s.plog.push(x); if (s.plog.length > 2500) s.plog.splice(0, s.plog.length - 2500);
+}
 function log(s, msg) { s.log.push(msg); if (s.log.length > 80) s.log.shift(); }
 function drawShot(r) { return Object.assign({}, r.pick(TREASURES.filter(t => t.k === 'shot'))); }
 function tierMax(d) { return d >= T.tier3At ? 3 : d >= T.tier2At ? 2 : 1; }
@@ -1480,6 +1491,25 @@ let homeSel = null, homeOut = null, homeSpot = null, homePick = null, homeMove =
 let calling = 'brawler', oath = false, tab = 'go', retireSel = null;
 let recSel = [], retGear = false, fx = null, narr = [], manageSel = null, sheet = null, pick = [], capNew = null, pairFx = null, focusI = 0, fanScan = false;
 function load(){ try{ let j = JSON.parse(localStorage.getItem(KEY) || 'null'); if (!j){ const o = JSON.parse(localStorage.getItem(OLDKEY) || 'null'); if (o && o.meta) j = { meta: o.meta, run: null, lastEnd: null }; } if (j && j.meta){ meta = G.fixMeta(Object.assign(G.newMeta(), j.meta)); run = j.run && j.run.maxGrit && j.run.deck && j.run.cards ? j.run : null; lastEnd = j.lastEnd || null; return; } }catch(e){} meta = G.newMeta(); run = null; }
+const LOGKEY = 'omd-home-log-v1';
+function readLog(){ try{ const j = JSON.parse(localStorage.getItem(LOGKEY) || 'null'); if (j && Array.isArray(j.runs)) return j; }catch(e){} return { v: 1, runs: [], home: [] }; }
+function writeLog(L){ for (let tries = 0; tries < 6; tries++){ try{ localStorage.setItem(LOGKEY, JSON.stringify(L)); return; }catch(e){ if (L.runs.length <= 1) return; L.runs.splice(0, Math.ceil(L.runs.length / 4)); } } }
+function hlog(t, x){ try{ const L = readLog(); L.home.push(Object.assign({ t, at: Date.now(), run: meta.runs || 0, gold: meta.gold }, x || {})); if (L.home.length > 600) L.home.splice(0, L.home.length - 600); writeLog(L); }catch(e){} }
+function logRun(s){ try{
+  const e = s.ended || {}, L = readLog(), gear = {}; for (const k in (s.gear || {})) if (s.gear[k]) gear[k] = s.gear[k].id + (s.gear[k].tier ? ':' + s.gear[k].tier : '');
+  L.runs.push({ n: meta.runs, at: Date.now(), calling: s.calling, how: e.how, door: e.door, cleared: e.cleared, gold: e.gold, embers: e.embers, mats: e.mats || {}, level: s.level, maxGrit: s.maxGrit,
+    deck: (s.deck || []).slice(), honed: s.honed || {}, gear, belt: (s.hand || []).map(x => x.id), favors: (s.favors || []).slice(), finds: e.bounty ? { n: e.bounty.n, of: e.bounty.of } : null,
+    event: e.event ? { id: e.event.id, stopped: !!e.event.stopped, lost: e.event.lost, gain: e.event.gain } : null,
+    home: Object.assign({}, meta.home.lv), forge: Object.assign({}, meta.forge || {}), metaGold: meta.gold, metaMats: Object.assign({}, meta.mats), log: s.plog || [] });
+  if (L.runs.length > 30) L.runs.splice(0, L.runs.length - 30); writeLog(L); }catch(err){} }
+function logExport(){ const L = readLog(); return JSON.stringify({ game: 'One More Door Homestead', exportedAt: new Date().toISOString(), runsTotal: meta.runs || 0, bestDoor: meta.bestDoor, deepest: meta.deepest, gold: meta.gold, mats: meta.mats, home: meta.home.lv, forge: meta.forge, bestiary: meta.bestiary, keys: { log: 'd door, t event, g grit after; monster: m name, hp, dmg, lv, might; pair: top/bot card ids, fast; exchange: took damage, i monster intent, mhp monster hp left; shot: it item id; win: how, c coins' }, runs: L.runs, homeActions: L.home }); }
+let logOut = null;
+async function saveLog(){ const txt = logExport(), name = 'one-more-door-log-' + new Date().toISOString().slice(0, 10) + '.json';
+  try{ const dl = window.claude && window.claude.use ? await window.claude.use('downloads') : null;
+    if (dl){ try{ await dl.save({ filename: name, data: txt }); logOut = { ok: 1 }; render(); return; }catch(e){ if (e && e.code === 'declined'){ logOut = null; render(); return; } } }
+  }catch(e){}
+  if (!(window.claude && window.claude.use)){ try{ const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([txt], { type: 'application/json' })); a.download = name; document.body.appendChild(a); a.click(); a.remove(); logOut = { ok: 1 }; render(); return; }catch(e){} }
+  logOut = { copy: txt }; render(); }
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify({ meta, run, lastEnd })); }catch(e){} }
 const $ = s => document.querySelector(s);
 const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
@@ -2321,7 +2351,9 @@ function homeTab(){
     const built = G.PARTS.filter(p => G.homeLv(meta, p.id)).length, ready = G.PARTS.filter(p => G.canHome(meta, p.id)).length;
     o += `<p class="small" style="margin:0 0 4px">Tap an empty spot to build, or tap a building to raise, move or restyle it.</p>`;
     o += `<p class="tiny muted" style="margin:0">${built} of ${G.PARTS.length} built${ready ? ` · <span class="okc">${ready} ready to build or raise</span>` : ''}. Bring materials home from runs. Nothing runs on a clock: crops grow by runs.</p>`;
-    o += pantryLine() + `<div class="hrow" style="margin-top:6px"><span></span><button class="tinybtn" data-hshare>Share or visit</button></div>`;
+    { const L = readLog(); o += pantryLine() + `<div class="hrow" style="margin-top:6px"><button class="tinybtn" data-logx data-tip="Save a file of your last ${L.runs.length} runs, door by door, to send to Claude for balancing.">📤 Export play log<small> ${L.runs.length} run${L.runs.length === 1 ? '' : 's'}</small></button><button class="tinybtn" data-hshare>Share or visit</button></div>`;
+      if (logOut && logOut.ok) o += `<p class="tiny okc" style="margin:4px 0 0">Saved. Upload the file in the chat with Claude.</p>`;
+      if (logOut && logOut.copy) o += `<p class="tiny" style="margin:4px 0 2px">This view can't save files. Copy the text below and paste it in the chat, or open the game's web page to save a file.</p><textarea data-logtxt readonly style="width:100%;height:90px;font-size:11px">${esc(logOut.copy)}</textarea><button class="tinybtn" data-logcopy>Copy</button>`; }
   }
   return o + `</div>`;
 }
@@ -2429,7 +2461,7 @@ function act(fn){
   const e = run.ev || {};
   narr = run.log.length > n0 ? run.log.slice(n0) : [];
   if (e.n !== e0) fx = { monster: 'open', stash: 'open', shrine: 'open', hearth: 'open', curse: 'curse', win: 'win', escape: 'escape', exchange: 'exchange', dead: 'caught', shot: 'shot', heal: 'heal', rested: 'heal', fizzle: 'fizzle', card: 'card', pair: 'card', camp: 'heal' }[e.t] || null;
-  if (run.phase === 'over' && !run.settled){ const r = G.settle(meta, run); run._emb = r ? r.embers : 0; }
+  if (run.phase === 'over' && !run.settled){ const r = G.settle(meta, run); run._emb = r ? r.embers : 0; logRun(run); }
   if (sheet && sheet !== 'help' && run.phase !== 'door' && run.phase !== 'fight') sheet = null;
   if (sheet === 'losefight' && run.phase !== 'fight') sheet = null;
   if (run.phase !== 'fight') pick = [];
@@ -2469,22 +2501,24 @@ function bind(){
   all('[data-lease]', b => { G.setLease(meta, +b.dataset.lease); save(); render(); });
   all('[data-recp]', b => { const i = +b.dataset.recp, n = Math.min(run.recPick || 0, run.spent.length); if (recSel.includes(i)) recSel = recSel.filter(x => x !== i); else { recSel.push(i); while (recSel.length > n) recSel.shift(); } render(); });
   all('#recgo', () => { G.pickRecover(run, recSel); recSel = []; save(); render(); });
-  all('[data-buymat]', b => { if (G.buyMat(meta, b.dataset.buymat)) { save(); render(); } });
+  all('[data-buymat]', b => { const p = G.tradePrice(meta, b.dataset.buymat); if (G.buyMat(meta, b.dataset.buymat)) { hlog('buymat', { id: b.dataset.buymat, price: p }); save(); render(); } });
   all('[data-find]', b => { const i = +b.dataset.find, k = G.findCarry(meta); let sel = (meta.findSel || []).slice(); if (sel.includes(i)) sel = sel.filter(x => x !== i); else { sel.push(i); while (sel.length > k) sel.shift(); } meta.findSel = sel; save(); render(); });
   all('[data-store]', b => { const id = b.dataset.store; meta.provisions = meta.provisions || {}; if (meta.provisions[id]) delete meta.provisions[id]; else if ((meta.stores || {})[id] > 0) meta.provisions[id] = true; save(); render(); });
   all('#setout', () => { meta.setOut = true; meta.calling = calling; run = G.startRun(meta, { calling }); narr = []; manageSel = null; sheet = null; save(); render(); });
-  all('[data-buy]', b => { G.buyForge(meta, b.dataset.buy); save(); render(); });
+  all('[data-buy]', b => { const g0 = meta.gold; G.buyForge(meta, b.dataset.buy); if (meta.gold !== g0) hlog('forge', { id: b.dataset.buy, cost: g0 - meta.gold }); save(); render(); });
   all('[data-build]', b => { G.buildTown(meta, b.dataset.build); save(); render(); });
-  all('[data-home]', b => { const id = b.dataset.home, sp = homeSpot; if (G.buildHome(meta, id, sp ? sp[0] : null, sp ? sp[1] : null)) { homeSel = id; homeSpot = null; homePick = null; } save(); render(); });
+  all('[data-home]', b => { const id = b.dataset.home, sp = homeSpot; if (G.buildHome(meta, id, sp ? sp[0] : null, sp ? sp[1] : null)) { hlog('build', { id, lv: G.homeLv(meta, id) }); homeSel = id; homeSpot = null; homePick = null; } save(); render(); });
   all('[data-tile]', b => { const [x, y] = b.dataset.tile.split(',').map(Number); homePanel = null;
     if (homeMove && homeSel) { G.placeHome(meta, homeSel, x, y); homeMove = false; save(); render(); return; }
     const id = partAt(x, y); if (id) { homeSel = homeSel === id ? null : id; homeSpot = null; } else { homeSpot = homeSpot && homeSpot[0] === x && homeSpot[1] === y ? null : [x, y]; homeSel = null; homePick = null; } homeMove = false; render(); });
   all('[data-hpickp]', b => { homePick = b.dataset.hpickp; render(); });
   all('[data-hmove]', () => { homeMove = !homeMove; render(); });
   all('[data-hclose]', () => { homeSel = null; homeSpot = null; homePick = null; homeMove = false; homePanel = null; homeOut = null; render(); });
+  all('[data-logx]', () => { saveLog(); });
+  all('[data-logcopy]', () => { const t = $('[data-logtxt]'); if (!t) return; t.select(); let ok = false; try{ ok = document.execCommand('copy'); }catch(e){} if (navigator.clipboard) navigator.clipboard.writeText(t.value).then(() => {}, () => {}); });
   all('[data-hshare]', () => { homePanel = 'share'; homeOut = null; render(); });
   all('[data-hstyle]', b => { G.styleHome(meta, b.dataset.hstyle); save(); render(); });
-  document.querySelectorAll('[data-bed]').forEach(el => el.onchange = () => { G.plant(meta, +el.dataset.bed, el.value); save(); render(); });
+  document.querySelectorAll('[data-bed]').forEach(el => el.onchange = () => { G.plant(meta, +el.dataset.bed, el.value); hlog('plant', { bed: +el.dataset.bed, crop: el.value }); save(); render(); });
   document.querySelectorAll('[data-hname]').forEach(el => el.onchange = () => { meta.home.name = el.value.slice(0, 30); save(); });
   all('[data-hcode]', () => { homeOut = { k: 'code', v: homeCode() }; render(); });
   all('[data-hpic]', () => { const svg = homeSVG(meta.home, true).replace('<svg ', '<svg width="768" height="507" '); const img = new Image(); img.onload = () => { try{ const c = document.createElement('canvas'); c.width = 768; c.height = 548; const x = c.getContext('2d'); x.fillStyle = '#efe7d8'; x.fillRect(0, 0, 768, 548); x.drawImage(img, 0, 0, 768, 507); x.fillStyle = '#3b3226'; x.font = 'bold 22px Georgia, serif'; x.fillText((meta.home.name || 'My homestead') + ' · One More Door', 16, 534); homeOut = { k: 'pic', v: c.toDataURL('image/png') }; }catch(e){ homeOut = { k: 'pic', v: 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg) }; } render(); }; img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg); });
@@ -2492,9 +2526,9 @@ function bind(){
   all('[data-hdrop]', b => { const gl = gallery(); gl.splice(+b.dataset.hdrop, 1); try{ localStorage.setItem('omd-home-gallery', JSON.stringify(gl)); }catch(e){} render(); });
   all('[data-openk]', b => act(() => G.openDoor(run, +b.dataset.openk)));
   all('[data-hone]', b => { sheet = null; act(() => G.rest(run, 'hone', +b.dataset.hone)); });
-  all('[data-retire]', b => { const i = +b.dataset.retire; if (retireSel === i){ G.retireCard(meta, G.startDeck(meta)[i]); retireSel = null; save(); } else retireSel = i; render(); });
+  all('[data-retire]', b => { const i = +b.dataset.retire; if (retireSel === i){ hlog('retire', { id: G.startDeck(meta)[i] }); G.retireCard(meta, G.startDeck(meta)[i]); retireSel = null; save(); } else retireSel = i; render(); });
   all('[data-restore]', b => { G.restoreCard(meta, +b.dataset.restore); save(); render(); });
-  all('[data-lib]', b => { G.buyCard(meta, b.dataset.lib); save(); render(); });
+  all('[data-lib]', b => { const g0 = meta.gold; G.buyCard(meta, b.dataset.lib); if (meta.gold !== g0) hlog('card', { id: b.dataset.lib, cost: g0 - meta.gold }); save(); render(); });
   all('[data-ember]', b => { if (G.buyEmber(meta, b.dataset.ember)){ const e = G.EMBERS.find(x => x.id === b.dataset.ember); if (e.calling) calling = e.calling; } save(); render(); });
   const ob = $('#oath'); if (ob) ob.onchange = () => { oath = ob.checked; };
   const rb = $('#reset'); if (rb) rb.onclick = () => { if (rb.dataset.arm){ meta = G.newMeta(); run = null; lastEnd = null; calling = 'brawler'; save(); render(); } else { rb.dataset.arm = '1'; rb.textContent = 'Tap again to erase everything'; } };
